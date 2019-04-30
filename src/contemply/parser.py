@@ -9,15 +9,6 @@ import os
 import contemply.functions
 from contemply.cpytypes import *
 
-# Tokens
-STRING, INTEGER, LIST, OBJNAME, EOL = 'STRING', 'INTEGER', 'LIST', 'OBJNAME', 'EOL',
-LPAR, RPAR, COMMA, LSQRBR, RSQRBR, ASSIGN = 'LPAR', 'RPAR', 'COMMA', 'LSQRBR', 'RSQRBR', 'ASSIGN'
-IF, ELSE, ENDIF = 'IF', 'ELSE', 'ENDIF'
-OPERATORS = COMP_EQ, COMP_LT, COMP_GT, COMP_LT_EQ, COMP_GT_EQ, COMP_NOT_EQ = 'COMP_EQ', 'COMP_LT', 'COMP_GT', 'COMP_LT_EQ', \
-                                                                             'COMP_GT_EQ', 'COMP_NOT_EQ'
-
-RESERVED = 'True', 'False', 'None'
-
 
 def pprint_tokens(tokens):
     out = ''
