@@ -1,7 +1,19 @@
+# This is a demo file
+# % echo('This is a contemply command - but commented out with %')
+#: ask('How should the new class be called? ', 'ClassName')
+#: ask('What should the text be? ', 'mytext')
+#: yesno('Print the super function?', 'printSuper', 'Yes')
+#
+#: version = '1.0.0'
+#% output('$classname.py')
 
-#% if from == 'yes'
-from setuptools import setup
+
+class $ClassName(Parent):
+
+    def someFunction(self):
+        print('$mytext')
+
+#: if printSuper == True
+    def versionFunction(self):
+        print('$version')
 #: endif
-
-
-#: echo('Finished')

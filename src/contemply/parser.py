@@ -16,6 +16,8 @@ IF, ELSE, ENDIF = 'IF', 'ELSE', 'ENDIF'
 OPERATORS = COMP_EQ, COMP_LT, COMP_GT, COMP_LT_EQ, COMP_GT_EQ, COMP_NOT_EQ = 'COMP_EQ', 'COMP_LT', 'COMP_GT', 'COMP_LT_EQ', \
                                                                              'COMP_GT_EQ', 'COMP_NOT_EQ'
 
+RESERVED = 'True', 'False', 'None'
+
 
 def pprint_tokens(tokens):
     out = ''
@@ -356,6 +358,22 @@ class TemplateParser:
 
         return lst
 
+    def _resolve_objectname(self, objname):
+        self.reserved_solution = {
+            'True': True,
+            'False': False,
+            'None': None
+        }
+
+        if objname in self.reserved_solution:
+            return self.reserved_solution[objname]
+
+        # check for variable
+        if self._ctx.has(objname):
+            return self._ctx.get(objname)
+        else:
+            raise ParserException("Variable {0} not found".format(objname), self._ctx)
+
     def _convert_token_to_primitive_type(self, token):
         if token.type() == STRING or token.type() in OPERATORS:
             return str(token.value())
@@ -364,10 +382,7 @@ class TemplateParser:
             return int(token.value())
 
         elif token.type() == OBJNAME:
-            if self._ctx.has(token.value()):
-                return self._ctx.get(token.value())
-            else:
-                raise ParserException("Variable {0} not found".format(token.value()))
+            return self._resolve_objectname(token.value())
 
     def _process_if(self):
         token = self._get_next_token()
