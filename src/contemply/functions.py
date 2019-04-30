@@ -90,3 +90,11 @@ def echo(args, ctx):
         raise SyntaxError("Function needs exactly 1 argument")
 
     print(args[0])
+
+
+def output(args, ctx):
+
+    if len(args) == 0:
+        raise SyntaxError("Function needs exactly 1 argument")
+
+    ctx.set_outputfile(args[0])

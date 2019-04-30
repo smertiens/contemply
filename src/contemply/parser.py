@@ -5,7 +5,7 @@
 # For more information on licensing see LICENSE file
 #
 
-import os
+import os, logging
 import contemply.functions
 from contemply.cpytypes import *
 
@@ -49,6 +49,9 @@ class TemplateContext:
     def set_outputfile(self, file):
         self._outputfile = file
 
+    def outputfile(self):
+        return self._outputfile
+
     def set(self, k, v):
         self._data[k] = v
 
@@ -63,6 +66,10 @@ class TemplateContext:
 
 
 class TemplateParser:
+    VAR_PREFIX = '$'
+    CMD_PREFIX = '#:'
+
+    OUTPUTMODE_CONSOLE, OUTPUTMODE_FILE = 0, 1
 
     def __init__(self):
         self._pos = 0
@@ -70,11 +77,18 @@ class TemplateParser:
         self._token = None
         self._cmd_stack = []
         self._block = None
+        self._outputmode = self.OUTPUTMODE_FILE
+
+    def get_logger(self):
+        return logging.getLogger(self.__module__)
+
+    def set_outputmode(self, mode):
+        self._outputmode = mode
 
     def _process_variables(self):
         for k, v in self._ctx.get_all().items():
             if isinstance(v, str):
-                self._text = self._text.replace('${0}'.format(k), v)
+                self._text = self._text.replace('{1}{0}'.format(k, self.VAR_PREFIX), v)
 
     def _parse(self, text):
         """
@@ -88,12 +102,9 @@ class TemplateParser:
 
         # check whether we should process this line
 
-        if text.startswith('#:'):
+        if text.startswith(self.CMD_PREFIX):
             # Command
             self._text = self._text[2:]
-        elif text.startswith('#%'):
-            # Comment
-            return ''
         else:
             # Template code
             # check condition if any
@@ -429,7 +440,24 @@ class TemplateParser:
             line = self._parse(line)
             output.append(line)
 
-        print(''.join(output))
+        if self._outputmode == TemplateParser.OUTPUTMODE_FILE:
+            outfile = self._ctx.outputfile()
+            if outfile == '':
+                # Prompt for outputfile
+                outfile = input('Please enter the filename of the new file: ')
+
+            # replace variables in outputfile
+            for k, v in self._ctx.get_all().items():
+                if isinstance(v, str):
+                    outfile = outfile.replace('{1}{0}'.format(k, TemplateParser.VAR_PREFIX), v)
+
+            path = os.path.realpath(outfile)
+
+            with open(path, 'w') as f:
+                f.write(''.join(output))
+
+        elif self._outputmode == self.OUTPUTMODE_CONSOLE:
+            print(''.join(output))
 
     def parse(self, text):
         self._ctx = TemplateContext()

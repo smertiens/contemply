@@ -22,7 +22,6 @@ pip install contemply
 
 ````python
 # This is a demo file
-#% echo('This is a contemply command - but commented out with %')
 #: ask('How should the new class be called? ', 'ClassName')
 #: ask('What should the text be? ', 'mytext')
 #: yesno('Create the version function?', 'printVersion', 'Yes')

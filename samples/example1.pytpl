@@ -1,11 +1,11 @@
 # This is a demo file
 # % echo('This is a contemply command - but commented out with %')
 #: ask('How should the new class be called? ', 'ClassName')
-#: ask('What should the text be? ', 'mytext')
+#% ask('What should the text be? ', 'mytext')
 #: yesno('Print the super function?', 'printSuper', 'Yes')
 #
 #: version = '1.0.0'
-#% output('$classname.py')
+#: output('$ClassName.py')
 
 
 class $ClassName(Parent):
