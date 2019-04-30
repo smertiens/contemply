@@ -1,5 +1,5 @@
 #% ask('name', 'name')
-#: choose('What blah', ['Demo', 'End'], 'some')
+#% choose('What blah', ['Demo', 'End'], 'some')
 #: temp = 'Hello'
 #: from = 'yes'
 

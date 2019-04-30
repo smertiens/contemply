@@ -1,8 +1,15 @@
+#
+# Contemply - A code generator that creates boilerplate files from templates
+#
+# Copyright (C) 2019  Sean Mertiens
+# For more information on licensing see LICENSE file
+#
+
+
 import contemply.functions
-from contemply.types import *
+from contemply.cpytypes import *
 
 # Tokens
-
 STRING, INTEGER, LIST, OBJNAME, EOL = 'STRING', 'INTEGER', 'LIST', 'OBJNAME', 'EOL',
 LPAR, RPAR, COMMA, LSQRBR, RSQRBR, ASSIGN = 'LPAR', 'RPAR', 'COMMA', 'LSQRBR', 'RSQRBR', 'ASSIGN'
 IF, ELSE, ENDIF = 'IF', 'ELSE', 'ENDIF'
