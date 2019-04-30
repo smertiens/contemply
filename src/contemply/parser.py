@@ -1,13 +1,13 @@
-import re
+import contemply.functions
+from contemply.types import *
 
 # Tokens
 
 STRING, INTEGER, LIST, OBJNAME, EOL = 'STRING', 'INTEGER', 'LIST', 'OBJNAME', 'EOL',
 LPAR, RPAR, COMMA, LSQRBR, RSQRBR, ASSIGN = 'LPAR', 'RPAR', 'COMMA', 'LSQRBR', 'RSQRBR', 'ASSIGN'
-
-
-class ParserException(Exception):
-    pass
+IF, ELSE, ENDIF = 'IF', 'ELSE', 'ENDIF'
+OPERATORS = COMP_EQ, COMP_LT, COMP_GT, COMP_LT_EQ, COMP_GT_EQ, COMP_NOT_EQ = 'COMP_EQ', 'COMP_LT', 'COMP_GT', 'COMP_LT_EQ', \
+                                                                             'COMP_GT_EQ', 'COMP_NOT_EQ'
 
 
 def pprint_tokens(tokens):
@@ -19,61 +19,23 @@ def pprint_tokens(tokens):
     print(out)
 
 
-class Token:
+class TemplateContext:
 
-    def __init__(self, ttype, val=''):
-        self._type = ttype
-        self._val = val
+    def __init__(self):
+        self._data = {}
 
-    def value(self):
-        return self._val
+    def set(self, k, v):
+        self._data[k] = v
 
-    def type(self):
-        return self._type
+    def get(self, k):
+        return self._data[k]
 
-    def __str__(self):
-        return 'Token: {0} ({1})'.format(self._type, self._val)
+    def has(self, k):
+        return k in self._data
 
-    def __repr__(self):
-        return self.__str__()
+    def get_all(self):
+        return self._data
 
-
-class Function:
-
-    def __init__(self, name, args):
-        self._name = name
-        self._args = args
-
-    def __str__(self):
-        return 'Function: {0} ({1})'.format(self._name, self._args)
-
-    def __repr__(self):
-        return self.__str__()
-
-
-class List:
-
-    def __init__(self, items):
-        self._items = items
-
-    def __str__(self):
-        return 'List: {0}'.format(self._items)
-
-    def __repr__(self):
-        return self.__str__()
-
-
-class VariableAssignment:
-
-    def __init__(self, varname, value):
-        self._varname = varname
-        self._value = value
-
-    def __str__(self):
-        return 'Assignment: {0} = {1}'.format(self._varname, self._value)
-
-    def __repr__(self):
-        return self.__str__()
 
 class TemplateParser:
 
@@ -81,12 +43,47 @@ class TemplateParser:
         self._pos = 0
         self._text = ''
         self._token = None
+        self._cmd_stack = []
+        self._block = None
+
+        self._ctx = TemplateContext()
+
+    def _process_variables(self):
+        for k, v in self._ctx.get_all().items():
+            self._text = self._text.replace('${0}'.format(k), v)
 
     def _parse(self, text):
+        """
+
+        :param text: The line to parse
+        :return:
+        """
         self._pos = 0
         self._token = None
         self._text = text
 
+        # check whether we should process this line
+
+        if text.startswith('#:'):
+            # Command
+            self._text = self._text[2:]
+        elif text.startswith('#%'):
+            # Comment
+            return ''
+        else:
+            # Template code
+            # check condition if any
+            if self._block is not None:
+                if self._block.type() == Block.IF_BLOCK and self._block.cond().solve() is False:
+                    return ''
+                elif self._block.type() == Block.ELSE_BLOCK and self._block.cond().solve() is True:
+                    return ''
+
+            # process variables only
+            self._process_variables()
+            return self._text
+
+        # Interpret commands
         while self._get_chr() is not None:
             token = self._get_next_token()
 
@@ -97,14 +94,37 @@ class TemplateParser:
                 if token.type() == LPAR:
                     # function
                     func = self._process_function(objname)
-                    print(func)
+                    if hasattr(contemply.functions, 'func_{0}'.format(func.name())):
+                        call = getattr(contemply.functions, 'func_{0}'.format(func.name()))
+                        call(func.args(), self._ctx)
+                    else:
+                        raise ParserException("Unknown function: {0}".format(func.name()))
 
                 elif token.type() == ASSIGN:
                     # assignment
                     assig = self._process_assignment(objname)
-                    print(assig)
+                    self._ctx.set(assig.varname(), assig.value())
+
                 else:
-                    raise ParserException("Unexpected token: " + token)
+                    raise ParserException("Unexpected token: {0} in {1}".format(token, text))
+
+            elif token.type() == IF:
+                cond = self._process_if()
+                self._block = Block(cond, Block.IF_BLOCK)
+
+            elif token.type() == ENDIF:
+                if self._block is None:
+                    raise ParserException("Found ENDIF without preceding IF")
+
+                self._block = None
+
+            elif token.type() == ELSE:
+                if self._block is None:
+                    raise ParserException("Found ELSE without preceding IF")
+
+                self._block.set_type(Block.ELSE_BLOCK)
+
+        return ''
 
     def _get_chr(self):
         try:
@@ -116,18 +136,37 @@ class TemplateParser:
         self._pos += 1
 
     def _lookahead(self, size=1):
-        return self._text[self._pos:size]
+        return self._text[self._pos + 1:self._pos + 1 + size]
 
     def _skip_whitespace(self):
-        while self._get_chr().isspace():
+        while self._get_chr() is not None and self._get_chr().isspace():
             self._advance()
 
     def _get_next_token(self):
         token = None
-
         self._skip_whitespace()
 
-        if self._get_chr().isalpha():
+        if self._get_chr() is None:
+            return Token(EOL)
+
+        if self._get_chr() == 'i' and self._lookahead() == 'f':
+            token = Token(IF)
+            self._advance()
+            self._advance()
+
+        elif self._get_chr() == 'e' and self._lookahead(3) == 'lse':
+            token = Token(ELSE)
+
+            for i in range(0, len('else')):
+                self._advance()
+
+        elif self._get_chr() == 'e' and self._lookahead(4) == 'ndif':
+            token = Token(ENDIF)
+
+            for i in range(0, len('endif')):
+                self._advance()
+
+        elif self._get_chr().isalpha():
             token = self._consume_objname()
 
         elif self._get_chr().isnumeric():
@@ -158,11 +197,38 @@ class TemplateParser:
             self._advance()
 
         elif self._get_chr() == '=':
-            token = Token(ASSIGN, '=')
+            if self._lookahead() == '=':
+                token = Token(COMP_EQ, '==')
+                self._advance()
+            else:
+                token = Token(ASSIGN, '=')
+
             self._advance()
 
-        elif self._get_chr() is None:
-            return Token(EOL)
+        elif self._get_chr() == '<':
+            if self._lookahead() == '=':
+                token = Token(COMP_LT_EQ, '<=')
+                self._advance()
+            else:
+                token = Token(COMP_LT, '<')
+
+            self._advance()
+
+        elif self._get_chr() == '>':
+            if self._lookahead() == '=':
+                token = Token(COMP_GT_EQ, '>=')
+                self._advance()
+            else:
+                token = Token(COMP_GT, '>')
+
+            self._advance()
+
+        elif self._get_chr() == '!':
+            if self._lookahead() == '=':
+                token = Token(COMP_GT_EQ, '>=')
+                self._advance()
+
+            self._advance()
 
         else:
             raise ParserException("Unrecognized token at pos {0}".format(self._pos))
@@ -185,7 +251,7 @@ class TemplateParser:
     def _consume_string(self):
         val = ''
 
-        while self._get_chr() is not None and self._get_chr() != '"' and self._get_chr() != '"':
+        while self._get_chr() is not None and self._get_chr() != '"' and self._get_chr() != "'":
             val += self._get_chr()
             self._advance()
 
@@ -217,13 +283,13 @@ class TemplateParser:
                 token = self._get_next_token()
                 continue
 
-            if token.type() in [STRING, INTEGER]:
-                args.append(token)
+            if token.type() in [STRING, INTEGER, OBJNAME]:
+                args.append(token.value())
             elif token.type() == LSQRBR:
                 lst = self._process_list()
                 args.append(lst)
             else:
-                raise ParserException("Unvalid function argument.")
+                raise ParserException("Invalid function argument.")
 
             token = self._get_next_token()
 
@@ -235,7 +301,7 @@ class TemplateParser:
         if token.type() not in [STRING, INTEGER]:
             raise ParserException("Expected String or Integer")
 
-        return VariableAssignment(varname, token)
+        return VariableAssignment(varname, token.value())
 
     def _process_list(self):
         token = self._get_next_token()
@@ -247,7 +313,7 @@ class TemplateParser:
                 continue
 
             if token.type() in [STRING, INTEGER]:
-                lst.append(token)
+                lst.append(token.value())
             elif token.type() == LSQRBR:
                 lst = self._process_list()
                 lst.append(lst)
@@ -256,7 +322,73 @@ class TemplateParser:
 
             token = self._get_next_token()
 
-        return List(lst)
+        return lst
 
-    def parseFile(self):
-        pass
+    def _convert_token_to_primitive_type(self, token):
+        if token.type() == STRING or token.type() in OPERATORS:
+            return str(token.value())
+
+        elif token.type() == INTEGER:
+            return int(token.value())
+
+        elif token.type() == OBJNAME:
+            if self._ctx.has(token.value()):
+                return self._ctx.get(token.value())
+            else:
+                raise ParserException("Variable {0} not found".format(token.value()))
+
+    def _process_if(self):
+        token = self._get_next_token()
+        condition = None
+
+        if token.type() not in [STRING, INTEGER, OBJNAME]:
+            raise ParserException("Invalid LVAL for condition")
+
+        lval = self._convert_token_to_primitive_type(token)
+
+        token = self._get_next_token()
+        if token.type() not in OPERATORS:
+            raise ParserException("Expected operator")
+        op = self._convert_token_to_primitive_type(token)
+
+        token = self._get_next_token()
+        if token.type() not in [STRING, INTEGER, OBJNAME]:
+            raise ParserException("Invalid RVAL for condition")
+        rval = self._convert_token_to_primitive_type(token)
+
+        condition = Condition(lval, rval, op)
+        return condition
+
+    def _run(self):
+
+        for cmd in self._cmd_stack:
+            if isinstance(cmd, VariableAssignment):
+                # TODO maybe NOTICE on overwrite
+                self._ctx.set(cmd.varname(), cmd.value())
+
+            elif isinstance(cmd, Function):
+                if hasattr(contemply.functions, 'func_{0}'.format(cmd.name())):
+                    func = getattr(contemply.functions, 'func_{0}'.format(cmd.name()))
+                    func(cmd.args(), self._ctx)
+                else:
+                    raise ParserException("Unknown function: {0}".format(cmd.name()))
+
+    def parseFile(self, filename):
+
+        lines = []
+        self._cmd_stack = []
+
+        with open(filename, 'r') as f:
+            for line in f:
+                lines.append(line)
+
+        # assemble output
+        output = []
+        for line in lines:
+            line = self._parse(line)
+            output.append(line)
+
+        print(''.join(output))
+
+    def parse(self, text):
+        return self._parse(text)
