@@ -21,11 +21,13 @@ def header():
     print('*' * 40)
     print('*' + 'Contemply {0}'.format(contemply.__version__).center(38) + '*')
     print('*' * 40)
+    print('')
 
 
 def main():
     # Parse CLI args
-    parser = argparse.ArgumentParser(description="A code generator that creates boilerplate files from templates")
+    parser = argparse.ArgumentParser(description="A code generator that creates boilerplate files from templates",
+                                     )
 
     parser.add_argument('template_file', metavar='template_file', type=str,
                         help='The template file you want to run')
@@ -33,18 +35,15 @@ def main():
                         action="store_true")
     parser.add_argument("-p", "--print", help="Print output to console instead of creating a new file",
                         action="store_true")
-    parser.add_argument("--header", type=bool, help="If set to False, the header will not be printed", default=True)
+    parser.add_argument("--no-header", help="If set  the header will not be printed", action="store_true")
+    parser.add_argument('--version', action='version', version='%(prog)s {0}'.format(contemply.__version__))
 
     args = parser.parse_args()
 
-    if args.header is True:
+    if not args.no_header is True:
         header()
 
     file = os.path.realpath(args.template_file)
-
-    if not os.path.exists(file):
-        print('I could not find that file')
-        quit(1)
 
     parser = TemplateParser()
 
@@ -61,6 +60,9 @@ def main():
         parser.parse_file(file)
     except ParserException as e:
         print_error(e)
+    except KeyboardInterrupt:
+        print('\nGoodbye.')
+        quit()
 
 
 if __name__ == '__main__':

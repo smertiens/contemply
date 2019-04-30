@@ -4,6 +4,7 @@
 # Copyright (C) 2019  Sean Mertiens
 # For more information on licensing see LICENSE file
 #
+from colorama import Fore, Style
 
 """
 Built in functions
@@ -20,7 +21,7 @@ def ask(args, ctx):
     if len(args) < 2:
         raise SyntaxError("Function needs exactly 2 argument")
 
-    answer = input(args[0])
+    answer = input(Style.BRIGHT + args[0] + Style.RESET_ALL)
     ctx.set(args[1], answer)
 
 
@@ -42,7 +43,7 @@ def choose(args, ctx):
 
     correct = False
     while not correct:
-        answer = input('Your choice: ')
+        answer = input(Style.BRIGHT + 'Your choice: ' + Style.RESET_ALL)
 
         if answer.isnumeric() and int(answer) in range(1, len(choices) + 1):
             correct = True
@@ -68,7 +69,7 @@ def yesno(args, ctx):
     correct = False
     ret = None
     while not correct:
-        answer = input('{0} [{1}]: '.format(prompt, default))
+        answer = input(Style.BRIGHT + '{0} '.format(prompt) + Fore.LIGHTYELLOW_EX + '[{0}]'.format(default) + Fore.RESET + ': ' + Style.RESET_ALL)
 
         if answer == '':
             answer = default
@@ -89,7 +90,7 @@ def echo(args, ctx):
     if len(args) == 0:
         raise SyntaxError("Function needs exactly 1 argument")
 
-    print(args[0])
+    print(ctx.process_variables(args[0]))
 
 
 def output(args, ctx):

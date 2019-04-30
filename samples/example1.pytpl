@@ -1,7 +1,8 @@
 # This is a demo file
-# % echo('This is a contemply command - but commented out with %')
+#: echo('This is a contemply command - but commented out with %')
 #: ask('How should the new class be called? ', 'ClassName')
-#% ask('What should the text be? ', 'mytext')
+#: echo('Okay, we will call it $ClassName')
+# ask('What should the text be? ', 'mytext')
 #: yesno('Print the super function?', 'printSuper', 'Yes')
 #
 #: version = '1.0.0'

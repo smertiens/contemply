@@ -8,6 +8,7 @@
 import os, logging
 import contemply.functions
 from contemply.cpytypes import *
+from colorama import Fore, Style
 
 
 def pprint_tokens(tokens):
@@ -64,6 +65,12 @@ class TemplateContext:
     def get_all(self):
         return self._data
 
+    def process_variables(self, text):
+        for k, v in self.get_all().items():
+            if isinstance(v, str):
+                text = text.replace('{1}{0}'.format(k, TemplateParser.VAR_PREFIX), v)
+
+        return text
 
 class TemplateParser:
     VAR_PREFIX = '$'
@@ -85,11 +92,6 @@ class TemplateParser:
     def set_outputmode(self, mode):
         self._outputmode = mode
 
-    def _process_variables(self):
-        for k, v in self._ctx.get_all().items():
-            if isinstance(v, str):
-                self._text = self._text.replace('{1}{0}'.format(k, self.VAR_PREFIX), v)
-
     def _parse(self, text):
         """
 
@@ -104,7 +106,7 @@ class TemplateParser:
 
         if text.startswith(self.CMD_PREFIX):
             # Command
-            self._text = self._text[2:]
+            self._text = self._text[len(self.CMD_PREFIX):]
         else:
             # Template code
             # check condition if any
@@ -115,7 +117,7 @@ class TemplateParser:
                     return ''
 
             # process variables only
-            self._process_variables()
+            self._text = self._ctx.process_variables(self._text)
             return self._text
 
         # Interpret commands
@@ -354,7 +356,7 @@ class TemplateParser:
                 lst = self._process_list()
                 lst.append(lst)
             else:
-                raise ParserException("Invalid list value.")
+                raise ParserException("Unexpected token: {0}".format(token.type()), self._ctx)
 
             token = self._get_next_token()
 
@@ -374,7 +376,7 @@ class TemplateParser:
         if self._ctx.has(objname):
             return self._ctx.get(objname)
         else:
-            raise ParserException("Variable {0} not found".format(objname), self._ctx)
+            raise ParserException('Unknown variable "{0}"'.format(objname), self._ctx)
 
     def _convert_token_to_primitive_type(self, token):
         if token.type() == STRING or token.type() in OPERATORS:
@@ -391,18 +393,18 @@ class TemplateParser:
         condition = None
 
         if token.type() not in [STRING, INTEGER, OBJNAME]:
-            raise ParserException("Invalid LVAL for condition")
+            raise ParserException("Expected string, integer or object", self._ctx)
 
         lval = self._convert_token_to_primitive_type(token)
 
         token = self._get_next_token()
         if token.type() not in OPERATORS:
-            raise ParserException("Expected operator")
+            raise ParserException("Expected operator", self._ctx)
         op = self._convert_token_to_primitive_type(token)
 
         token = self._get_next_token()
         if token.type() not in [STRING, INTEGER, OBJNAME]:
-            raise ParserException("Invalid RVAL for condition")
+            raise ParserException("Expected string, integer or object", self._ctx)
         rval = self._convert_token_to_primitive_type(token)
 
         condition = Condition(lval, rval, op)
@@ -420,7 +422,7 @@ class TemplateParser:
                     func = getattr(contemply.functions, 'func_{0}'.format(cmd.name()))
                     func(cmd.args(), self._ctx)
                 else:
-                    raise ParserException("Unknown function: {0}".format(cmd.name()))
+                    raise ParserException("Unknown function: {0}".format(cmd.name()), self._ctx)
 
     def parse_file(self, filename):
 
@@ -447,14 +449,15 @@ class TemplateParser:
                 outfile = input('Please enter the filename of the new file: ')
 
             # replace variables in outputfile
-            for k, v in self._ctx.get_all().items():
-                if isinstance(v, str):
-                    outfile = outfile.replace('{1}{0}'.format(k, TemplateParser.VAR_PREFIX), v)
+            outfile = self._ctx.process_variables(outfile)
 
             path = os.path.realpath(outfile)
 
             with open(path, 'w') as f:
                 f.write(''.join(output))
+
+            print(Fore.GREEN + '√' + Fore.RESET + ' File ' + Style.BRIGHT + '{0}'.format(os.path.basename(path)) +
+                  Style.RESET_ALL + ' has been created')
 
         elif self._outputmode == self.OUTPUTMODE_CONSOLE:
             print(''.join(output))
