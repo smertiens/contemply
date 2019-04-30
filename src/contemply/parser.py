@@ -5,7 +5,7 @@
 # For more information on licensing see LICENSE file
 #
 
-
+import os
 import contemply.functions
 from contemply.cpytypes import *
 
@@ -30,6 +30,31 @@ class TemplateContext:
 
     def __init__(self):
         self._data = {}
+        self._outputfile = ''
+        self._filename = ''
+        self._line = 0
+        self._pos = 0
+
+    def set_filename(self, val):
+        self._filename = val
+
+    def set_line(self, val):
+        self._line = val
+
+    def set_pos(self, val):
+        self._pos = val
+
+    def filename(self):
+        return self._filename
+
+    def line(self):
+        return self._line
+
+    def pos(self):
+        return self._pos
+
+    def set_outputfile(self, file):
+        self._outputfile = file
 
     def set(self, k, v):
         self._data[k] = v
@@ -53,11 +78,10 @@ class TemplateParser:
         self._cmd_stack = []
         self._block = None
 
-        self._ctx = TemplateContext()
-
     def _process_variables(self):
         for k, v in self._ctx.get_all().items():
-            self._text = self._text.replace('${0}'.format(k), v)
+            if isinstance(v, str):
+                self._text = self._text.replace('${0}'.format(k), v)
 
     def _parse(self, text):
         """
@@ -121,7 +145,7 @@ class TemplateParser:
 
             elif token.type() == ENDIF:
                 if self._block is None:
-                    raise ParserException("Found ENDIF without preceding IF")
+                    raise ParserException("Found ENDIF without preceding IF", self._ctx)
 
                 self._block = None
 
@@ -141,6 +165,7 @@ class TemplateParser:
 
     def _advance(self):
         self._pos += 1
+        self._ctx.set_pos(self._pos)
 
     def _lookahead(self, size=1):
         return self._text[self._pos + 1:self._pos + 1 + size]
@@ -380,8 +405,10 @@ class TemplateParser:
                 else:
                     raise ParserException("Unknown function: {0}".format(cmd.name()))
 
-    def parseFile(self, filename):
+    def parse_file(self, filename):
 
+        self._ctx = TemplateContext()
+        self._ctx.set_filename(os.path.basename(filename))
         lines = []
         self._cmd_stack = []
 
@@ -391,11 +418,13 @@ class TemplateParser:
 
         # assemble output
         output = []
-        for line in lines:
+        for lineno, line in enumerate(lines):
+            self._ctx.set_line(lineno + 1)
             line = self._parse(line)
             output.append(line)
 
         print(''.join(output))
 
     def parse(self, text):
+        self._ctx = TemplateContext()
         return self._parse(text)

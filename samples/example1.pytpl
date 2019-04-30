@@ -1,9 +1,5 @@
-#% ask('name', 'name')
-#% choose('What blah', ['Demo', 'End'], 'some')
-#: temp = 'Hello'
-#: from = 'yes'
 
-#: if from == 'yes'
+#% if from == 'yes'
 from setuptools import setup
 #: endif
 

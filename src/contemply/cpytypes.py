@@ -26,7 +26,20 @@ class Token:
 
 
 class ParserException(Exception):
-    pass
+
+    def __init__(self, message, ctx = None):
+        super(Exception, self).__init__(message)
+        self.message = message
+        self.ctx = ctx
+
+    def __str__(self):
+        if self.ctx is not None:
+            return 'ParserException in {1}, line {2}, col {3}: {0}'.format(self.message, self.ctx.filename(), self.ctx.line(), self.ctx.pos())
+        else:
+            return 'ParserException: {0}'.format(self.message)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class Function:

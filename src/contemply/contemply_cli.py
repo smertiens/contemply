@@ -7,6 +7,13 @@
 
 import argparse, os
 from contemply.parser import *
+from colorama import init, Fore
+
+init()
+
+
+def print_error(msg):
+    print(Fore.RED + '{0}'.format(msg))
 
 
 def header():
@@ -33,7 +40,11 @@ def main():
         quit(1)
 
     parser = TemplateParser()
-    parser.parseFile(file)
+
+    try:
+        parser.parse_file(file)
+    except ParserException as e:
+        print_error(e)
 
 
 if __name__ == '__main__':

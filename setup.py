@@ -25,12 +25,12 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
 
-    install_requires=[],
+    install_requires=['colorama>=0.4'],
     python_requires='>=3.4',
 
     entry_points={
         'console_scripts': [
-            'contemply=contemply.contemply:main',
+            'contemply=contemply.contemply_cli:main',
         ]
     }
 )

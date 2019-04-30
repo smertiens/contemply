@@ -21,21 +21,58 @@ def func_choose(args, ctx):
     if not isinstance(args[1], list):
         raise SyntaxError("Expected list at position 2")
 
-    choices = enumerate(args[1])
-    print(args[0])
-    for i, line in choices:
+    choices = args[1]
+    prompt = args[0]
+    print(prompt)
+    for i, line in enumerate(choices):
         print('{0}. {1}'.format(i + 1, line))
+
+    # add quit option
+    print(print('{0}. {1}'.format(len(choices) + 1, 'Cancel')))
 
     correct = False
     while not correct:
         answer = input('Your choice: ')
 
-        if answer.isnumeric() and int(answer) in range(1, len(args[1]) + 1):
+        if answer.isnumeric() and int(answer) in range(1, len(choices) + 1):
             correct = True
+        elif int(answer) == len(args[1]) + 1:
+            quit()
         else:
             print('Invalid choice')
 
-    ctx.set(args[2], args[1][int(answer) - 1])
+    ctx.set(prompt, choices[int(answer) - 1])
+
+
+def func_yesno(args, ctx):
+    if len(args) < 2:
+        raise SyntaxError("Function needs at least 1 argument")
+
+    prompt = args[0]
+    varname = args[1]
+    default = 'Yes'
+
+    if len(args) > 2:
+        default = args[2].capitalize()
+
+    correct = False
+    while not correct:
+        answer = input('{0} [{1}]: '.format(prompt, default))
+
+        if answer == '':
+            answer = default
+
+        ret = None
+        if answer == 'y' or answer == 'yes' or answer == 'Yes':
+            ret = True
+            correct = True
+        elif answer == 'n' or answer == 'no' or answer == 'No':
+            ret = False
+            correct = True
+        else:
+            print('Invalid answer')
+
+    ctx.set(varname, ret)
 
 
 def func_echo(args, ctx):
