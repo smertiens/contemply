@@ -2,9 +2,10 @@ import setuptools
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
 setuptools.setup(
     name='contemply',
-    version='1.0.0',
+    version='1.0.0a1',
     packages=setuptools.find_packages('src'),
     package_dir={'': 'src'},
     classifiers=[

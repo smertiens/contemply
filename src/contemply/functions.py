@@ -5,8 +5,18 @@
 # For more information on licensing see LICENSE file
 #
 
+"""
+Built in functions
+"""
 
-def func_ask(args, ctx):
+
+def ask(args, ctx):
+    """
+    Call in inside your template as: **ask(prompt, variable_name)**
+
+    :param prompt: The text of the question
+    :param variable_name: The variable name to save the answer to
+    """
     if len(args) < 2:
         raise SyntaxError("Function needs exactly 2 argument")
 
@@ -14,7 +24,7 @@ def func_ask(args, ctx):
     ctx.set(args[1], answer)
 
 
-def func_choose(args, ctx):
+def choose(args, ctx):
     if len(args) < 3:
         raise SyntaxError("Function needs exactly 2 argument")
 
@@ -44,7 +54,7 @@ def func_choose(args, ctx):
     ctx.set(prompt, choices[int(answer) - 1])
 
 
-def func_yesno(args, ctx):
+def yesno(args, ctx):
     if len(args) < 2:
         raise SyntaxError("Function needs at least 1 argument")
 
@@ -56,13 +66,13 @@ def func_yesno(args, ctx):
         default = args[2].capitalize()
 
     correct = False
+    ret = None
     while not correct:
         answer = input('{0} [{1}]: '.format(prompt, default))
 
         if answer == '':
             answer = default
 
-        ret = None
         if answer == 'y' or answer == 'yes' or answer == 'Yes':
             ret = True
             correct = True
@@ -75,13 +85,8 @@ def func_yesno(args, ctx):
     ctx.set(varname, ret)
 
 
-def func_echo(args, ctx):
+def echo(args, ctx):
     if len(args) == 0:
         raise SyntaxError("Function needs exactly 1 argument")
 
     print(args[0])
-
-
-def func_list(args, ctx):
-    for k, v in ctx.get_all().items():
-        print('{0} = {1}'.format(k, v))

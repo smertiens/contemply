@@ -118,8 +118,8 @@ class TemplateParser:
                 if token.type() == LPAR:
                     # function
                     func = self._process_function(objname)
-                    if hasattr(contemply.functions, 'func_{0}'.format(func.name())):
-                        call = getattr(contemply.functions, 'func_{0}'.format(func.name()))
+                    if hasattr(contemply.functions, '{0}'.format(func.name())):
+                        call = getattr(contemply.functions, '{0}'.format(func.name()))
                         call(func.args(), self._ctx)
                     else:
                         raise ParserException("Unknown function: {0}".format(func.name()))
