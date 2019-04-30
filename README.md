@@ -1,5 +1,8 @@
 # Contemply
 
+[![Build Status](https://travis-ci.org/smertiens/contemply.svg?branch=master)](https://travis-ci.org/smertiens/contemply)
+
+
 A code generator that creates boilerplate files from templates.
 
 All the questions necessary to interactively create a file from your template are embedded in the template itself,
