@@ -1,3 +1,3 @@
 # Contemply
 
-A code generator that created boilerplate files from templates
+A code generator that creates boilerplate files from templates
