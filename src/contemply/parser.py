@@ -218,7 +218,7 @@ class TemplateParser:
             for i in range(0, len('endif')):
                 self._advance()
 
-        elif self._get_chr().isalpha():
+        elif self._get_chr().isalpha() or self._get_chr() == '_':
             token = self._consume_objname()
 
         elif self._get_chr().isnumeric():
@@ -294,7 +294,7 @@ class TemplateParser:
     def _consume_objname(self):
         objname = ''
 
-        while self._get_chr() is not None and self._get_chr().isalpha() or self._get_chr().isnumeric():
+        while self._get_chr() is not None and self._get_chr().isalpha() or self._get_chr().isnumeric() or self._get_chr() == '_':
             objname += self._get_chr()
             self._advance()
 
@@ -390,7 +390,7 @@ class TemplateParser:
         if self._ctx.has(objname):
             return self._ctx.get(objname)
         else:
-            raise ParserException('Unknown variable "{0}"'.format(objname), self._ctx)
+            raise ParserException('Unknown variable "{0}"'.format(objname), self._ctx, self._text)
 
     def _convert_token_to_primitive_type(self, token):
         if token.type() == STRING or token.type() in OPERATORS:

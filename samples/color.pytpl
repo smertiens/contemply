@@ -1,0 +1,3 @@
+#: choose('What is your favourite color?', ['red', 'green', 'blue'], 'color')
+#: echo('Ah, your favourite color is $color.')
+

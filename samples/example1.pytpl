@@ -1,5 +1,5 @@
-#: yesno('Do you want to add Hello World to your file?', 'addhw', 'No')
+#: yesno('Do you want to add Hello World to your file?', '_add_hw', 'No')
 
-#: if addhw == True
+#: if _add_hw == True
 Hello World
 #: endif
