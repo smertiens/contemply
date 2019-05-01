@@ -23,7 +23,7 @@ author = 'Sean Mertiens'
 
 # The full version, including alpha/beta/rc tags
 release = '1.0.0a1'
-
+master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
