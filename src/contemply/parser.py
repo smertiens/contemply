@@ -277,7 +277,7 @@ class TemplateParser:
 
         elif self._get_chr() == '!':
             if self._lookahead() == '=':
-                token = Token(COMP_GT_EQ, '>=')
+                token = Token(COMP_NOT_EQ, '!=')
                 self._advance()
 
             self._advance()

@@ -1,0 +1,26 @@
+# Python class template
+#: echo('Welcome to the Python class template!')
+#: ask('What is the name of your class? ', 'classname')
+#: choose('Enter the parent class or leave empty for none: ', ['Object', 'SuperClass', 'Foo', ''], 'parent')
+#: yesno('Do you want to override the string represenation for your class?', 'ow_str', 'No')
+#: output('$classname.py')
+#: echo('$parent')
+#: if parent != ''
+class $classname($parent):
+#: else
+class $classname:
+#: endif
+
+    def __init__(self):
+#: if parent != ''
+        super().__init__()
+#: else
+        pass
+#: endif
+
+#: if ow_str == True
+     def __str__(self):
+        return 'Class: {0}'.format('$classname')
+
+    def __repr__(self):
+        return self.__str__()
