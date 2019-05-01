@@ -9,6 +9,9 @@ A code generator that creates boilerplate files from templates.
 All the questions necessary to interactively create a file from your template are embedded in the template itself,
 so all you need is Contemply and your template file to get up and running.
 
+The project is in early beta right now, you can help by creating an issue on github for bugs or feature requests. 
+Contributors are always welcome! 
+
 ## Installation
 
 The easiest way to install Contemply is using pip:
@@ -19,7 +22,9 @@ pip install contemply
 
 ## Documentation and support
 
+You can find the documentation here: https://contemply.readthedocs.io/en/latest/
 
+If you find any bugs or have a feature request, please create an issue on github: https://github.com/smertiens/contemply/issues
 
 ## Quickstart
 
@@ -59,7 +64,7 @@ Contemply will ask you some questions...
 ```
 How should the new class be called? MyClass
 What should the text be? Hello World
-Print the super function? [Yes]: No
+Create the version function? [Yes]: No
 ```
 
 ## 3. Take a look at your outputfile

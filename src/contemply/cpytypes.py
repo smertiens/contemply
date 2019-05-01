@@ -37,15 +37,21 @@ class Token:
 
 class ParserException(Exception):
 
-    def __init__(self, message, ctx=None):
+    def __init__(self, message, ctx=None, expr = ''):
         super(Exception, self).__init__(message)
         self.message = message
         self.ctx = ctx
+        self.expr = expr
 
     def __str__(self):
         if self.ctx is not None:
-            return 'ParserException in {1}, line {2}, col {3}: {0}'.format(self.message, self.ctx.filename(),
-                                                                           self.ctx.line(), self.ctx.pos())
+            line = self.expr.rstrip('\n')
+            marker = ''
+            if line != '':
+                marker = '{0}^'.format(' '*self.ctx.pos())
+
+            return 'ParserException in {1}, line {2}, col {3}: {0}\n{4}\n{5}'.format(self.message, self.ctx.filename(),
+                                                                           self.ctx.line(), self.ctx.pos(), line, marker)
         else:
             return 'ParserException: {0}'.format(self.message)
 

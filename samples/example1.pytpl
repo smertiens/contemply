@@ -1,20 +1,5 @@
-# This is a demo file
-#: echo('This is a contemply command - but commented out with %')
-#: ask('How should the new class be called? ', 'ClassName')
-#: echo('Okay, we will call it $ClassName')
-# ask('What should the text be? ', 'mytext')
-#: yesno('Print the super function?', 'printSuper', 'Yes')
-#
-#: version = '1.0.0'
-#: output('$ClassName.py')
+#: yesno('Do you want to add Hello World to your file?', '_add_hw', 'No')
 
-
-class $ClassName(Parent):
-
-    def someFunction(self):
-        print('$mytext')
-
-#: if printSuper == True
-    def versionFunction(self):
-        print('$version')
+#: if _add_hw == True
+Hello World
 #: endif

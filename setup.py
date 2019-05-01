@@ -10,11 +10,11 @@ with open('requirements.txt', 'r') as fh:
 
 setuptools.setup(
     name='contemply',
-    version='1.0.0a1',
+    version='1.0.0a2',
     packages=setuptools.find_packages('src'),
     package_dir={'': 'src'},
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Operating System :: OS Independent",

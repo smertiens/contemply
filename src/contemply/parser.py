@@ -5,7 +5,7 @@
 # For more information on licensing see LICENSE file
 #
 
-import os, logging
+import os, logging, re
 import contemply.functions
 from contemply.cpytypes import *
 from colorama import Fore, Style
@@ -66,11 +66,25 @@ class TemplateContext:
         return self._data
 
     def process_variables(self, text):
-        for k, v in self.get_all().items():
-            if isinstance(v, str):
-                text = text.replace('{1}{0}'.format(k, TemplateParser.VAR_PREFIX), v)
+
+        def check_and_replace(match):
+            varname = match.group(1)[1:]  # strip trailing $
+
+            if not self.has(varname):
+                raise ParserException('Unknown variable: "{0}"'.format(varname), self)
+            else:
+                val = self.get(varname)
+
+                if not isinstance(val, str):
+                    val = str(val)
+
+                return '{0}{1}'.format(val, match.group(2))
+
+        p = re.compile(r'(\$[\w_]+)(\s|\W|$)', re.MULTILINE)
+        text = p.sub(check_and_replace, text)
 
         return text
+
 
 class TemplateParser:
     VAR_PREFIX = '$'
@@ -204,7 +218,7 @@ class TemplateParser:
             for i in range(0, len('endif')):
                 self._advance()
 
-        elif self._get_chr().isalpha():
+        elif self._get_chr().isalpha() or self._get_chr() == '_':
             token = self._consume_objname()
 
         elif self._get_chr().isnumeric():
@@ -280,7 +294,7 @@ class TemplateParser:
     def _consume_objname(self):
         objname = ''
 
-        while self._get_chr() is not None and self._get_chr().isalpha() or self._get_chr().isnumeric():
+        while self._get_chr() is not None and self._get_chr().isalpha() or self._get_chr().isnumeric() or self._get_chr() == '_':
             objname += self._get_chr()
             self._advance()
 
@@ -376,7 +390,7 @@ class TemplateParser:
         if self._ctx.has(objname):
             return self._ctx.get(objname)
         else:
-            raise ParserException('Unknown variable "{0}"'.format(objname), self._ctx)
+            raise ParserException('Unknown variable "{0}"'.format(objname), self._ctx, self._text)
 
     def _convert_token_to_primitive_type(self, token):
         if token.type() == STRING or token.type() in OPERATORS:
