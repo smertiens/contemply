@@ -2,15 +2,11 @@
 Welcome to Contemply's documentation!
 =====================================
 
+Contemply is a code generator that creates boilerplate files from templates.
+
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+    :maxdepth: 2
+    :caption: Contents:
 
-   functions
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+    intro
+    functions
