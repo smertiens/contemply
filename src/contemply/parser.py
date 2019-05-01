@@ -5,7 +5,7 @@
 # For more information on licensing see LICENSE file
 #
 
-import os, logging
+import os, logging, re
 import contemply.functions
 from contemply.cpytypes import *
 from colorama import Fore, Style
@@ -66,11 +66,25 @@ class TemplateContext:
         return self._data
 
     def process_variables(self, text):
-        for k, v in self.get_all().items():
-            if isinstance(v, str):
-                text = text.replace('{1}{0}'.format(k, TemplateParser.VAR_PREFIX), v)
+
+        def check_and_replace(match):
+            varname = match.group(1)[1:]  # strip trailing $
+
+            if not self.has(varname):
+                raise ParserException('Unknown variable: "{0}"'.format(varname), self)
+            else:
+                val = self.get(varname)
+
+                if not isinstance(val, str):
+                    val = str(val)
+
+                return '{0}{1}'.format(val, match.group(2))
+
+        p = re.compile(r'(\$[\w_]+)(\s|\W|$)', re.MULTILINE)
+        text = p.sub(check_and_replace, text)
 
         return text
+
 
 class TemplateParser:
     VAR_PREFIX = '$'
