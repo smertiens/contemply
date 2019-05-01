@@ -3,6 +3,11 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+requirements = []
+with open('requirements.txt', 'r') as fh:
+    for line in fh:
+        requirements.append(line)
+
 setuptools.setup(
     name='contemply',
     version='1.0.0a1',
@@ -26,7 +31,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
 
-    install_requires=['colorama>=0.4'],
+    install_requires=requirements,
     python_requires='>=3.4',
 
     entry_points={
