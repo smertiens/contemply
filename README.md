@@ -11,7 +11,7 @@ so all you need is Contemply and your template file to get up and running.
 
 The project is in early beta right now, you can help by creating an issue on github for bugs or feature requests. 
 Contributors are always welcome! 
-~~~~
+
 ## Installation
 
 The easiest way to install Contemply is using pip:
