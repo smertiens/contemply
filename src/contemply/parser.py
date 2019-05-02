@@ -283,7 +283,7 @@ class TemplateParser:
             self._advance()
 
         else:
-            raise ParserException("Unrecognized token at pos {0}".format(self._pos))
+            raise ParserException("Unrecognized token at pos {0}".format(self._pos), self._ctx, self._text)
 
         return token
 
@@ -350,10 +350,10 @@ class TemplateParser:
     def _process_assignment(self, varname):
         token = self._get_next_token()
 
-        if token.type() not in [STRING, INTEGER]:
-            raise ParserException("Expected String or Integer")
+        if token.type() not in [STRING, INTEGER, OBJNAME]:
+            raise ParserException("Expected String, Integer or Object", self._ctx, self._text)
 
-        return VariableAssignment(varname, token.value())
+        return VariableAssignment(varname, token.value() if token.type() != OBJNAME else self._resolve_objectname(token.value()))
 
     def _process_list(self):
         token = self._get_next_token()
