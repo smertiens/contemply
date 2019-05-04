@@ -203,7 +203,7 @@ class Tokenizer:
     def _consume_symbol(self):
         name = ''
 
-        while self.get_chr() is not None and self.get_chr().isalpha() or self.get_chr().isnumeric() or self.get_chr() == '_':
+        while (self.get_chr() is not None) and (self.get_chr().isalpha() or self.get_chr().isnumeric() or self.get_chr() == '_'):
             name += self.get_chr()
             self._advance()
 

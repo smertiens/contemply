@@ -288,6 +288,9 @@ class TemplateParser:
         self._ctx = TemplateContext()
         self._output_mode = self.OUTPUTMODE_FILE
 
+    def get_template_context(self):
+        return self._ctx
+
     def set_output_mode(self, mode):
         self._output_mode = mode
 
@@ -330,3 +333,5 @@ class TemplateParser:
 
         elif self._output_mode == self.OUTPUTMODE_CONSOLE:
             print('\n'.join(result))
+
+        return result

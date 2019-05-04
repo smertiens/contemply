@@ -9,7 +9,7 @@
 class TemplateException(Exception):
 
     def __init__(self, message, ctx=None):
-        super(Exception, self).__init__(message)
+        super().__init__(message)
         self.message = message
         self.ctx = ctx
 
@@ -24,7 +24,7 @@ class TemplateException(Exception):
                                                                                      self.ctx.line(), self.ctx.pos(),
                                                                                      line, marker, self.__class__.__name__)
         else:
-            return '{1}: {0}'.format(self.message, elf.__class__.__name__)
+            return '{1}: {0}'.format(self.message, self.__class__.__name__)
 
     def __repr__(self):
         return self.__str__()

@@ -65,7 +65,7 @@ class Interpreter:
 
         if hasattr(contemply.functions, '{0}'.format(func)):
             call = getattr(contemply.functions, '{0}'.format(func))
-            call(args, self._ctx)
+            return call(args, self._ctx)
         else:
             raise ParserError("Unknown function: {0}".format(func), self._ctx)
 

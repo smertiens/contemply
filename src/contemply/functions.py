@@ -5,6 +5,7 @@
 # For more information on licensing see LICENSE file
 #
 from colorama import Fore, Style
+import os
 
 """
 Built in functions
@@ -131,7 +132,8 @@ def yesno(args, ctx):
     correct = False
     ret = None
     while not correct:
-        answer = input(Style.BRIGHT + '{0} '.format(prompt) + Fore.LIGHTYELLOW_EX + '[{0}]'.format(default) + Fore.RESET + ': ' + Style.RESET_ALL)
+        answer = input(Style.BRIGHT + '{0} '.format(prompt) + Fore.LIGHTYELLOW_EX + '[{0}]'.format(
+            default) + Fore.RESET + ': ' + Style.RESET_ALL)
 
         if answer == '':
             answer = default
@@ -148,15 +150,21 @@ def yesno(args, ctx):
     ctx.set(varname, ret)
 
 
+def env(args, ctx):
+    if len(args) < 1:
+        raise SyntaxError("Function needs at exactly 1 argument")
+
+    return os.environ[args[0]]
+
+
 def echo(args, ctx):
     if len(args) == 0:
         raise SyntaxError("Function needs exactly 1 argument")
-
+    print(args[0])
     print(ctx.process_variables(args[0]))
 
 
 def output(args, ctx):
-
     if len(args) == 0:
         raise SyntaxError("Function needs exactly 1 argument")
 
