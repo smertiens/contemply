@@ -5,6 +5,7 @@
 # For more information on licensing see LICENSE file
 #
 from colorama import Fore, Style
+from contemply.exceptions import *
 import os
 
 """
@@ -14,29 +15,26 @@ Built in functions
 
 def ask(args, ctx):
     """
-    Call in inside your template as: **ask(prompt, variable_name)**
+    Call in inside your template as: **ask(prompt)**
 
     :param prompt: The text of the question
-    :param variable_name: The variable to save the answer to
 
-    This function will prompt the user for a string value and save it to variable_name.
-    To access the user input later in your template, simply insert the variable: $variable_name
+    This function will prompt the user for a string value.
     """
-    if len(args) < 2:
-        raise SyntaxError("Function needs exactly 2 argument")
+    if len(args) != 1:
+        raise SyntaxError("Function ask() needs exactly 1 argument", ctx)
 
     answer = input(Style.BRIGHT + args[0] + Style.RESET_ALL)
-    ctx.set(args[1], answer)
+    return answer
 
 
 def choose(args, ctx):
     """
-    Call inside your template as: choose(prompt, choices, variable_name)
+    Call inside your template as: choose(prompt, choices)
 
     :param prompt: The text of the question
     :param choices: A list of strings that the user can choose from. The selected string will be saved to
                     variable name
-    :param variable_name: The variable to save the answer to
 
     This function will provide the user with a list of numbered choices. The user can then input the number
     of the item he chooses.
@@ -62,20 +60,20 @@ def choose(args, ctx):
 
 
     """
-    if len(args) < 3:
-        raise SyntaxError("Function needs exactly 2 argument")
+    if len(args) != 2:
+        raise SyntaxError("Function choose() needs exactly 2 arguments", ctx)
 
     if not isinstance(args[1], list):
-        raise SyntaxError("Expected list at position 2")
+        raise SyntaxError("Expected list at position 2", ctx)
 
-    varname = args[2]
     choices = args[1]
     prompt = args[0]
-    print(prompt)
+    print(Style.BRIGHT + prompt + Style.RESET_ALL)
     for i, line in enumerate(choices):
         print('{0}. {1}'.format(i + 1, line))
 
     correct = False
+    answer = 0
     while not correct:
         answer = input(Style.BRIGHT + 'Your choice: ' + Style.RESET_ALL)
 
@@ -84,15 +82,14 @@ def choose(args, ctx):
         else:
             print('Invalid choice')
 
-    ctx.set(varname, choices[int(answer) - 1])
+    return choices[int(answer) - 1]
 
 
 def yesno(args, ctx):
     """
-    Call inside your template as: choose(prompt, variable_name, [default = Yes])
+    Call inside your template as: choose(prompt, [default = Yes])
 
     :param prompt: The text of the question
-    :param variable_name: The variable to save the answer to
     :param defautl: The default value that is returned when the user has entered nothing. If this argument is not
                     given, the default value will be 'Yes'.
 
@@ -119,15 +116,11 @@ def yesno(args, ctx):
         Hello World
 
     """
-    if len(args) < 2:
-        raise SyntaxError("Function needs at least 1 argument")
+    if len(args) < 1:
+        raise SyntaxError("Function yesno() needs at least 1 argument")
 
     prompt = args[0]
-    varname = args[1]
     default = 'Yes'
-
-    if len(args) > 2:
-        default = args[2].capitalize()
 
     correct = False
     ret = None
@@ -138,34 +131,35 @@ def yesno(args, ctx):
         if answer == '':
             answer = default
 
-        if answer == 'y' or answer == 'yes' or answer == 'Yes':
+        answer = answer.lower()
+        if answer == 'y' or answer == 'yes':
             ret = True
             correct = True
-        elif answer == 'n' or answer == 'no' or answer == 'No':
+        elif answer == 'n' or answer == 'no':
             ret = False
             correct = True
         else:
             print('Invalid answer')
 
-    ctx.set(varname, ret)
+    return ret
 
 
 def env(args, ctx):
-    if len(args) < 1:
-        raise SyntaxError("Function needs at exactly 1 argument")
+    if len(args) != 1:
+        raise SyntaxError("Function env() needs at exactly 1 argument", ctx)
 
     return os.environ[args[0]]
 
 
 def echo(args, ctx):
     if len(args) == 0:
-        raise SyntaxError("Function needs exactly 1 argument")
-    print(args[0])
+        raise SyntaxError("Function echo() needs exactly 1 argument", ctx)
+
     print(ctx.process_variables(args[0]))
 
 
-def output(args, ctx):
+def setOutput(args, ctx):
     if len(args) == 0:
-        raise SyntaxError("Function needs exactly 1 argument")
+        raise SyntaxError("Function output() needs exactly 1 argument", ctx)
 
     ctx.set_outputfile(args[0])
