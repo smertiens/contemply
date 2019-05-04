@@ -1,3 +1,7 @@
-#: choose('What is your favourite color?', ['red', 'green', 'blue'], 'color')
+#: demo = 'Peter'
+stufasd
+
+#: choose('What is your favourite color?', ['red', 'green', demo, 'blue'], 'color')
 #: echo('Ah, your favourite color is $color.')
 
+some tstuf

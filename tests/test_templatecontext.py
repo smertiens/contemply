@@ -43,5 +43,5 @@ def test_VariableReplacement():
     assert ctx.process_variables(
         'This is $myvar and we have $myvartwo monkeys on the $anotherone!') == 'This is Hello World and we have 25 monkeys on the table!'
 
-    with pytest.raises(ParserException):
+    with pytest.raises(ParserError):
         assert not ctx.process_variables('$myvarinanotherword and another on') == 'Hello Worldinanotherword and another one'
