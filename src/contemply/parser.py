@@ -102,6 +102,7 @@ class Parser:
     an AST from the input tokens that can be interpreted using the Interpreter.
     """
     CMD_LINE_IDENTIFIER = '#:'
+    CONTEMPLY_COMMENT = '#%'
 
     def __init__(self, tokenizer, ctx):
         self._token = None
@@ -132,7 +133,9 @@ class Parser:
             self._ctx.set_position(i, 0)
             self._tokenizer.update_position()
 
-            if self._tokenizer.get_chr() + self._tokenizer.lookahead() != self.CMD_LINE_IDENTIFIER:
+            if self._tokenizer.get_chr() + self._tokenizer.lookahead() == self.CONTEMPLY_COMMENT:
+                continue
+            elif self._tokenizer.get_chr() + self._tokenizer.lookahead() != self.CMD_LINE_IDENTIFIER:
                 node.children.append(self._consume_content_line())
             else:
                 self._token = self._tokenizer.get_next_token()

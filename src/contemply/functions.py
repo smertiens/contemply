@@ -15,52 +15,18 @@ Built in functions
 
 
 def ask(args, ctx):
-    """
-    Call in inside your template as: **ask(prompt)**
-
-    :param prompt: The text of the question
-
-    This function will prompt the user for a string value.
-    """
     if len(args) != 1:
         raise SyntaxError("Function ask() needs exactly 1 argument", ctx)
 
-    answer = input(Style.BRIGHT + args[0] + Style.RESET_ALL)
+    prompt = args[0]
+    if prompt[-1] != ' ':
+        prompt = prompt + ' '
+
+    answer = input(Style.BRIGHT + prompt + Style.RESET_ALL)
     return answer
 
 
 def choose(args, ctx):
-    """
-    Call inside your template as: choose(prompt, choices)
-
-    :param prompt: The text of the question
-    :param choices: A list of strings that the user can choose from. The selected string will be saved to
-                    variable name
-
-    This function will provide the user with a list of numbered choices. The user can then input the number
-    of the item he chooses.
-
-    Example:
-
-    ::
-
-        #: choose('What is your favourite color?', ['red', 'green', 'blue'], 'color')
-        #: echo('Ah, your favourite color is $color.')
-
-
-    this will result in:
-
-    ::
-
-        What is your favourite color?
-        1. red
-        2. green
-        3. blue
-        Your choice: 2
-        Ah, your favourite color is green.
-
-
-    """
     if len(args) != 2:
         raise SyntaxError("Function choose() needs exactly 2 arguments", ctx)
 
@@ -87,36 +53,6 @@ def choose(args, ctx):
 
 
 def yesno(args, ctx):
-    """
-    Call inside your template as: choose(prompt, [default = Yes])
-
-    :param prompt: The text of the question
-    :param defautl: The default value that is returned when the user has entered nothing. If this argument is not
-                    given, the default value will be 'Yes'.
-
-    This function will ask the user a yes/no question. The answer is saved to variable_name as boolean.
-    Accepted user inputs are: "yes", "Yes", "y" / "no", "No", "n"
-
-    Example:
-
-    ::
-
-        #: addhw = yesno('Do you want to add Hello World to your file?', 'No')
-
-        #: if addhw == True
-        Hello World
-        #: endif
-
-
-    this will result in:
-
-    ::
-
-        Do you want to add Hello World to your file? [No]: Yes
-
-        Hello World
-
-    """
     default = 'Yes'
 
     if len(args) < 1:

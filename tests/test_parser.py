@@ -60,3 +60,16 @@ def test_parser_if_else():
     result = parser.parse('\n'.join(text))
     assert result == ['Lorem ipsum']
 
+def test_parser_skip_comments():
+    text = [
+        '#% var1 = "Hello"',
+        'Lorem ipsum',
+        '# Comment'
+    ]
+
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+    result = parser.parse('\n'.join(text))
+    assert result == ['Lorem ipsum', '# Comment']
+    assert not parser.get_template_context().has('var1')
+
