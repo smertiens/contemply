@@ -9,6 +9,7 @@ from colorama import Style, Fore
 
 __all__ = ['prompt']
 
+
 def prompt(question, default='Yes'):
     correct = False
     ret = None

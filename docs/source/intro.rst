@@ -40,8 +40,10 @@ There are a number of command line options that you can use:
 Get support
 ***********
 
+You can issue a bug report or feature request on the project's GitHub page: https://github.com/smertiens/contemply/issues
+
 Contribute
 **********
 
 
-
+Contributors are always welcome. You can fork the project on GitHub: https://github.com/smertiens/contemply

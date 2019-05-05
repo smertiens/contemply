@@ -5,12 +5,12 @@
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/smertiens/contemply.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/smertiens/contemply/context:python)
 [![PyPI version](https://badge.fury.io/py/contemply.svg)](https://badge.fury.io/py/contemply)
 
-A code generator that creates boilerplate files from templates.
+A code generator that interactively creates boilerplate files from templates.
 
 All the questions necessary to interactively create a file from your template are embedded in the template itself,
 so all you need is Contemply and your template file to get up and running.
 
-The project is in early beta right now, you can help by creating an issue on github for bugs or feature requests. 
+The project is in early beta right now, you can help by creating an issue on GitHub for bugs or feature requests. 
 Contributors are always welcome! 
 
 ## Installation
@@ -33,17 +33,17 @@ If you find any bugs or have a feature request, please create an issue on github
 
 ````python
 # This is a demo file
-#: ask('How should the new class be called? ', 'ClassName')
-#: ask('What should the text be? ', 'mytext')
-#: yesno('Create the version function?', 'printVersion', 'Yes')
+#: classname = ask('How should the new class be called?')
+#: text = ask('What should the text be?')
+#: printVersion = yesno('Create the version function?', 'Yes')
 
 #: version = '1.0.0'
-#: output('$classname.py')
+#: setOutput('$classname.py')
 
-class $ClassName:
+class $classname:
 
     def someFunction(self):
-        print('$mytext')
+        print('$text')
 
 #: if printVersion == True
     def versionFunction(self):
