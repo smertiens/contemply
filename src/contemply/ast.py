@@ -20,6 +20,12 @@ class Variable(AST):
     def __init__(self, name):
         self.name = name
 
+    def __str__(self):
+        return '{0}'.format(self.name)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class String(AST):
 
@@ -31,6 +37,12 @@ class Num(AST):
 
     def __init__(self, value):
         self.value = value
+
+    def __str__(self):
+        return '{0}'.format(self.value)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class Function(AST):
@@ -59,6 +71,12 @@ class SimpleExpression(AST):
         self.lval = lval
         self.op = op
         self.rval = rval
+
+    def __str__(self):
+        return '{0} {1} {2}'.format(self.lval, self.op, self.rval)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class ContentLine(AST):

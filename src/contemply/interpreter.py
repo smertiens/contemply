@@ -1,4 +1,5 @@
-# AtraxiCreator - GUI editor for AtraxiFlow scripts
+#
+# Contemply - A code generator that creates boilerplate files from templates
 #
 # Copyright (C) 2019  Sean Mertiens
 # For more information on licensing see LICENSE file
@@ -30,6 +31,8 @@ class InterpreterLoop:
     def __init__(self, node, ltype, target_line):
         self.node = node
         self.type = ltype
+
+        # the line where the loop starts.
         self.target_line = target_line
         self.iterations = 0
 
@@ -44,7 +47,7 @@ class InterpreterLoop:
 
 
 class Interpreter:
-    MAX_LOOP_RUNS = 10000
+    MAX_LOOP_RUNS = 10  # 10000
 
     def __init__(self, ctx):
         self._BUILTINS = {
@@ -56,6 +59,7 @@ class Interpreter:
         self._tree = []
         self._conditions = []
         self._loops = []
+        self._skip_until = None
         self._ctx = ctx
         self._line = 0
 
@@ -89,7 +93,17 @@ class Interpreter:
         return visitor(node)
 
     def fallback_visit(self, node):
-        raise Exception('No visitor found for node {0}'.format(node))
+        raise ParserError('No visitor found for node {0}'.format(node))
+
+    def _cleanup(self):
+        if len(self._conditions) > 0:
+            raise ParserError('There is still at least one open IF-block. Expected: ENDIF.', self._ctx)
+
+        if len(self._loops) > 0:
+            raise ParserError('There is still at least one open loop-block. Expected: ENDWHILE.', self._ctx)
+
+        if self._skip_until is not None:
+            raise ParserError('Unexpected end of template. Expected: {0}'.format(self._skip_until.__name__), self._ctx)
 
     def visit_function(self, node):
         # function
@@ -137,12 +151,26 @@ class Interpreter:
 
             self._line += 1
 
+        self._cleanup()
+
     def visit_contentline(self, node):
+        if self._skip_until is not None:
+            # we can skip every contentline
+            return
+
         if not self._skip_due_to_conditions():
             line = self._ctx.process_variables(node.content)
             self._parsed_template.append(line)
 
     def visit_commandline(self, node):
+        if self._skip_until is not None and not isinstance(node.statement, self._skip_until):
+            return
+        elif self._skip_until is not None and isinstance(node.statement, self._skip_until):
+            # we have reached the desired statement
+            self._skip_until = None
+            # skip this statement (skip_until means "including the given statement")
+            return
+
         if type(node.statement) not in [Endif, Else]:
             if not self._skip_due_to_conditions():
                 self.visit(node.statement)
@@ -161,6 +189,9 @@ class Interpreter:
     def visit_while(self, node):
         if self.visit(node.expr):
             self._loops.append(InterpreterLoop(node, InterpreterLoop.TYPE_WHILE, self._line))
+        else:
+            # while condition not True -> skip next while block until ENDWHILE is discovered
+            self._skip_until = Endwhile
 
     def visit_endwhile(self, node):
         try:
@@ -169,17 +200,19 @@ class Interpreter:
             raise ParserError('Unexpected ENDWHILE', self._ctx)
 
         if not self.visit(active_loop.node.expr):
+            # the condition of the active loop does not match anymore so we can remove the loop from the stack
             self._loops.pop()
         else:
             if active_loop.iterations >= self.MAX_LOOP_RUNS:
                 raise ParserError("Maximum loop iterations of {0} reached.".format(self.MAX_LOOP_RUNS))
 
+            # jump back to the loop's start and increment the number of loop runs
             self._line = active_loop.target_line
             active_loop.increment_iterations()
 
     def visit_else(self, node):
         try:
-            active_cond = self._conditions.pop()
+            self._conditions.pop()
         except IndexError:
             raise ParserError("Unexpected ELSE", self._ctx)
 
@@ -187,7 +220,7 @@ class Interpreter:
 
     def visit_endif(self, node):
         try:
-            active_cond = self._conditions.pop()
+            self._conditions.pop()
         except IndexError:
             raise ParserError("Unexpected ENDIF", self._ctx)
 
