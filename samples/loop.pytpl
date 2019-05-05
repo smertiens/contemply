@@ -1,0 +1,12 @@
+#: echo('Start')
+#: go = 'xxx'
+
+#: while go != ''
+
+#: go = ask('Function name?')
+#: if go != ''
+def $go():
+    pass
+#: endif
+#: endwhile
+#: echo('End')

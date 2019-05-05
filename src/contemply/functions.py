@@ -4,10 +4,11 @@
 # Copyright (C) 2019  Sean Mertiens
 # For more information on licensing see LICENSE file
 #
-from colorama import Fore, Style
-from contemply.exceptions import *
-import contemply.cli as cli
 import os
+
+import contemply.cli as cli
+from colorama import Style
+from contemply.exceptions import *
 
 """
 Built in functions
@@ -53,14 +54,12 @@ def choose(args, ctx):
 
 
 def yesno(args, ctx):
-    default = 'Yes'
-
     if len(args) < 1:
-        raise SyntaxError("Function yesno() needs at least 1 argument")
-    elif len(args) == 2:
-        default = args[1]
-    else:
-        raise SyntaxError("Function yesno() expects not more than 2 arguments.")
+        raise SyntaxError("Function yesno() needs at least 1 argument", ctx)
+    elif len(args) > 2:
+        raise SyntaxError("Function yesno() expects not more than 2 arguments.", ctx)
+
+    default = 'Yes' if len(args) != 2 else args[1]
 
     return cli.prompt(args[0], default)
 

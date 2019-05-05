@@ -78,10 +78,12 @@ class If(AST):
     def __init__(self, condition):
         self.condition = condition
 
+
 class Else(AST):
 
     def __init__(self, condition):
         self.condition = condition
+
 
 class List(AST):
 
@@ -90,9 +92,18 @@ class List(AST):
 
 
 class NoOp(AST):
-
     pass
 
-class Endif(AST):
 
+class Endif(AST):
+    pass
+
+
+class While(AST):
+
+    def __init__(self, expr):
+        self.expr = expr
+
+
+class Endwhile(AST):
     pass

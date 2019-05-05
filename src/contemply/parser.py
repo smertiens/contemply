@@ -5,14 +5,13 @@
 # For more information on licensing see LICENSE file
 #
 
-import os, logging, re
-from contemply.exceptions import *
-from contemply.tokenizer import *
-from colorama import Fore, Style
-from contemply.ast import *
-from contemply.interpreter import *
-from contemply.functions import yesno
+import os
+import re
+
 import contemply.cli as cli
+from colorama import Fore, Style
+from contemply.interpreter import *
+from contemply.tokenizer import *
 
 
 class TemplateContext:
@@ -117,9 +116,6 @@ class Parser:
     def get_logger(self):
         return logging.getLogger(self.__module__)
 
-    def set_outputmode(self, mode):
-        self._outputmode = mode
-
     def parse(self):
         root = self._consume_template()
         return root
@@ -169,7 +165,8 @@ class Parser:
 
     def _consume_assignment(self, name):
         self._token = self._consume_next_token(ASSIGN)
-        value = self._consume_value()
+        #value = self._consume_value()
+        value = self._consume_expression()
         return Assignment(name, value)
 
     def _consume_value(self):
@@ -212,12 +209,19 @@ class Parser:
             self._token = self._consume_next_token(ENDIF)
             node = Endif()
 
+        elif self._token.type() == WHILE:
+            self._token = self._consume_next_token(WHILE)
+            node = While(self._consume_expression(True))
+
+        elif self._token.type() == ENDWHILE:
+            node = Endwhile()
+
         else:
             raise ParserError('Unknown block start: ' + self._token.type(), self._ctx)
 
         return node
 
-    def _consume_expression(self):
+    def _consume_expression(self, condition_testing = False):
 
         lval = None
         op = None
@@ -234,7 +238,13 @@ class Parser:
             op = self._token.value()
             self._token = self._consume_next_token(self._token.type())
         else:
-            raise ParserError("Unexpected operator: " + self._token.type(), self._ctx)
+            if condition_testing:
+                # short form expression, assume operator == and rval == True
+                return SimpleExpression(lval, '==', Variable('True'))
+            else:
+                return lval
+
+            # raise ParserError("Unexpected operator: " + self._token.type(), self._ctx)
 
         if self._token.type() in [STRING, INTEGER]:
             rval = self._consume_value()

@@ -5,8 +5,9 @@
 #
 
 import contemply.functions
-from contemply.exceptions import *
 from contemply.ast import *
+from contemply.exceptions import *
+import logging
 
 
 class InterpeterCondition:
@@ -23,7 +24,27 @@ class InterpeterCondition:
         return self.__str__()
 
 
+class InterpreterLoop:
+    TYPE_WHILE = 'TYPE_WHILE'
+
+    def __init__(self, node, ltype, target_line):
+        self.node = node
+        self.type = ltype
+        self.target_line = target_line
+        self.iterations = 0
+
+    def increment_iterations(self):
+        self.iterations += 1
+
+    def __str__(self):
+        return "Condition {0}, {1}".format(self.type, self.node.expr)
+
+    def __repr__(self):
+        return self.__str__()
+
+
 class Interpreter:
+    MAX_LOOP_RUNS = 10000
 
     def __init__(self, ctx):
         self._BUILTINS = {
@@ -34,9 +55,14 @@ class Interpreter:
 
         self._tree = []
         self._conditions = []
+        self._loops = []
         self._ctx = ctx
+        self._line = 0
 
         self._parsed_template = []
+
+    def get_logger(self):
+        return logging.getLogger(self.__module__)
 
     def get_parsed_template(self):
         return self._parsed_template
@@ -50,9 +76,16 @@ class Interpreter:
 
         return result
 
+    def _get_active_loop(self):
+        try:
+            return self._loops[-1]
+        except IndexError:
+            return None
+
     def visit(self, node):
         method_name = 'visit_' + type(node).__name__.lower()
         visitor = getattr(self, method_name, self.fallback_visit)
+        # print('Visiting: '+type(node).__name__)
         return visitor(node)
 
     def fallback_visit(self, node):
@@ -96,11 +129,13 @@ class Interpreter:
         return pylist
 
     def visit_template(self, node):
-        for child in node.children:
-            visit = True
+        self._line = 0
 
-            if visit:
-                self.visit(child)
+        while self._line < len(node.children):
+            child = node.children[self._line]
+            self.visit(child)
+
+            self._line += 1
 
     def visit_contentline(self, node):
         if not self._skip_due_to_conditions():
@@ -123,11 +158,30 @@ class Interpreter:
     def visit_if(self, node):
         self._conditions.append(InterpeterCondition(self.visit(node.condition), InterpeterCondition.TYPE_IF))
 
+    def visit_while(self, node):
+        if self.visit(node.expr):
+            self._loops.append(InterpreterLoop(node, InterpreterLoop.TYPE_WHILE, self._line))
+
+    def visit_endwhile(self, node):
+        try:
+            active_loop = self._loops[-1]
+        except IndexError:
+            raise ParserError('Unexpected ENDWHILE', self._ctx)
+
+        if not self.visit(active_loop.node.expr):
+            self._loops.pop()
+        else:
+            if active_loop.iterations >= self.MAX_LOOP_RUNS:
+                raise ParserError("Maximum loop iterations of {0} reached.".format(self.MAX_LOOP_RUNS))
+
+            self._line = active_loop.target_line
+            active_loop.increment_iterations()
+
     def visit_else(self, node):
         try:
             active_cond = self._conditions.pop()
         except IndexError:
-            ParserError("Unexpected ELSE", self._ctx)
+            raise ParserError("Unexpected ELSE", self._ctx)
 
         self._conditions.append(InterpeterCondition(self.visit(node.condition), InterpeterCondition.TYPE_ELSE))
 
@@ -135,7 +189,7 @@ class Interpreter:
         try:
             active_cond = self._conditions.pop()
         except IndexError:
-            ParserError("Unexpected ENDIF", self._ctx)
+            raise ParserError("Unexpected ENDIF", self._ctx)
 
     def visit_simpleexpression(self, node):
         lval = self.visit(node.lval)
@@ -153,8 +207,16 @@ class Interpreter:
             return lval >= rval
         elif node.op == '!=':
             return lval != rval
+        elif node.op == '+':
+            return lval + rval
+        elif node.op == '-':
+            return lval - rval
+        elif node.op == '/':
+            return lval / rval
+        elif node.op == '*':
+            return lval * rval
         else:
-            raise ParserError("Unrecognized operator: {0}".format(node.op))
+            raise ParserError("Unrecognized operator: {0}".format(node.op), self._ctx)
 
     def visit_noop(self, node):
         pass
