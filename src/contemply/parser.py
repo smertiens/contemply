@@ -11,9 +11,15 @@ from contemply.tokenizer import *
 from colorama import Fore, Style
 from contemply.ast import *
 from contemply.interpreter import *
+from contemply.functions import yesno
+import contemply.cli as cli
 
 
 class TemplateContext:
+    """
+    This class holds all information regarding the template and it's parsing process as well as
+    the text that should be parsed.
+    """
 
     def __init__(self):
         self._data = {}
@@ -91,6 +97,10 @@ class TemplateContext:
 
 
 class Parser:
+    """
+    This class will do the actual parsing. It needs a Tokenizer instance and will then create
+    an AST from the input tokens that can be interpreted using the Interpreter.
+    """
     CMD_LINE_IDENTIFIER = '#:'
 
     def __init__(self, tokenizer, ctx):
@@ -282,6 +292,12 @@ class Parser:
 
 
 class TemplateParser:
+    """
+    This is the frontend class used for TemplateParsing.
+    It will set up a TemplateContext and split the input text up in
+    separate lines before handing it to the _parse function.
+    """
+
     OUTPUTMODE_CONSOLE, OUTPUTMODE_FILE = 0, 1
 
     def __init__(self):
@@ -310,16 +326,21 @@ class TemplateParser:
             self._ctx.set_text(text.split('\n'))
             self._ctx.set_filename('')
 
+        # Create the Tokenizer, Parser and Interpreter instances
         tokenizer = Tokenizer(self._ctx)
         parser = Parser(tokenizer, self._ctx)
         interpreter = Interpreter(self._ctx)
 
+        # parse the input and create a AST
         tree = parser.parse()
+        # interpret the AST and execute all statements contained within
         interpreter.interpret(tree)
+        # result will hold the contents of the parsed template
         result = interpreter.get_parsed_template()
 
         if self._output_mode == TemplateParser.OUTPUTMODE_FILE:
             outfile = self._ctx.outputfile()
+
             if outfile == '':
                 # Prompt for outputfile
                 outfile = input('Please enter the filename of the new file: ')
@@ -328,8 +349,16 @@ class TemplateParser:
             outfile = self._ctx.process_variables(outfile)
             path = os.path.realpath(outfile)
 
-            with open(path, 'w') as f:
-                f.write('\n'.join(result))
+            overwrite = True
+            if os.path.exists(path):
+                overwrite = cli.prompt('A file with the name {0} already exists. Overwrite?'.format(outfile))
+
+            if overwrite:
+                with open(path, 'w') as f:
+                    f.write('\n'.join(result))
+
+                print(Fore.GREEN + '√' + Fore.RESET + ' File ' + Style.BRIGHT + '{0}'.format(os.path.basename(path)) +
+                      Style.RESET_ALL + ' has been created')
 
         elif self._output_mode == self.OUTPUTMODE_CONSOLE:
             print('\n'.join(result))

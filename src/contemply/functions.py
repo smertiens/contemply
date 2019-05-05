@@ -6,6 +6,7 @@
 #
 from colorama import Fore, Style
 from contemply.exceptions import *
+import contemply.cli as cli
 import os
 
 """
@@ -100,7 +101,7 @@ def yesno(args, ctx):
 
     ::
 
-        #: yesno('Do you want to add Hello World to your file?', 'addhw', 'No')
+        #: addhw = yesno('Do you want to add Hello World to your file?', 'No')
 
         #: if addhw == True
         Hello World
@@ -116,32 +117,16 @@ def yesno(args, ctx):
         Hello World
 
     """
-    if len(args) < 1:
-        raise SyntaxError("Function yesno() needs at least 1 argument")
-
-    prompt = args[0]
     default = 'Yes'
 
-    correct = False
-    ret = None
-    while not correct:
-        answer = input(Style.BRIGHT + '{0} '.format(prompt) + Fore.LIGHTYELLOW_EX + '[{0}]'.format(
-            default) + Fore.RESET + ': ' + Style.RESET_ALL)
+    if len(args) < 1:
+        raise SyntaxError("Function yesno() needs at least 1 argument")
+    elif len(args) == 2:
+        default = args[1]
+    else:
+        raise SyntaxError("Function yesno() expects not more than 2 arguments.")
 
-        if answer == '':
-            answer = default
-
-        answer = answer.lower()
-        if answer == 'y' or answer == 'yes':
-            ret = True
-            correct = True
-        elif answer == 'n' or answer == 'no':
-            ret = False
-            correct = True
-        else:
-            print('Invalid answer')
-
-    return ret
+    return cli.prompt(args[0], default)
 
 
 def env(args, ctx):
