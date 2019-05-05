@@ -1,3 +1,5 @@
+.. _templatefunctions:
+
 Template functions
 ==================
 
