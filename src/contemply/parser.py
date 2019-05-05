@@ -6,28 +6,34 @@
 #
 
 import os, logging, re
-import contemply.functions
-from contemply.cpytypes import *
+from contemply.exceptions import *
+from contemply.tokenizer import *
 from colorama import Fore, Style
-
-
-def pprint_tokens(tokens):
-    out = ''
-
-    for t in tokens:
-        out += t.type() + (' -> ' if t.type() != EOL else '')
-
-    print(out)
+from contemply.ast import *
+from contemply.interpreter import *
+from contemply.functions import yesno
+import contemply.cli as cli
 
 
 class TemplateContext:
+    """
+    This class holds all information regarding the template and it's parsing process as well as
+    the text that should be parsed.
+    """
 
     def __init__(self):
         self._data = {}
+        self._text = ''
         self._outputfile = ''
         self._filename = ''
         self._line = 0
         self._pos = 0
+
+    def set_text(self, text):
+        self._text = text
+
+    def text(self):
+        return self._text
 
     def set_filename(self, val):
         self._filename = val
@@ -65,13 +71,17 @@ class TemplateContext:
     def get_all(self):
         return self._data
 
+    def set_position(self, line, col):
+        self.set_line(line)
+        self.set_pos(col)
+
     def process_variables(self, text):
 
         def check_and_replace(match):
             varname = match.group(1)[1:]  # strip trailing $
 
             if not self.has(varname):
-                raise ParserException('Unknown variable: "{0}"'.format(varname), self)
+                raise ParserError('Unknown variable: "{0}"'.format(varname), self)
             else:
                 val = self.get(varname)
 
@@ -86,19 +96,22 @@ class TemplateContext:
         return text
 
 
-class TemplateParser:
-    VAR_PREFIX = '$'
-    CMD_PREFIX = '#:'
+class Parser:
+    """
+    This class will do the actual parsing. It needs a Tokenizer instance and will then create
+    an AST from the input tokens that can be interpreted using the Interpreter.
+    """
+    CMD_LINE_IDENTIFIER = '#:'
 
-    OUTPUTMODE_CONSOLE, OUTPUTMODE_FILE = 0, 1
-
-    def __init__(self):
-        self._pos = 0
-        self._text = ''
+    def __init__(self, tokenizer, ctx):
         self._token = None
-        self._cmd_stack = []
-        self._block = None
-        self._outputmode = self.OUTPUTMODE_FILE
+        self._tokenizer = tokenizer
+        self._ctx = ctx
+
+        self._conditions = []
+
+    def _raise_error(self, msg):
+        raise ParserError(msg, self._ctx)
 
     def get_logger(self):
         return logging.getLogger(self.__module__)
@@ -106,376 +119,248 @@ class TemplateParser:
     def set_outputmode(self, mode):
         self._outputmode = mode
 
-    def _parse(self, text):
-        """
+    def parse(self):
+        root = self._consume_template()
+        return root
 
-        :param text: The line to parse
-        :return:
-        """
-        self._pos = 0
-        self._token = None
-        self._text = text
+    def _consume_template(self):
 
-        # check whether we should process this line
+        node = Template()
 
-        if text.startswith(self.CMD_PREFIX):
-            # Command
-            self._text = self._text[len(self.CMD_PREFIX):]
+        # Consume template line by line
+        for i in range(0, len(self._ctx.text())):
+            self._ctx.set_position(i, 0)
+            self._tokenizer.update_position()
+
+            if self._tokenizer.get_chr() + self._tokenizer.lookahead() != self.CMD_LINE_IDENTIFIER:
+                node.children.append(self._consume_content_line())
+            else:
+                self._token = self._tokenizer.get_next_token()
+                node.children.append(self._consume_cmd_line())
+
+        return node
+
+    def _consume_next_token(self, ttype):
+        if self._token.type() == ttype:
+            return self._tokenizer.get_next_token()
         else:
-            # Template code
-            # check condition if any
-            if self._block is not None:
-                if self._block.type() == Block.IF_BLOCK and self._block.cond().solve() is False:
-                    return ''
-                elif self._block.type() == Block.ELSE_BLOCK and self._block.cond().solve() is True:
-                    return ''
+            raise ParserError('Unexpected token, got ' + self._token.type() + ' expected ' + ttype, self._ctx)
 
-            # process variables only
-            self._text = self._ctx.process_variables(self._text)
-            return self._text
+    def _consume_cmd_line(self):
+        self._token = self._consume_next_token(CMD_LINE_START)
+        statement = self._consume_statement()
+        return CommandLine(statement)
 
-        # Interpret commands
-        while self._get_chr() is not None:
-            token = self._get_next_token()
+    def _consume_symbol(self):
+        name = self._token.value()
+        self._token = self._consume_next_token(SYMBOL)
 
-            if token.type() == OBJNAME:
-                objname = token.value()
-                token = self._get_next_token()
+        if self._token.type() == LPAR:
+            node = self._consume_function(name)
+        elif self._token.type() == ASSIGN:
+            node = self._consume_assignment(name)
+        else:
+            node = Variable(name)
 
-                if token.type() == LPAR:
-                    # function
-                    func = self._process_function(objname)
-                    if hasattr(contemply.functions, '{0}'.format(func.name())):
-                        call = getattr(contemply.functions, '{0}'.format(func.name()))
-                        call(func.args(), self._ctx)
-                    else:
-                        raise ParserException("Unknown function: {0}".format(func.name()))
+        return node
 
-                elif token.type() == ASSIGN:
-                    # assignment
-                    assig = self._process_assignment(objname)
-                    self._ctx.set(assig.varname(), assig.value())
+    def _consume_assignment(self, name):
+        self._token = self._consume_next_token(ASSIGN)
+        value = self._consume_value()
+        return Assignment(name, value)
 
-                else:
-                    raise ParserException("Unexpected token: {0} in {1}".format(token, text))
+    def _consume_value(self):
+        node = None
+        if self._token.type() == SYMBOL:
+            node = self._consume_symbol()
+        elif self._token.type() == STRING:
+            node = String(self._token.value())
+            self._token = self._consume_next_token(STRING)
+        elif self._token.type() == INTEGER:
+            node = Num(self._token.value())
+            self._token = self._consume_next_token(INTEGER)
+        elif self._token.type() == LSQRBR:
+            node = self._consume_list()
+        else:
+            self._raise_error('Unexpected token-type: ' + self._token.type())
+        return node
 
-            elif token.type() == IF:
-                cond = self._process_if()
-                self._block = Block(cond, Block.IF_BLOCK)
+    def _consume_statement(self):
+        if self._token.type() == SYMBOL:
+            node = self._consume_symbol()
+        elif self._token.type() == IF:
+            node = self._consume_if_block()
+            self._conditions.append(node)
+        elif self._token.type() == ELSE:
+            try:
+                last_condition = self._conditions.pop()
+                node = Else(last_condition.condition)
+                self._token = self._consume_next_token(ELSE)
+                self._conditions.append(node)
+            except IndexError:
+                raise ParserError("Unexpected token: ENDIF", self._ctx)
 
-            elif token.type() == ENDIF:
-                if self._block is None:
-                    raise ParserException("Found ENDIF without preceding IF", self._ctx)
+        elif self._token.type() == ENDIF:
+            try:
+                self._conditions.pop()
+            except IndexError:
+                raise ParserError("Unexpected token: ENDIF", self._ctx)
 
-                self._block = None
-
-            elif token.type() == ELSE:
-                if self._block is None:
-                    raise ParserException("Found ELSE without preceding IF")
-
-                self._block.set_type(Block.ELSE_BLOCK)
-
-        return ''
-
-    def _get_chr(self):
-        try:
-            return self._text[self._pos]
-        except IndexError:
-            return None
-
-    def _advance(self):
-        self._pos += 1
-        self._ctx.set_pos(self._pos)
-
-    def _lookahead(self, size=1):
-        return self._text[self._pos + 1:self._pos + 1 + size]
-
-    def _skip_whitespace(self):
-        while self._get_chr() is not None and self._get_chr().isspace():
-            self._advance()
-
-    def _get_next_token(self):
-        token = None
-        self._skip_whitespace()
-
-        if self._get_chr() is None:
-            return Token(EOL)
-
-        if self._get_chr() == 'i' and self._lookahead() == 'f':
-            token = Token(IF)
-            self._advance()
-            self._advance()
-
-        elif self._get_chr() == 'e' and self._lookahead(3) == 'lse':
-            token = Token(ELSE)
-
-            for i in range(0, len('else')):
-                self._advance()
-
-        elif self._get_chr() == 'e' and self._lookahead(4) == 'ndif':
-            token = Token(ENDIF)
-
-            for i in range(0, len('endif')):
-                self._advance()
-
-        elif self._get_chr().isalpha() or self._get_chr() == '_':
-            token = self._consume_objname()
-
-        elif self._get_chr().isnumeric():
-            token = self._consume_integer()
-
-        elif self._get_chr() == '(':
-            token = Token(LPAR, '(')
-            self._advance()
-
-        elif self._get_chr() == ')':
-            token = Token(RPAR, '')
-            self._advance()
-
-        elif self._get_chr() == '[':
-            token = Token(LSQRBR, '[')
-            self._advance()
-
-        elif self._get_chr() == ']':
-            token = Token(RSQRBR, ']')
-            self._advance()
-
-        elif self._get_chr() == '"' or self._get_chr() == "'":
-            self._advance()
-            token = self._consume_string()
-
-        elif self._get_chr() == ',':
-            token = Token(COMMA, ',')
-            self._advance()
-
-        elif self._get_chr() == '=':
-            if self._lookahead() == '=':
-                token = Token(COMP_EQ, '==')
-                self._advance()
-            else:
-                token = Token(ASSIGN, '=')
-
-            self._advance()
-
-        elif self._get_chr() == '<':
-            if self._lookahead() == '=':
-                token = Token(COMP_LT_EQ, '<=')
-                self._advance()
-            else:
-                token = Token(COMP_LT, '<')
-
-            self._advance()
-
-        elif self._get_chr() == '>':
-            if self._lookahead() == '=':
-                token = Token(COMP_GT_EQ, '>=')
-                self._advance()
-            else:
-                token = Token(COMP_GT, '>')
-
-            self._advance()
-
-        elif self._get_chr() == '!':
-            if self._lookahead() == '=':
-                token = Token(COMP_GT_EQ, '>=')
-                self._advance()
-
-            self._advance()
+            self._token = self._consume_next_token(ENDIF)
+            node = Endif()
 
         else:
-            raise ParserException("Unrecognized token at pos {0}".format(self._pos))
+            raise ParserError('Unknown block start: ' + self._token.type(), self._ctx)
 
-        return token
+        return node
 
-    #######################
-    # Token consumption
-    #######################
+    def _consume_expression(self):
 
-    def _consume_objname(self):
-        objname = ''
+        lval = None
+        op = None
+        rval = None
 
-        while self._get_chr() is not None and self._get_chr().isalpha() or self._get_chr().isnumeric() or self._get_chr() == '_':
-            objname += self._get_chr()
-            self._advance()
+        if self._token.type() in [STRING, INTEGER]:
+            lval = self._consume_value()
+        elif self._token.type() == SYMBOL:
+            lval = self._consume_symbol()
+        else:
+            raise ParserError("Unexpected left value: " + self._token.type(), self._ctx)
 
-        return Token(OBJNAME, objname)
+        if self._token.type() in OPERATORS:
+            op = self._token.value()
+            self._token = self._consume_next_token(self._token.type())
+        else:
+            raise ParserError("Unexpected operator: " + self._token.type(), self._ctx)
 
-    def _consume_string(self):
-        val = ''
+        if self._token.type() in [STRING, INTEGER]:
+            rval = self._consume_value()
+        elif self._token.type() == SYMBOL:
+            rval = self._consume_symbol()
+        else:
+            raise ParserError("Unexpected right value: " + self._token.type(), self._ctx)
 
-        while self._get_chr() is not None and self._get_chr() != '"' and self._get_chr() != "'":
-            val += self._get_chr()
-            self._advance()
+        return SimpleExpression(lval, op, rval)
 
-        self._advance()
-        return Token(STRING, val)
+    def _consume_if_block(self):
 
-    def _consume_integer(self):
-        val = ''
+        self._token = self._consume_next_token(IF)
+        cond = self._consume_expression()
+        node = If(cond)
 
-        while self._get_chr() is not None and self._get_chr().isnumeric():
-            val += self._get_chr()
-            self._advance()
+        return node
 
-        return Token(INTEGER, int(val))
+    def _consume_content_line(self, prepend=None):
+        line = self._tokenizer.get_raw('\n')
 
-    #######################
-    # Interpreter
-    #######################
+        if prepend is not None:
+            line = prepend + line
 
-    def _process_function(self, funcname):
-        token = self._get_next_token()
-        args = []
+        self._token = self._tokenizer.get_next_token()
+        return ContentLine(line)
 
-        while token.type() != RPAR:
-            if token.type() == EOL:
-                raise ParserException("Unexpected EOL")
+    def _consume_argument_list(self):
+        node = ArgumentList()
+        while self._token.type() != RPAR:
+            if self._token.type() == EOF or self._token.type() == NEWLINE:
+                raise ParserError("Unexpected token in argument list: " + self._token.type(), self._ctx)
 
-            if token.type() == COMMA:
-                token = self._get_next_token()
-                continue
-
-            if token.type() in [STRING, INTEGER, OBJNAME]:
-                args.append(token.value())
-            elif token.type() == LSQRBR:
-                lst = self._process_list()
-                args.append(lst)
+            if self._token.type() == COMMA:
+                self._token = self._consume_next_token(COMMA)
             else:
-                raise ParserException("Invalid function argument.")
+                node.children.append(self._consume_value())
 
-            token = self._get_next_token()
+        return node
 
+    def _consume_function(self, funcname):
+        self._token = self._consume_next_token(LPAR)
+        args = self._consume_argument_list()
+        self._token = self._consume_next_token(RPAR)
         return Function(funcname, args)
 
-    def _process_assignment(self, varname):
-        token = self._get_next_token()
-
-        if token.type() not in [STRING, INTEGER]:
-            raise ParserException("Expected String or Integer")
-
-        return VariableAssignment(varname, token.value())
-
-    def _process_list(self):
-        token = self._get_next_token()
-        lst = []
-
-        while token.type() != RSQRBR and token.type():
-            if token.type() == COMMA:
-                token = self._get_next_token()
-                continue
-
-            if token.type() in [STRING, INTEGER]:
-                lst.append(token.value())
-            elif token.type() == LSQRBR:
-                lst = self._process_list()
-                lst.append(lst)
+    def _consume_list(self):
+        self._token = self._consume_next_token(LSQRBR)
+        node = List()
+        while self._token.type() != RSQRBR:
+            if self._token.type() == COMMA:
+                self._token = self._consume_next_token(COMMA)
             else:
-                raise ParserException("Unexpected token: {0}".format(token.type()), self._ctx)
+                node.children.append(self._consume_value())
 
-            token = self._get_next_token()
+        self._token = self._consume_next_token(RSQRBR)
+        return node
 
-        return lst
 
-    def _resolve_objectname(self, objname):
-        self.reserved_solution = {
-            'True': True,
-            'False': False,
-            'None': None
-        }
+class TemplateParser:
+    """
+    This is the frontend class used for TemplateParsing.
+    It will set up a TemplateContext and split the input text up in
+    separate lines before handing it to the _parse function.
+    """
 
-        if objname in self.reserved_solution:
-            return self.reserved_solution[objname]
+    OUTPUTMODE_CONSOLE, OUTPUTMODE_FILE = 0, 1
 
-        # check for variable
-        if self._ctx.has(objname):
-            return self._ctx.get(objname)
-        else:
-            raise ParserException('Unknown variable "{0}"'.format(objname), self._ctx, self._text)
+    def __init__(self):
+        self._ctx = TemplateContext()
+        self._output_mode = self.OUTPUTMODE_FILE
 
-    def _convert_token_to_primitive_type(self, token):
-        if token.type() == STRING or token.type() in OPERATORS:
-            return str(token.value())
+    def get_template_context(self):
+        return self._ctx
 
-        elif token.type() == INTEGER:
-            return int(token.value())
-
-        elif token.type() == OBJNAME:
-            return self._resolve_objectname(token.value())
-
-    def _process_if(self):
-        token = self._get_next_token()
-        condition = None
-
-        if token.type() not in [STRING, INTEGER, OBJNAME]:
-            raise ParserException("Expected string, integer or object", self._ctx)
-
-        lval = self._convert_token_to_primitive_type(token)
-
-        token = self._get_next_token()
-        if token.type() not in OPERATORS:
-            raise ParserException("Expected operator", self._ctx)
-        op = self._convert_token_to_primitive_type(token)
-
-        token = self._get_next_token()
-        if token.type() not in [STRING, INTEGER, OBJNAME]:
-            raise ParserException("Expected string, integer or object", self._ctx)
-        rval = self._convert_token_to_primitive_type(token)
-
-        condition = Condition(lval, rval, op)
-        return condition
-
-    def _run(self):
-
-        for cmd in self._cmd_stack:
-            if isinstance(cmd, VariableAssignment):
-                # TODO maybe NOTICE on overwrite
-                self._ctx.set(cmd.varname(), cmd.value())
-
-            elif isinstance(cmd, Function):
-                if hasattr(contemply.functions, 'func_{0}'.format(cmd.name())):
-                    func = getattr(contemply.functions, 'func_{0}'.format(cmd.name()))
-                    func(cmd.args(), self._ctx)
-                else:
-                    raise ParserException("Unknown function: {0}".format(cmd.name()), self._ctx)
+    def set_output_mode(self, mode):
+        self._output_mode = mode
 
     def parse_file(self, filename):
-
-        self._ctx = TemplateContext()
         self._ctx.set_filename(os.path.basename(filename))
-        lines = []
-        self._cmd_stack = []
 
         with open(filename, 'r') as f:
+            lines = []
             for line in f:
                 lines.append(line)
+            self._ctx.set_text(lines)
 
-        # assemble output
-        output = []
-        for lineno, line in enumerate(lines):
-            self._ctx.set_line(lineno + 1)
-            line = self._parse(line)
-            output.append(line)
+        return self.parse()
 
-        if self._outputmode == TemplateParser.OUTPUTMODE_FILE:
+    def parse(self, text=None):
+        if text is not None:
+            self._ctx.set_text(text.split('\n'))
+            self._ctx.set_filename('')
+
+        # Create the Tokenizer, Parser and Interpreter instances
+        tokenizer = Tokenizer(self._ctx)
+        parser = Parser(tokenizer, self._ctx)
+        interpreter = Interpreter(self._ctx)
+
+        # parse the input and create a AST
+        tree = parser.parse()
+        # interpret the AST and execute all statements contained within
+        interpreter.interpret(tree)
+        # result will hold the contents of the parsed template
+        result = interpreter.get_parsed_template()
+
+        if self._output_mode == TemplateParser.OUTPUTMODE_FILE:
             outfile = self._ctx.outputfile()
+
             if outfile == '':
                 # Prompt for outputfile
                 outfile = input('Please enter the filename of the new file: ')
 
             # replace variables in outputfile
             outfile = self._ctx.process_variables(outfile)
-
             path = os.path.realpath(outfile)
 
-            with open(path, 'w') as f:
-                f.write(''.join(output))
+            overwrite = True
+            if os.path.exists(path):
+                overwrite = cli.prompt('A file with the name {0} already exists. Overwrite?'.format(outfile))
 
-            print(Fore.GREEN + '√' + Fore.RESET + ' File ' + Style.BRIGHT + '{0}'.format(os.path.basename(path)) +
-                  Style.RESET_ALL + ' has been created')
+            if overwrite:
+                with open(path, 'w') as f:
+                    f.write('\n'.join(result))
 
-        elif self._outputmode == self.OUTPUTMODE_CONSOLE:
-            print(''.join(output))
+                print(Fore.GREEN + '√' + Fore.RESET + ' File ' + Style.BRIGHT + '{0}'.format(os.path.basename(path)) +
+                      Style.RESET_ALL + ' has been created')
 
-    def parse(self, text):
-        self._ctx = TemplateContext()
-        return self._parse(text)
+        elif self._output_mode == self.OUTPUTMODE_CONSOLE:
+            print('\n'.join(result))
+
+        return result

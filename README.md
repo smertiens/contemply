@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/smertiens/contemply.svg?branch=master)](https://travis-ci.org/smertiens/contemply)
 [![Documentation Status](https://readthedocs.org/projects/contemply/badge/?version=latest)](https://contemply.readthedocs.io/en/latest/?badge=latest)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/smertiens/contemply.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/smertiens/contemply/context:python)
 [![PyPI version](https://badge.fury.io/py/contemply.svg)](https://badge.fury.io/py/contemply)
 
 A code generator that creates boilerplate files from templates.

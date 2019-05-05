@@ -48,17 +48,17 @@ def main():
     parser = TemplateParser()
 
     # set up parser
-    if args.verbose is True:
-        parser.get_logger().setLevel(logging.DEBUG)
-    else:
-        parser.get_logger().setLevel(logging.INFO)
+    # if args.verbose is True:
+    #     parser.get_logger().setLevel(logging.DEBUG)
+    # else:
+    #     parser.get_logger().setLevel(logging.INFO)
 
     if args.print is True:
-        parser.set_outputmode(TemplateParser.OUTPUTMODE_CONSOLE)
+         parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
 
     try:
         parser.parse_file(file)
-    except ParserException as e:
+    except ParserError as e:
         print_error(e)
     except KeyboardInterrupt:
         print('\nGoodbye.')

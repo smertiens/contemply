@@ -1,0 +1,21 @@
+#: echo('Welcome to the Python science template!')
+#: ask('What is the name of your project? ', 'project_name')
+#: ask('What is your name? ', 'user')
+#: yesno('Do you want add a main-function?', 'main')
+#: output('$project_name.py')
+#########################################################
+# Project: $project_name
+# Author: $user
+#########################################################
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+#: if main == True
+def main():
+	pass
+
+if __name__ == '__main__':
+	main()
+#: endif
