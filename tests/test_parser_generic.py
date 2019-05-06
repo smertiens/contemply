@@ -6,7 +6,6 @@
 #
 
 from contemply.parser import *
-import pytest
 
 
 def test_parser_simple():
@@ -76,43 +75,6 @@ def test_parser_skip_comments():
     assert not parser.get_template_context().has('var1')
 
 
-def test_while_loop():
-    text = [
-        '#: num = 0',
-        '#: while num <= 5',
-        'This run no. $num',
-        '#: num = num + 1',
-        '#: endwhile'
-    ]
-
-    expected = [
-        'This run no. 0',
-        'This run no. 1',
-        'This run no. 2',
-        'This run no. 3',
-        'This run no. 4',
-        'This run no. 5'
-    ]
-
-    parser = TemplateParser()
-    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
-    assert result == expected
-
-
-def test_while_loop_max_runs():
-    text = [
-        '#: while True',
-        '#: endwhile'
-    ]
-
-    parser = TemplateParser()
-    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-
-    with pytest.raises(ParserError):
-        parser.parse('\n'.join(text))
-
-
 def test_simple_expressions():
     text = [
         '#: test1 = 10',
@@ -135,31 +97,3 @@ def test_simple_expressions():
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
     result = parser.parse('\n'.join(text))
     assert result == []
-
-
-def test_subtraction():
-    parser = TemplateParser()
-    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('#: result = 1283 - 87\n$result')
-    assert result == ['1196']
-
-
-def test_addition():
-    parser = TemplateParser()
-    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('#: result = 274 + 863\n$result')
-    assert result == ['1137']
-
-
-def test_division():
-    parser = TemplateParser()
-    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('#: result =  285/5\n$result')
-    assert result == ['57.0']
-
-
-def test_multiplication():
-    parser = TemplateParser()
-    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('#: result =  1839 * 123\n$result')
-    assert result == ['226197']
