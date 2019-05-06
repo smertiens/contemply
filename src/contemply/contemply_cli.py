@@ -48,10 +48,10 @@ def main():
     parser = TemplateParser()
 
     # set up parser
-    # if args.verbose is True:
-    #     parser.get_logger().setLevel(logging.DEBUG)
-    # else:
-    #     parser.get_logger().setLevel(logging.INFO)
+    if args.verbose is True:
+        parser.get_logger().setLevel(logging.DEBUG)
+    else:
+        parser.get_logger().setLevel(logging.INFO)
 
     if args.print is True:
          parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)

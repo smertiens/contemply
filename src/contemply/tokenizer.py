@@ -11,10 +11,11 @@ from contemply.exceptions import *
 
 # Tokens
 STRING, INTEGER, LIST, SYMBOL, EOF = 'STRING', 'INTEGER', 'LIST', 'SYMBOL', 'EOF',
-LPAR, RPAR, COMMA, LSQRBR, RSQRBR, ASSIGN, NEWLINE = 'LPAR', 'RPAR', 'COMMA', 'LSQRBR', 'RSQRBR', 'ASSIGN', 'NEWLINE'
+LPAR, RPAR, COMMA, LSQRBR, RSQRBR, ASSIGN, ASSIGN_PLUS, NEWLINE = 'LPAR', 'RPAR', 'COMMA', 'LSQRBR', 'RSQRBR', 'ASSIGN', 'ASSIGN_PLUS', 'NEWLINE'
 IF, ELSE, ENDIF, WHILE, ENDWHILE = 'IF', 'ELSE', 'ENDIF', 'WHILE', 'ENDWHILE'
+
 OPERATORS = COMP_EQ, COMP_LT, COMP_GT, COMP_LT_EQ, COMP_GT_EQ, COMP_NOT_EQ, ADD, SUB, DIV, MULT = 'COMP_EQ', 'COMP_LT', 'COMP_GT', 'COMP_LT_EQ', \
-                                                                             'COMP_GT_EQ', 'COMP_NOT_EQ', 'ADD', 'SUB', 'DIV', 'MULT'
+                                                                                                  'COMP_GT_EQ', 'COMP_NOT_EQ', 'ADD', 'SUB', 'DIV', 'MULT'
 CMD_LINE_START, COMMENT = 'CMD_LINE_START', 'COMMENT'
 RESERVED = 'True', 'False', 'None'
 
@@ -173,6 +174,11 @@ class Tokenizer:
 
         elif self.get_chr() == ',':
             token = Token(COMMA, ',')
+            self._advance()
+
+        elif self.get_chr() == '+' and self.lookahead() == '=':
+            token = Token(ASSIGN_PLUS, '+=')
+            self._advance()
             self._advance()
 
         elif self.get_chr() == '+':

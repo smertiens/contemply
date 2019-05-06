@@ -156,7 +156,7 @@ class Parser:
 
         if self._token.type() == LPAR:
             node = self._consume_function(name)
-        elif self._token.type() == ASSIGN:
+        elif self._token.type() in [ASSIGN, ASSIGN_PLUS]:
             node = self._consume_assignment(name)
         else:
             node = Variable(name)
@@ -164,10 +164,12 @@ class Parser:
         return node
 
     def _consume_assignment(self, name):
-        self._token = self._consume_next_token(ASSIGN)
+        assignment_type = self._token.type()
+        self._token = self._consume_next_token(assignment_type)
+        print(self._token)
         #value = self._consume_value()
         value = self._consume_expression()
-        return Assignment(name, value)
+        return Assignment(name, value, assignment_type)
 
     def _consume_value(self):
         node = None
@@ -198,7 +200,7 @@ class Parser:
                 self._token = self._consume_next_token(ELSE)
                 self._conditions.append(node)
             except IndexError:
-                raise ParserError("Unexpected token: ENDIF", self._ctx)
+                raise ParserError("Unexpected token: ELSE", self._ctx)
 
         elif self._token.type() == ENDIF:
             try:
@@ -228,8 +230,13 @@ class Parser:
         rval = None
 
         if self._token.type() in [STRING, INTEGER]:
+            # Consume primitive type
             lval = self._consume_value()
+        elif self._token.type() == LSQRBR:
+            # Consume list
+            lval = self._consume_list()
         elif self._token.type() == SYMBOL:
+            # Consume function/builtin/variable
             lval = self._consume_symbol()
         else:
             raise ParserError("Unexpected left value: " + self._token.type(), self._ctx)
@@ -244,11 +251,14 @@ class Parser:
             else:
                 return lval
 
-            # raise ParserError("Unexpected operator: " + self._token.type(), self._ctx)
-
         if self._token.type() in [STRING, INTEGER]:
+            # Consume primitive type
             rval = self._consume_value()
+        elif self._token.type() == LSQRBR:
+            # Consume list
+            rval = self._consume_list()
         elif self._token.type() == SYMBOL:
+            # Consume function/builtin/variable
             rval = self._consume_symbol()
         else:
             raise ParserError("Unexpected right value: " + self._token.type(), self._ctx)
@@ -317,6 +327,9 @@ class TemplateParser:
         self._ctx = TemplateContext()
         self._output_mode = self.OUTPUTMODE_FILE
 
+    def get_logger(self):
+        return logging.getLogger(self.__module__)
+
     def get_template_context(self):
         return self._ctx
 
@@ -341,8 +354,10 @@ class TemplateParser:
 
         # Create the Tokenizer, Parser and Interpreter instances
         tokenizer = Tokenizer(self._ctx)
+        tokenizer.get_logger().setLevel(self.get_logger().level)
         parser = Parser(tokenizer, self._ctx)
         interpreter = Interpreter(self._ctx)
+        interpreter.get_logger().setLevel(self.get_logger().level)
 
         # parse the input and create a AST
         tree = parser.parse()

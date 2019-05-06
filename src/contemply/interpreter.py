@@ -65,6 +65,10 @@ class Interpreter:
 
         self._parsed_template = []
 
+    def interpret(self, tree):
+        self._tree = tree
+        self.visit(tree)
+
     def get_logger(self):
         return logging.getLogger(self.__module__)
 
@@ -86,15 +90,6 @@ class Interpreter:
         except IndexError:
             return None
 
-    def visit(self, node):
-        method_name = 'visit_' + type(node).__name__.lower()
-        visitor = getattr(self, method_name, self.fallback_visit)
-        # print('Visiting: '+type(node).__name__)
-        return visitor(node)
-
-    def fallback_visit(self, node):
-        raise ParserError('No visitor found for node {0}'.format(node))
-
     def _cleanup(self):
         if len(self._conditions) > 0:
             raise ParserError('There is still at least one open IF-block. Expected: ENDIF.', self._ctx)
@@ -105,10 +100,38 @@ class Interpreter:
         if self._skip_until is not None:
             raise ParserError('Unexpected end of template. Expected: {0}'.format(self._skip_until.__name__), self._ctx)
 
+    ##########################
+    # Internal functions
+    ##########################
+
+    def _internal_func_exit(self, args):
+        if len(args) > 0:
+            print(args[0])
+
+        quit()
+
+    ##########################
+    # Node visitors
+    ##########################
+
+    def visit(self, node):
+        method_name = 'visit_' + type(node).__name__.lower()
+        visitor = getattr(self, method_name, self.fallback_visit)
+        # print('Visiting: '+type(node).__name__)
+        return visitor(node)
+
+    def fallback_visit(self, node):
+        raise ParserError('No visitor found for node {0}'.format(node))
+
     def visit_function(self, node):
         # function
         func = node.name
         args = self.visit(node.args)
+
+        # check for internal function
+        if hasattr(self, '_internal_func_{0}'.format(func)):
+            call = getattr(self, '_internal_func_{0}'.format(func))
+            return call(args)
 
         if hasattr(contemply.functions, '{0}'.format(func)):
             call = getattr(contemply.functions, '{0}'.format(func))
@@ -178,7 +201,16 @@ class Interpreter:
             self.visit(node.statement)
 
     def visit_assignment(self, node):
-        self._ctx.set(node.variable, self.visit(node.value))
+        if node.type == 'ASSIGN':
+            self._ctx.set(node.variable, self.visit(node.value))
+        elif node.type == 'ASSIGN_PLUS':
+            list_var = self._ctx.get(node.variable)
+
+            # check var type
+            if not isinstance(list_var, list):
+                raise ParserError("Expected variable of type 'list'.", self._ctx)
+            else:
+                list_var.append(self.visit(node.value))
 
     def visit_string(self, node):
         return node.value
@@ -253,7 +285,3 @@ class Interpreter:
 
     def visit_noop(self, node):
         pass
-
-    def interpret(self, tree):
-        self._tree = tree
-        self.visit(tree)

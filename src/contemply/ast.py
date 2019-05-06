@@ -54,9 +54,10 @@ class Function(AST):
 
 class Assignment(AST):
 
-    def __init__(self, variable, value):
+    def __init__(self, variable, value, assign_type = 'ASSIGN'):
         self.variable = variable
         self.value = value
+        self.type = assign_type
 
 
 class ArgumentList(AST):

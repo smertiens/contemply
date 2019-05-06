@@ -76,7 +76,7 @@ def echo(args, ctx):
     if len(args) == 0:
         raise SyntaxError("Function echo() needs exactly 1 argument", ctx)
 
-    print(ctx.process_variables(args[0]))
+    print(ctx.process_variables(str(args[0])))
 
 
 def setOutput(args, ctx):
