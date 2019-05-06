@@ -1,8 +1,29 @@
-#: prop = 'notempty'
-#: lst = []
-#: addToList(lst, 'hello')
-#: while prop != ''
-#: prop = ask('What is the property called?')
+#: classname = ask('What it the name of your class?')
+#: propname = 'notempty'
+#: props = []
+#: while propname != ''
+#: propname = ask('What is the property called?')
 #: is_private = yesno('Is it a private property?')
-#: create_funcs = yesno('Create getter/setter?')
+#: if is_private
+#: propname = '_' + propname
+#: endif
+#: if propname != ''
+#: props += propname
+#: endif
 #: endwhile
+
+class $classname:
+
+    def __init__():
+#: for item in props
+        $item = ''
+#: endfor
+
+
+#: for item in props
+     def set_$item(value):
+        $item = value
+
+     def get_$item():
+        return $item
+#: endfor

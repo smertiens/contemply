@@ -1,3 +1,5 @@
 #: liste = ['hello']
 #: liste += 'world'
-#: echo(liste)
+#: for item in liste
+Item $item
+#: endfor

@@ -54,7 +54,7 @@ class Function(AST):
 
 class Assignment(AST):
 
-    def __init__(self, variable, value, assign_type = 'ASSIGN'):
+    def __init__(self, variable, value, assign_type='ASSIGN'):
         self.variable = variable
         self.value = value
         self.type = assign_type
@@ -125,4 +125,15 @@ class While(AST):
 
 
 class Endwhile(AST):
+    pass
+
+
+class For(AST):
+
+    def __init__(self, listvar, itemvar):
+        self.listvar = listvar
+        self.itemvar = itemvar
+
+
+class Endfor(AST):
     pass

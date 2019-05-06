@@ -12,12 +12,12 @@ from contemply.exceptions import *
 # Tokens
 STRING, INTEGER, LIST, SYMBOL, EOF = 'STRING', 'INTEGER', 'LIST', 'SYMBOL', 'EOF',
 LPAR, RPAR, COMMA, LSQRBR, RSQRBR, ASSIGN, ASSIGN_PLUS, NEWLINE = 'LPAR', 'RPAR', 'COMMA', 'LSQRBR', 'RSQRBR', 'ASSIGN', 'ASSIGN_PLUS', 'NEWLINE'
-IF, ELSE, ENDIF, WHILE, ENDWHILE = 'IF', 'ELSE', 'ENDIF', 'WHILE', 'ENDWHILE'
+IF, ELSE, ENDIF, WHILE, ENDWHILE, FOR, IN, ENDFOR = 'IF', 'ELSE', 'ENDIF', 'WHILE', 'ENDWHILE', 'FOR', 'IN', 'ENDFOR'
 
 OPERATORS = COMP_EQ, COMP_LT, COMP_GT, COMP_LT_EQ, COMP_GT_EQ, COMP_NOT_EQ, ADD, SUB, DIV, MULT = 'COMP_EQ', 'COMP_LT', 'COMP_GT', 'COMP_LT_EQ', \
                                                                                                   'COMP_GT_EQ', 'COMP_NOT_EQ', 'ADD', 'SUB', 'DIV', 'MULT'
 CMD_LINE_START, COMMENT = 'CMD_LINE_START', 'COMMENT'
-RESERVED = 'True', 'False', 'None'
+RESERVED = 'True', 'False', 'None', 'for', 'in', 'while', 'endwhile', 'endif', 'if', 'else', 'endfor'
 
 
 class Token:
@@ -128,11 +128,28 @@ class Tokenizer:
             for i in range(0, len('endwhile')):
                 self._advance()
 
+        elif self.get_chr() == 'e' and self.lookahead(5) == 'ndfor':
+            token = Token(ENDFOR)
+
+            for i in range(0, len('endfor')):
+                self._advance()
+
         elif self.get_chr() == 'w' and self.lookahead(4) == 'hile':
             token = Token(WHILE)
 
             for i in range(0, len('while')):
                 self._advance()
+
+        elif self.get_chr() == 'f' and self.lookahead(2) == 'or':
+            token = Token(FOR)
+            self._advance()
+            self._advance()
+            self._advance()
+
+        elif self.get_chr() == 'i' and self.lookahead(2) == 'n':
+            token = Token(IN)
+            self._advance()
+            self._advance()
 
         elif self.get_chr().isalpha() or self.get_chr() == '_':
             token = self._consume_symbol()

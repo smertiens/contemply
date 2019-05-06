@@ -25,12 +25,10 @@ class InterpeterCondition:
         return self.__str__()
 
 
-class InterpreterLoop:
-    TYPE_WHILE = 'TYPE_WHILE'
+class WhileLoop:
 
-    def __init__(self, node, ltype, target_line):
+    def __init__(self, node, target_line):
         self.node = node
-        self.type = ltype
 
         # the line where the loop starts.
         self.target_line = target_line
@@ -40,7 +38,26 @@ class InterpreterLoop:
         self.iterations += 1
 
     def __str__(self):
-        return "Condition {0}, {1}".format(self.type, self.node.expr)
+        return "While {0}".format(self.node.expr)
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class ForLoop:
+
+    def __init__(self, node, target_line):
+        self.node = node
+
+        # the line where the loop starts.
+        self.target_line = target_line
+        self.iterations = 0
+
+    def increment_iterations(self):
+        self.iterations += 1
+
+    def __str__(self):
+        return "For {0} in {1}".format(self.node.itemvar, self.node.listvar)
 
     def __repr__(self):
         return self.__str__()
@@ -220,16 +237,60 @@ class Interpreter:
 
     def visit_while(self, node):
         if self.visit(node.expr):
-            self._loops.append(InterpreterLoop(node, InterpreterLoop.TYPE_WHILE, self._line))
+            self._loops.append(WhileLoop(node, self._line))
         else:
             # while condition not True -> skip next while block until ENDWHILE is discovered
             self._skip_until = Endwhile
+
+    def visit_for(self, node):
+        # Check listvar
+        listvar = self.visit(node.listvar)
+
+        if not isinstance(listvar, list):
+            raise ParserError('Cannot iterate "{0}", expected a list.'.format(node.listvar.name), self._ctx)
+
+        # No elements in list, no sense in running loop
+        if len(listvar) == 0:
+            self._skip_until = Endfor
+            return
+
+        # Initialize itemvar
+        self._ctx.set(node.itemvar.name, listvar[0])
+        self._loops.append(ForLoop(node, self._line))
+
+        # Since we're now running the loop for the first time, we also need to increment the counter
+        self._loops[-1].increment_iterations()
+
+    def visit_endfor(self, node):
+        # Get active loop
+        try:
+            active_loop = self._loops[-1]
+        except IndexError:
+            raise ParserError('Unexpected ENDFOR', self._ctx)
+
+        # Check whether it's the loop we're looking for
+        if not isinstance(active_loop, ForLoop):
+            raise ParserError('Active loop is not a for loop.', self._ctx)
+
+        # check if we're done with iterating
+        listvar = self.visit(active_loop.node.listvar)
+        if not active_loop.iterations < len(listvar):
+            self._loops.pop()
+        else:
+            # set itemvar to new value
+            self._ctx.set(active_loop.node.itemvar.name, listvar[active_loop.iterations])
+            # jump to start of loop and run again from there
+            self._line = active_loop.target_line
+            active_loop.increment_iterations()
 
     def visit_endwhile(self, node):
         try:
             active_loop = self._loops[-1]
         except IndexError:
             raise ParserError('Unexpected ENDWHILE', self._ctx)
+
+        if not isinstance(active_loop, WhileLoop):
+            raise ParserError('Active loop is not a while loop.', self._ctx)
 
         if not self.visit(active_loop.node.expr):
             # the condition of the active loop does not match anymore so we can remove the loop from the stack

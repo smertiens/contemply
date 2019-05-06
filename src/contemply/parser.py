@@ -166,8 +166,6 @@ class Parser:
     def _consume_assignment(self, name):
         assignment_type = self._token.type()
         self._token = self._consume_next_token(assignment_type)
-        print(self._token)
-        #value = self._consume_value()
         value = self._consume_expression()
         return Assignment(name, value, assignment_type)
 
@@ -218,12 +216,22 @@ class Parser:
         elif self._token.type() == ENDWHILE:
             node = Endwhile()
 
+        elif self._token.type() == FOR:
+            self._token = self._consume_next_token(FOR)
+            itemvar = self._consume_symbol()
+            self._token = self._consume_next_token(SYMBOL)
+            listvar = self._consume_symbol()
+            node = For(listvar, itemvar)
+
+        elif self._token.type() == ENDFOR:
+            node = Endfor()
+
         else:
             raise ParserError('Unknown block start: ' + self._token.type(), self._ctx)
 
         return node
 
-    def _consume_expression(self, condition_testing = False):
+    def _consume_expression(self, condition_testing=False):
 
         lval = None
         op = None
