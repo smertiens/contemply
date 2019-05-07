@@ -87,3 +87,5 @@ Template functions
 
         #: username = env("USER")
         #: echo ("Hello $username!")
+
+.. todo:: Add more functions
