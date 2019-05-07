@@ -17,8 +17,9 @@ class Template(AST):
 
 class Variable(AST):
 
-    def __init__(self, name):
+    def __init__(self, name, index=None):
         self.name = name
+        self.index = index
 
     def __str__(self):
         return '{0}'.format(self.name)

@@ -16,7 +16,7 @@ IF, ELSE, ENDIF, WHILE, ENDWHILE, FOR, IN, ENDFOR = 'IF', 'ELSE', 'ENDIF', 'WHIL
 
 OPERATORS = COMP_EQ, COMP_LT, COMP_GT, COMP_LT_EQ, COMP_GT_EQ, COMP_NOT_EQ, ADD, SUB, DIV, MULT = 'COMP_EQ', 'COMP_LT', 'COMP_GT', 'COMP_LT_EQ', \
                                                                                                   'COMP_GT_EQ', 'COMP_NOT_EQ', 'ADD', 'SUB', 'DIV', 'MULT'
-CMD_LINE_START, COMMENT = 'CMD_LINE_START', 'COMMENT'
+CMD_LINE_START, COMMENT, CMD_BLOCK = 'CMD_LINE_START', 'COMMENT', 'CMD_BLOCK'
 RESERVED = 'True', 'False', 'None', 'for', 'in', 'while', 'endwhile', 'endif', 'if', 'else', 'endfor'
 
 
@@ -156,6 +156,12 @@ class Tokenizer:
 
         elif self.get_chr().isnumeric():
             token = self._consume_integer()
+
+        elif self.get_chr() == '#' and self.lookahead(2) == '::':
+            token = Token(CMD_BLOCK)
+            self._advance()
+            self._advance()
+            self._advance()
 
         elif self.get_chr() == '#':
             if self.lookahead() == ':':

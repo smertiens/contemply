@@ -62,7 +62,10 @@ class TemplateContext:
         self._data[k] = v
 
     def get(self, k):
-        return self._data[k]
+        try:
+            return self._data[k]
+        except KeyError:
+            raise ParserError('Unknown variable: {0}'.format(k), self)
 
     def has(self, k):
         return k in self._data
@@ -84,12 +87,14 @@ class TemplateContext:
             else:
                 val = self.get(varname)
 
+                if isinstance(val, list) and match.group(2) is not None:
+                    val = val[int(match.group(3))]
                 if not isinstance(val, str):
                     val = str(val)
 
-                return '{0}{1}'.format(val, match.group(2))
+                return '{0}{1}'.format(val, match.group(4))
 
-        p = re.compile(r'(\$[\w_]+)(\s|\W|$)', re.MULTILINE)
+        p = re.compile(r'(\$[\w_]+)(\[(\d+)\])?(\s|\W|$)', re.MULTILINE)
         text = p.sub(check_and_replace, text)
 
         return text
@@ -102,6 +107,7 @@ class Parser:
     """
     CMD_LINE_IDENTIFIER = '#:'
     CONTEMPLY_COMMENT = '#%'
+    CMD_BLOCK_IDENTIFIER = '#::'
 
     def __init__(self, tokenizer, ctx):
         self._token = None
@@ -109,6 +115,7 @@ class Parser:
         self._ctx = ctx
 
         self._conditions = []
+        self._cmd_block_mode = False
 
     def _raise_error(self, msg):
         raise ParserError(msg, self._ctx)
@@ -129,13 +136,35 @@ class Parser:
             self._ctx.set_position(i, 0)
             self._tokenizer.update_position()
 
-            if self._tokenizer.get_chr() + self._tokenizer.lookahead() == self.CONTEMPLY_COMMENT:
+            # Contemply comment line: ignore
+            if self._tokenizer.get_chr() + self._tokenizer.lookahead(
+                    len(self.CONTEMPLY_COMMENT) - 1) == self.CONTEMPLY_COMMENT:
+
                 continue
-            elif self._tokenizer.get_chr() + self._tokenizer.lookahead() != self.CMD_LINE_IDENTIFIER:
-                node.children.append(self._consume_content_line())
-            else:
+
+            # Toggle command block
+            elif self._tokenizer.get_chr() + self._tokenizer.lookahead(
+                    len(self.CMD_BLOCK_IDENTIFIER) - 1) == self.CMD_BLOCK_IDENTIFIER:
+
+                self._cmd_block_mode = not self._cmd_block_mode
+                continue
+
+            # Line is a command line orwe are inside a command block, which makes all
+            # lines command lines
+            elif (self._tokenizer.get_chr() + self._tokenizer.lookahead(
+                    len(self.CMD_LINE_IDENTIFIER) - 1) == self.CMD_LINE_IDENTIFIER) or \
+                    self._cmd_block_mode:
+
                 self._token = self._tokenizer.get_next_token()
+
+                # Skip empty lines
+                if self._token.type() == NEWLINE:
+                    continue
+
                 node.children.append(self._consume_cmd_line())
+
+            else:
+                node.children.append(self._consume_content_line())
 
         return node
 
@@ -146,7 +175,9 @@ class Parser:
             raise ParserError('Unexpected token, got ' + self._token.type() + ' expected ' + ttype, self._ctx)
 
     def _consume_cmd_line(self):
-        self._token = self._consume_next_token(CMD_LINE_START)
+        if not self._cmd_block_mode:
+            self._token = self._consume_next_token(CMD_LINE_START)
+
         statement = self._consume_statement()
         return CommandLine(statement)
 
@@ -159,7 +190,13 @@ class Parser:
         elif self._token.type() in [ASSIGN, ASSIGN_PLUS]:
             node = self._consume_assignment(name)
         else:
-            node = Variable(name)
+            index = None
+            if self._token.type() == LSQRBR:
+                index = self._consume_next_token(LSQRBR).value()
+                self._token = self._consume_next_token(LSQRBR)
+                self._token = self._consume_next_token(RSQRBR)
+
+            node = Variable(name, index)
 
         return node
 

@@ -127,6 +127,23 @@ class Interpreter:
 
         quit()
 
+    def _internal_func__debugDumpStack(self, args):
+        print(self._ctx.get_all())
+
+    def _internal_func_break(self, args):
+        if len(args) > 0:
+            raise ParserError('break() taktes no arguments', self._ctx)
+
+        try:
+            active_loop = self._loops.pop()
+        except IndexError:
+            raise ParserError('Not in a loop.', self._ctx)
+
+        if isinstance(active_loop, WhileLoop):
+            self._skip_until = Endwhile
+        elif isinstance(active_loop, ForLoop):
+            self._skip_until = Endfor
+
     ##########################
     # Node visitors
     ##########################
@@ -170,7 +187,14 @@ class Interpreter:
             return self._BUILTINS[node.name]
 
         if self._ctx.has(node.name):
-            return self._ctx.get(node.name)
+            var = self._ctx.get(node.name)
+            if node.index is not None:
+                if isinstance(var, list):
+                    return var[node.index]
+                else:
+                    raise ParserError('Variable "{0}" is not a list.'.format(node.name), self._ctx)
+            else:
+                return var
         else:
             raise ParserError('Unknown variable: "{0}"'.format(node.name), self._ctx)
 
@@ -203,7 +227,10 @@ class Interpreter:
             self._parsed_template.append(line)
 
     def visit_commandline(self, node):
-        if self._skip_until is not None and not isinstance(node.statement, self._skip_until):
+        if (self._skip_until is not None) and (not isinstance(node.statement, self._skip_until)) \
+                and (not type(node.statement) in [Endif, Else, If]):
+            # this makes sure that conditionals are seen, otherwise a ParserError would be raised
+            # because there could be unclosed if-blocks remaining when using break() in a loop
             return
         elif self._skip_until is not None and isinstance(node.statement, self._skip_until):
             # we have reached the desired statement

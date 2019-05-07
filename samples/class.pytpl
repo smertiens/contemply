@@ -1,29 +1,50 @@
-#: classname = ask('What it the name of your class?')
-#: propname = 'notempty'
-#: props = []
-#: while propname != ''
-#: propname = ask('What is the property called?')
-#: is_private = yesno('Is it a private property?')
-#: if is_private
-#: propname = '_' + propname
-#: endif
-#: if propname != ''
-#: props += propname
-#: endif
-#: endwhile
+#::
+classname = ask('What it the name of your class?')
+propname = 'notempty'
 
+props = []
+
+while propname != ''
+    propname = ask('What is the property called? (Leave empty to finish editing properties)')
+
+    if propname == ''
+        break()
+    endif
+
+    create_funcs = yesno('Do you want to add getter/setter methods?')
+    type = choose('What is the type of your property?', ['String', 'Integer', 'Float', 'Object'])
+
+    propvar = '_' + propname
+
+    props += [propname, propvar, type, create_funcs]
+endwhile
+
+#::
 class $classname:
 
     def __init__():
 #: for item in props
-        $item = ''
+#: if item[2] == 'String'
+        self.$item[1] = ''
+#: endif
+#: if item[2] == 'Integer'
+        self.$item[1] = 0
+#: endif
+#: if item[2] == 'Float'
+        self.$item[1] = 0.0
+#: endif
+#: if item[2] == 'Object'
+        self.$item[1] = None
+#: endif
 #: endfor
 
-
 #: for item in props
-     def set_$item(value):
-        $item = value
+#: if item[3] == True
+     def set_$item[0](value):
+        self.$item[1] = value
 
-     def get_$item():
-        return $item
+     def get_$item[0]():
+        return self.$item[1]
+
+#: endif
 #: endfor
