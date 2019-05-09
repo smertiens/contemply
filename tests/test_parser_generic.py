@@ -60,6 +60,7 @@ def test_parser_if_else():
     result = parser.parse('\n'.join(text))
     assert result == ['Lorem ipsum']
 
+
 def test_parser_skip_comments():
     text = [
         '#% var1 = "Hello"',
@@ -72,4 +73,29 @@ def test_parser_skip_comments():
     result = parser.parse('\n'.join(text))
     assert result == ['Lorem ipsum', '# Comment']
     assert not parser.get_template_context().has('var1')
+
+
+def test_simple_expressions():
+    text = [
+        '#: test1 = 10',
+        '#: test2 = 8',
+        '#: test3 = 18',
+        '#: result = 10 + 8',
+        '#: if test3 == result',
+        'Hello',
+        '#: endif'
+    ]
+
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+    result = parser.parse('\n'.join(text))
+    assert result == ['Hello']
+
+    text[2] = '#: test3 = 5'
+
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+    result = parser.parse('\n'.join(text))
+    assert result == []
+
 

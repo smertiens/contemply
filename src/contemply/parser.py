@@ -5,14 +5,13 @@
 # For more information on licensing see LICENSE file
 #
 
-import os, logging, re
-from contemply.exceptions import *
-from contemply.tokenizer import *
-from colorama import Fore, Style
-from contemply.ast import *
-from contemply.interpreter import *
-from contemply.functions import yesno
+import os
+import re
+
 import contemply.cli as cli
+from colorama import Fore, Style
+from contemply.interpreter import *
+from contemply.tokenizer import *
 
 
 class TemplateContext:
@@ -63,7 +62,10 @@ class TemplateContext:
         self._data[k] = v
 
     def get(self, k):
-        return self._data[k]
+        try:
+            return self._data[k]
+        except KeyError:
+            raise ParserError('Unknown variable: {0}'.format(k), self)
 
     def has(self, k):
         return k in self._data
@@ -85,12 +87,14 @@ class TemplateContext:
             else:
                 val = self.get(varname)
 
+                if isinstance(val, list) and match.group(2) is not None:
+                    val = val[int(match.group(3))]
                 if not isinstance(val, str):
                     val = str(val)
 
-                return '{0}{1}'.format(val, match.group(2))
+                return '{0}{1}'.format(val, match.group(4))
 
-        p = re.compile(r'(\$[\w_]+)(\s|\W|$)', re.MULTILINE)
+        p = re.compile(r'(\$[\w_]+)(\[(\d+)\])?(\s|\W|$)', re.MULTILINE)
         text = p.sub(check_and_replace, text)
 
         return text
@@ -103,6 +107,7 @@ class Parser:
     """
     CMD_LINE_IDENTIFIER = '#:'
     CONTEMPLY_COMMENT = '#%'
+    CMD_BLOCK_IDENTIFIER = '#::'
 
     def __init__(self, tokenizer, ctx):
         self._token = None
@@ -110,15 +115,13 @@ class Parser:
         self._ctx = ctx
 
         self._conditions = []
+        self._cmd_block_mode = False
 
     def _raise_error(self, msg):
         raise ParserError(msg, self._ctx)
 
     def get_logger(self):
         return logging.getLogger(self.__module__)
-
-    def set_outputmode(self, mode):
-        self._outputmode = mode
 
     def parse(self):
         root = self._consume_template()
@@ -133,13 +136,35 @@ class Parser:
             self._ctx.set_position(i, 0)
             self._tokenizer.update_position()
 
-            if self._tokenizer.get_chr() + self._tokenizer.lookahead() == self.CONTEMPLY_COMMENT:
+            # Contemply comment line: ignore
+            if self._tokenizer.get_chr() + self._tokenizer.lookahead(
+                    len(self.CONTEMPLY_COMMENT) - 1) == self.CONTEMPLY_COMMENT:
+
                 continue
-            elif self._tokenizer.get_chr() + self._tokenizer.lookahead() != self.CMD_LINE_IDENTIFIER:
-                node.children.append(self._consume_content_line())
-            else:
+
+            # Toggle command block
+            elif self._tokenizer.get_chr() + self._tokenizer.lookahead(
+                    len(self.CMD_BLOCK_IDENTIFIER) - 1) == self.CMD_BLOCK_IDENTIFIER:
+
+                self._cmd_block_mode = not self._cmd_block_mode
+                continue
+
+            # Line is a command line orwe are inside a command block, which makes all
+            # lines command lines
+            elif (self._tokenizer.get_chr() + self._tokenizer.lookahead(
+                    len(self.CMD_LINE_IDENTIFIER) - 1) == self.CMD_LINE_IDENTIFIER) or \
+                    self._cmd_block_mode:
+
                 self._token = self._tokenizer.get_next_token()
+
+                # Skip empty lines
+                if self._token.type() == NEWLINE:
+                    continue
+
                 node.children.append(self._consume_cmd_line())
+
+            else:
+                node.children.append(self._consume_content_line())
 
         return node
 
@@ -150,7 +175,9 @@ class Parser:
             raise ParserError('Unexpected token, got ' + self._token.type() + ' expected ' + ttype, self._ctx)
 
     def _consume_cmd_line(self):
-        self._token = self._consume_next_token(CMD_LINE_START)
+        if not self._cmd_block_mode:
+            self._token = self._consume_next_token(CMD_LINE_START)
+
         statement = self._consume_statement()
         return CommandLine(statement)
 
@@ -160,17 +187,25 @@ class Parser:
 
         if self._token.type() == LPAR:
             node = self._consume_function(name)
-        elif self._token.type() == ASSIGN:
+        elif self._token.type() in [ASSIGN, ASSIGN_PLUS]:
             node = self._consume_assignment(name)
         else:
-            node = Variable(name)
+            index = None
+            if self._token.type() == LSQRBR:
+                self._token = self._consume_next_token(LSQRBR)
+                index = self._token.value()
+                self._token = self._consume_next_token(INTEGER)
+                self._token = self._consume_next_token(RSQRBR)
+
+            node = Variable(name, index)
 
         return node
 
     def _consume_assignment(self, name):
-        self._token = self._consume_next_token(ASSIGN)
-        value = self._consume_value()
-        return Assignment(name, value)
+        assignment_type = self._token.type()
+        self._token = self._consume_next_token(assignment_type)
+        value = self._consume_expression()
+        return Assignment(name, value, assignment_type)
 
     def _consume_value(self):
         node = None
@@ -185,7 +220,7 @@ class Parser:
         elif self._token.type() == LSQRBR:
             node = self._consume_list()
         else:
-            self._raise_error('Unexpected token-type: ' + self._token.type())
+            raise ParserError('Unexpected token-type: ' + self._token.type(), self._ctx)
         return node
 
     def _consume_statement(self):
@@ -201,7 +236,7 @@ class Parser:
                 self._token = self._consume_next_token(ELSE)
                 self._conditions.append(node)
             except IndexError:
-                raise ParserError("Unexpected token: ENDIF", self._ctx)
+                raise ParserError("Unexpected token: ELSE", self._ctx)
 
         elif self._token.type() == ENDIF:
             try:
@@ -212,20 +247,42 @@ class Parser:
             self._token = self._consume_next_token(ENDIF)
             node = Endif()
 
+        elif self._token.type() == WHILE:
+            self._token = self._consume_next_token(WHILE)
+            node = While(self._consume_expression(True))
+
+        elif self._token.type() == ENDWHILE:
+            node = Endwhile()
+
+        elif self._token.type() == FOR:
+            self._token = self._consume_next_token(FOR)
+            itemvar = self._consume_symbol()
+            self._token = self._consume_next_token(SYMBOL)
+            listvar = self._consume_symbol()
+            node = For(listvar, itemvar)
+
+        elif self._token.type() == ENDFOR:
+            node = Endfor()
+
         else:
             raise ParserError('Unknown block start: ' + self._token.type(), self._ctx)
 
         return node
 
-    def _consume_expression(self):
+    def _consume_expression(self, condition_testing=False):
 
         lval = None
         op = None
         rval = None
 
         if self._token.type() in [STRING, INTEGER]:
+            # Consume primitive type
             lval = self._consume_value()
+        elif self._token.type() == LSQRBR:
+            # Consume list
+            lval = self._consume_list()
         elif self._token.type() == SYMBOL:
+            # Consume function/builtin/variable
             lval = self._consume_symbol()
         else:
             raise ParserError("Unexpected left value: " + self._token.type(), self._ctx)
@@ -234,11 +291,20 @@ class Parser:
             op = self._token.value()
             self._token = self._consume_next_token(self._token.type())
         else:
-            raise ParserError("Unexpected operator: " + self._token.type(), self._ctx)
+            if condition_testing:
+                # short form expression, assume operator == and rval == True
+                return SimpleExpression(lval, '==', Variable('True'))
+            else:
+                return lval
 
         if self._token.type() in [STRING, INTEGER]:
+            # Consume primitive type
             rval = self._consume_value()
+        elif self._token.type() == LSQRBR:
+            # Consume list
+            rval = self._consume_list()
         elif self._token.type() == SYMBOL:
+            # Consume function/builtin/variable
             rval = self._consume_symbol()
         else:
             raise ParserError("Unexpected right value: " + self._token.type(), self._ctx)
@@ -307,6 +373,9 @@ class TemplateParser:
         self._ctx = TemplateContext()
         self._output_mode = self.OUTPUTMODE_FILE
 
+    def get_logger(self):
+        return logging.getLogger(self.__module__)
+
     def get_template_context(self):
         return self._ctx
 
@@ -331,8 +400,10 @@ class TemplateParser:
 
         # Create the Tokenizer, Parser and Interpreter instances
         tokenizer = Tokenizer(self._ctx)
+        tokenizer.get_logger().setLevel(self.get_logger().level)
         parser = Parser(tokenizer, self._ctx)
         interpreter = Interpreter(self._ctx)
+        interpreter.get_logger().setLevel(self.get_logger().level)
 
         # parse the input and create a AST
         tree = parser.parse()

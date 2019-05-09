@@ -5,8 +5,9 @@
 # For more information on licensing see LICENSE file
 #
 
-import argparse, os, logging
+import argparse, os, logging, sys
 from contemply.parser import *
+from contemply import samples
 from colorama import Fore, init
 
 # Init colorama
@@ -22,6 +23,14 @@ def header():
     print('*' + 'Contemply {0}'.format(contemply.__version__).center(38) + '*')
     print('*' * 40)
     print('')
+
+
+def get_builtin_template(name):
+    if not name.endswith('.pytpl'):
+        name += '.pytpl'
+
+    path = os.path.realpath(os.path.join(os.path.dirname(samples.__file__), name))
+    return path
 
 
 def main():
@@ -43,18 +52,25 @@ def main():
     if not args.no_header is True:
         header()
 
-    file = os.path.realpath(args.template_file)
+    if args.template_file.startswith('samples:'):
+        file = get_builtin_template(args.template_file.split(':')[1])
+    else:
+        file = os.path.realpath(args.template_file)
+
+    if not os.path.exists(file):
+        print_error('Template "{0}" not found.'.format(file))
+        sys.exit()
 
     parser = TemplateParser()
 
     # set up parser
-    # if args.verbose is True:
-    #     parser.get_logger().setLevel(logging.DEBUG)
-    # else:
-    #     parser.get_logger().setLevel(logging.INFO)
+    if args.verbose is True:
+        parser.get_logger().setLevel(logging.DEBUG)
+    else:
+        parser.get_logger().setLevel(logging.INFO)
 
     if args.print is True:
-         parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+        parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
 
     try:
         parser.parse_file(file)
@@ -62,7 +78,7 @@ def main():
         print_error(e)
     except KeyboardInterrupt:
         print('\nGoodbye.')
-        quit()
+        sys.exit()
 
 
 if __name__ == '__main__':

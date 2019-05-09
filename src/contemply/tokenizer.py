@@ -6,16 +6,18 @@
 #
 
 import logging
+
 from contemply.exceptions import *
 
 # Tokens
 STRING, INTEGER, LIST, SYMBOL, EOF = 'STRING', 'INTEGER', 'LIST', 'SYMBOL', 'EOF',
-LPAR, RPAR, COMMA, LSQRBR, RSQRBR, ASSIGN, NEWLINE = 'LPAR', 'RPAR', 'COMMA', 'LSQRBR', 'RSQRBR', 'ASSIGN', 'NEWLINE'
-IF, ELSE, ENDIF = 'IF', 'ELSE', 'ENDIF'
-OPERATORS = COMP_EQ, COMP_LT, COMP_GT, COMP_LT_EQ, COMP_GT_EQ, COMP_NOT_EQ = 'COMP_EQ', 'COMP_LT', 'COMP_GT', 'COMP_LT_EQ', \
-                                                                             'COMP_GT_EQ', 'COMP_NOT_EQ'
-CMD_LINE_START, COMMENT = 'CMD_LINE_START', 'COMMENT'
-RESERVED = 'True', 'False', 'None'
+LPAR, RPAR, COMMA, LSQRBR, RSQRBR, ASSIGN, ASSIGN_PLUS, NEWLINE = 'LPAR', 'RPAR', 'COMMA', 'LSQRBR', 'RSQRBR', 'ASSIGN', 'ASSIGN_PLUS', 'NEWLINE'
+IF, ELSE, ENDIF, WHILE, ENDWHILE, FOR, IN, ENDFOR = 'IF', 'ELSE', 'ENDIF', 'WHILE', 'ENDWHILE', 'FOR', 'IN', 'ENDFOR'
+
+OPERATORS = COMP_EQ, COMP_LT, COMP_GT, COMP_LT_EQ, COMP_GT_EQ, COMP_NOT_EQ, ADD, SUB, DIV, MULT = 'COMP_EQ', 'COMP_LT', 'COMP_GT', 'COMP_LT_EQ', \
+                                                                                                  'COMP_GT_EQ', 'COMP_NOT_EQ', 'ADD', 'SUB', 'DIV', 'MULT'
+CMD_LINE_START, COMMENT, CMD_BLOCK = 'CMD_LINE_START', 'COMMENT', 'CMD_BLOCK'
+RESERVED = 'True', 'False', 'None', 'for', 'in', 'while', 'endwhile', 'endif', 'if', 'else', 'endfor'
 
 
 class Token:
@@ -43,6 +45,7 @@ class Tokenizer:
         self._line = 0
         self._token = None
         self._ctx = ctx
+        self._text = ''
 
         self.update_position()
 
@@ -107,23 +110,58 @@ class Tokenizer:
             self._advance()
             self._advance()
 
-        elif self.get_chr() == 'e' and self.lookahead(3) == 'lse':
-            token = Token(ELSE)
-
-            for i in range(0, len('else')):
-                self._advance()
-
         elif self.get_chr() == 'e' and self.lookahead(4) == 'ndif':
             token = Token(ENDIF)
 
             for i in range(0, len('endif')):
                 self._advance()
 
+        elif self.get_chr() == 'e' and self.lookahead(3) == 'lse':
+            token = Token(ELSE)
+
+            for i in range(0, len('else')):
+                self._advance()
+
+        elif self.get_chr() == 'e' and self.lookahead(7) == 'ndwhile':
+            token = Token(ENDWHILE)
+
+            for i in range(0, len('endwhile')):
+                self._advance()
+
+        elif self.get_chr() == 'e' and self.lookahead(5) == 'ndfor':
+            token = Token(ENDFOR)
+
+            for i in range(0, len('endfor')):
+                self._advance()
+
+        elif self.get_chr() == 'w' and self.lookahead(4) == 'hile':
+            token = Token(WHILE)
+
+            for i in range(0, len('while')):
+                self._advance()
+
+        elif self.get_chr() == 'f' and self.lookahead(2) == 'or':
+            token = Token(FOR)
+            self._advance()
+            self._advance()
+            self._advance()
+
+        elif self.get_chr() == 'i' and self.lookahead(2) == 'n':
+            token = Token(IN)
+            self._advance()
+            self._advance()
+
         elif self.get_chr().isalpha() or self.get_chr() == '_':
             token = self._consume_symbol()
 
         elif self.get_chr().isnumeric():
             token = self._consume_integer()
+
+        elif self.get_chr() == '#' and self.lookahead(2) == '::':
+            token = Token(CMD_BLOCK)
+            self._advance()
+            self._advance()
+            self._advance()
 
         elif self.get_chr() == '#':
             if self.lookahead() == ':':
@@ -159,6 +197,27 @@ class Tokenizer:
 
         elif self.get_chr() == ',':
             token = Token(COMMA, ',')
+            self._advance()
+
+        elif self.get_chr() == '+' and self.lookahead() == '=':
+            token = Token(ASSIGN_PLUS, '+=')
+            self._advance()
+            self._advance()
+
+        elif self.get_chr() == '+':
+            token = Token(ADD, '+')
+            self._advance()
+
+        elif self.get_chr() == '-':
+            token = Token(ADD, '-')
+            self._advance()
+
+        elif self.get_chr() == '/':
+            token = Token(DIV, '/')
+            self._advance()
+
+        elif self.get_chr() == '*':
+            token = Token(MULT, '*')
             self._advance()
 
         elif self.get_chr() == '=':
@@ -203,7 +262,8 @@ class Tokenizer:
     def _consume_symbol(self):
         name = ''
 
-        while (self.get_chr() is not None) and (self.get_chr().isalpha() or self.get_chr().isnumeric() or self.get_chr() == '_'):
+        while (self.get_chr() is not None) and (
+                self.get_chr().isalpha() or self.get_chr().isnumeric() or self.get_chr() == '_'):
             name += self.get_chr()
             self._advance()
 
