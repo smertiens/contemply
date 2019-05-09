@@ -5,6 +5,7 @@ propname = 'notempty'
 
 props = []
 
+echo("Let us start adding class properties")
 while propname != ''
     propname = ask('What is the property called? (Leave empty to finish editing properties)')
 
@@ -21,14 +22,13 @@ while propname != ''
 endwhile
 
 #::
-
 #: if parentclass != ''
 class $classname($parentclass):
 #: else
 class $classname:
 #: endif
 
-    def __init__():
+    def __init__(self):
 #: for item in props
 #: if item[2] == 'String'
         self.$item[1] = ''
@@ -46,10 +46,10 @@ class $classname:
 
 #: for item in props
 #: if item[3] == True
-     def set_$item[0](value):
+    def set_$item[0](self, value):
         self.$item[1] = value
 
-     def get_$item[0]():
+    def get_$item[0](self):
         return self.$item[1]
 
 #: endif
