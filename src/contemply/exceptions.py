@@ -9,6 +9,10 @@ __all__ = ['TemplateException', 'ParserError', 'SyntaxError']
 
 
 class TemplateException(Exception):
+    """
+    Base class for exceptions that have a TemplateContext.
+    Using the template context this class can output the corresponding line and column in the script
+    """
 
     def __init__(self, message, ctx=None):
         super().__init__(message)

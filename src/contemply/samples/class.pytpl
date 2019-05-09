@@ -1,5 +1,6 @@
 #::
 classname = ask('What it the name of your class?')
+parentclass = ask('Does your class have a parent class? Leave empty for none.')
 propname = 'notempty'
 
 props = []
@@ -20,7 +21,12 @@ while propname != ''
 endwhile
 
 #::
+
+#: if parentclass != ''
+class $classname($parentclass):
+#: else
 class $classname:
+#: endif
 
     def __init__():
 #: for item in props

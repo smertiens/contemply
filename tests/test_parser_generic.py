@@ -98,8 +98,4 @@ def test_simple_expressions():
     result = parser.parse('\n'.join(text))
     assert result == []
 
-def test_list_index():
 
-    parser = TemplateParser()
-    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse("#: list = ['item 1']\n#: echo(list[0])")

@@ -192,8 +192,9 @@ class Parser:
         else:
             index = None
             if self._token.type() == LSQRBR:
-                index = self._consume_next_token(LSQRBR).value()
                 self._token = self._consume_next_token(LSQRBR)
+                index = self._token.value()
+                self._token = self._consume_next_token(INTEGER)
                 self._token = self._consume_next_token(RSQRBR)
 
             node = Variable(name, index)
@@ -219,7 +220,7 @@ class Parser:
         elif self._token.type() == LSQRBR:
             node = self._consume_list()
         else:
-            self._raise_error('Unexpected token-type: ' + self._token.type())
+            raise ParserError('Unexpected token-type: ' + self._token.type(), self._ctx)
         return node
 
     def _consume_statement(self):

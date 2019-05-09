@@ -1,5 +1,0 @@
-#: liste = ['hello']
-#: liste += 'world'
-#: for item in liste
-Item $item
-#: endfor
