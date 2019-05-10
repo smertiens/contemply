@@ -10,7 +10,7 @@ with open('requirements.txt', 'r') as fh:
 
 setuptools.setup(
     name='contemply',
-    version='1.0.0a4',
+    version='1.0.0a5',
     packages=setuptools.find_packages('src'),
     package_dir={'': 'src'},
     classifiers=[
@@ -33,6 +33,10 @@ setuptools.setup(
 
     install_requires=requirements,
     python_requires='>=3.4',
+
+    package_data={
+        'contemply': ['samples/*', 'LICENSE'],
+    },
 
     entry_points={
         'console_scripts': [

@@ -29,55 +29,152 @@ class TemplateContext:
         self._pos = 0
 
     def set_text(self, text):
+        """
+        Sets the lines for parsing
+
+        :param list text: A list with lines to parse
+        :return:
+        """
         self._text = text
 
     def text(self):
+        """
+        Returns the lines to parse
+
+        :return: List with lines to parse
+        """
         return self._text
 
     def set_filename(self, val):
+        """
+        Sets the path of the template file.
+
+        :param str val: Path to a template file
+        """
         self._filename = val
 
     def set_line(self, val):
+        """
+        Sets the current line. Should usually not be used.
+
+        :param int val: line number
+        """
         self._line = val
 
     def set_pos(self, val):
+        """
+        Sets the current position inside the line (column)
+
+        :param int val: The current character position
+        """
         self._pos = val
 
     def filename(self):
+        """
+        Returns the current template file
+
+        :return: Path to template file
+        :rtype: str
+        """
         return self._filename
 
     def line(self):
+        """
+        Returns the current line in the template file
+
+        :return: Line  number
+        :rtype: int
+        """
         return self._line
 
     def pos(self):
+        """
+        Returns the current character position inside the template file line
+        :return: Character position
+        :rtype: int
+        """
         return self._pos
 
     def set_outputfile(self, file):
+        """
+        Sets the path to the output file under which the rendered template is saved (can be set form within the
+        template via setOutput())
+
+        :param str file: Path to the file (can be relative to the current directory)
+        """
         self._outputfile = file
 
     def outputfile(self):
+        """
+        Returns the path to the outputfile
+
+        :return: Path to outputfile
+        :rtype: str
+        """
         return self._outputfile
 
-    def set(self, k, v):
-        self._data[k] = v
+    def set(self, varname, v):
+        """
+        Sets the value of a variable
 
-    def get(self, k):
+        :param str varname: The name of the variable
+        :param Any v: Variable value
+        """
+        self._data[varname] = v
+
+    def get(self, varname):
+        """
+        Returns the value of a variable
+
+        :param str varname: Name of the variable
+        :return: Variable value
+        :rtype: Any
+        :raises: ParserError
+        """
         try:
-            return self._data[k]
+            return self._data[varname]
         except KeyError:
-            raise ParserError('Unknown variable: {0}'.format(k), self)
+            raise ParserError('Unknown variable: {0}'.format(varname), self)
 
-    def has(self, k):
-        return k in self._data
+    def has(self, varname):
+        """
+        Checks whether a variable with the given name exists.
+
+        :param str varname: Name of the variable
+        :return: True if variable exists, False if not
+        :rtype: bool
+        """
+        return varname in self._data
 
     def get_all(self):
+        """
+        Returns a dictionary with all the variables
+
+        :return: A dictionary with all defined variables
+        :rtype: dict
+        """
         return self._data
 
     def set_position(self, line, col):
+        """
+        Sets the current position inside the template. Should not be used.
+
+        :param int line: The new line
+        :param int col: THe new column
+        """
         self.set_line(line)
         self.set_pos(col)
 
     def process_variables(self, text):
+        """
+        Replaces variabels inside a string.
+        The content line notation is used (variable names start with a $).
+        Variable names and values are taken from this TemplateContexte instance.
+
+        :param str text: The text to parse
+        :return: The parsed text
+        :rtype: str
+        """
 
         def check_and_replace(match):
             varname = match.group(1)[1:]  # strip trailing $
@@ -374,15 +471,41 @@ class TemplateParser:
         self._output_mode = self.OUTPUTMODE_FILE
 
     def get_logger(self):
+        """
+        Returns the logger instance for the parser.
+        This loggers level will also be used for the tokenizer and interpreter.
+
+        :returns: Logger instance
+        :rtype: logging.Logger
+        """
         return logging.getLogger(self.__module__)
 
     def get_template_context(self):
+        """
+        Returns the current template context instance
+
+        :return: The current template context
+        :rtype: TemplateContext
+        """
         return self._ctx
 
     def set_output_mode(self, mode):
+        """
+        Sets the parsers output mode. If set to "console", the parsed template is output to the
+        console. Defaults to OUTPUTMODE_FILE.
+
+        :param mode: TemplateParser.OUTPUTMODE_CONSOLE | TemplateParser.OUTPUTMODE_FILE
+        """
         self._output_mode = mode
 
     def parse_file(self, filename):
+        """
+        Parses the given filename
+
+        :param str filename: The path to a file to parse
+        :return: A list containing the lines of the parsed template
+        :rtype: list
+        """
         self._ctx.set_filename(os.path.basename(filename))
 
         with open(filename, 'r') as f:
@@ -394,6 +517,14 @@ class TemplateParser:
         return self.parse()
 
     def parse(self, text=None):
+        """
+        Parses the given text. If no text is set, the parser will parse the content of the current
+        TemplateContext.
+
+        :param str text: A text to parse
+        :return: A list containing the lines of the parsed template
+        :rtype: list
+        """
         if text is not None:
             self._ctx.set_text(text.split('\n'))
             self._ctx.set_filename('')

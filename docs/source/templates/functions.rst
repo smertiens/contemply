@@ -88,4 +88,9 @@ Template functions
         #: username = env("USER")
         #: echo ("Hello $username!")
 
-.. todo:: Add more functions
+
+.. py:function:: setOutput(filename)
+
+    Sets the name of the outputfile. If no outputfile is set, the user will be prompted to enter a filename.
+
+    :param str filename: The name of the file (may contain variables). Either absolute or relative to the current directory

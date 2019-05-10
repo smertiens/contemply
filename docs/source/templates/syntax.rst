@@ -24,6 +24,23 @@ Contemply expression, one per line. The command line syntax is very similar to P
 languages. Take a look at the README file or the samples folder in the GitHub Repo to see how it works.
 You can also take a look at :ref:`templatefunctions`.
 
+Command blocks
+--------------
+
+If you have a many command lines in a row, you can use **#::** to toggle a **commmand block**. All lines in
+this block are treated as command lines, sou don't have to start every line with '#:'.
+
+Example:
+
+
+::
+
+    #% Demo of a command block
+    #::
+        echo('Line 1')
+        echo('Line 2')
+    #::
+
 
 Content lines
 *************

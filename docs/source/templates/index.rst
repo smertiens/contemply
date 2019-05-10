@@ -7,3 +7,5 @@ Templates
 
     syntax
     functions
+    loops
+    developer
