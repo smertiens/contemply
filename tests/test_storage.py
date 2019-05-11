@@ -12,25 +12,25 @@ import os
 
 
 @pytest.fixture()
-def pref_instance(tmp_path):
-    os.environ['CONTEMPLY_SETTINGS_FILE'] = os.path.join(str(tmp_path), 'settings.json')
+def pref_instance(tmpdir):
+    os.environ['CONTEMPLY_SETTINGS_FILE'] = os.path.join(str(tmpdir), 'settings.json')
     pref = PreferencesProvider()
     return pref
 
 
-def test_add_path(pref_instance, tmp_path):
+def test_add_path(pref_instance, tmpdir):
     storage = TemplateStorageManager(pref_instance)
     assert storage.list() == {}
 
-    storage.add_location('some_name', str(tmp_path))
-    assert storage.resolve('some_name::hello.pytpl') == os.path.join(str(tmp_path), 'hello.pytpl')
+    storage.add_location('some_name', str(tmpdir))
+    assert storage.resolve('some_name::hello.pytpl') == os.path.join(str(tmpdir), 'hello.pytpl')
     assert 'some_name' in storage.list()
 
 
-def test_remove_path(pref_instance, tmp_path):
+def test_remove_path(pref_instance, tmpdir):
     storage = TemplateStorageManager(pref_instance)
     assert storage.list() == {}
-    storage.add_location('some_name', str(tmp_path))
+    storage.add_location('some_name', str(tmpdir))
     assert 'some_name' in storage.list()
 
     storage.remove_location('some_name')
