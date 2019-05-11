@@ -11,7 +11,7 @@ import os
 
 def test_create_and_save_file(tmp_path):
     # overwrite settings file
-    os.environ['CONTEMPLY_SETTINGS_FILE'] = os.path.join(tmp_path, 'settings.json')
+    os.environ['CONTEMPLY_SETTINGS_FILE'] = os.path.join(str(tmp_path), 'settings.json')
 
     assert not os.path.exists(os.environ['CONTEMPLY_SETTINGS_FILE'])
 
@@ -23,7 +23,7 @@ def test_create_and_save_file(tmp_path):
 
 def test_save_and_load(tmp_path):
     # overwrite settings file
-    os.environ['CONTEMPLY_SETTINGS_FILE'] = os.path.join(tmp_path, 'settings.json')
+    os.environ['CONTEMPLY_SETTINGS_FILE'] = os.path.join(str(tmp_path), 'settings.json')
 
     pref = PreferencesProvider()
     pref.set('hello', 'world')
@@ -36,7 +36,7 @@ def test_save_and_load(tmp_path):
 
 def test_get_default(tmp_path):
     # overwrite settings file
-    os.environ['CONTEMPLY_SETTINGS_FILE'] = os.path.join(tmp_path, 'settings.json')
+    os.environ['CONTEMPLY_SETTINGS_FILE'] = os.path.join(str(tmp_path), 'settings.json')
 
     pref = PreferencesProvider()
     assert pref.get('not_existing', 'default') == 'default'

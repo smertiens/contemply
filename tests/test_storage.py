@@ -13,7 +13,7 @@ import os
 
 @pytest.fixture()
 def pref_instance(tmp_path):
-    os.environ['CONTEMPLY_SETTINGS_FILE'] = os.path.join(tmp_path, 'settings.json')
+    os.environ['CONTEMPLY_SETTINGS_FILE'] = os.path.join(str(tmp_path), 'settings.json')
     pref = PreferencesProvider()
     return pref
 
@@ -23,7 +23,7 @@ def test_add_path(pref_instance, tmp_path):
     assert storage.list() == {}
 
     storage.add_location('some_name', tmp_path)
-    assert storage.resolve('some_name::hello.pytpl') == os.path.join(tmp_path, 'hello.pytpl')
+    assert storage.resolve('some_name::hello.pytpl') == os.path.join(str(tmp_path), 'hello.pytpl')
     assert 'some_name' in storage.list()
 
 
