@@ -12,3 +12,5 @@ Make sure you also take a look at the builtin samples: https://github.com/smerti
 
     intro
     templates/index
+    storage
+    developer
