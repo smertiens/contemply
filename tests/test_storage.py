@@ -22,7 +22,7 @@ def test_add_path(pref_instance, tmp_path):
     storage = TemplateStorageManager(pref_instance)
     assert storage.list() == {}
 
-    storage.add_location('some_name', tmp_path)
+    storage.add_location('some_name', str(tmp_path))
     assert storage.resolve('some_name::hello.pytpl') == os.path.join(str(tmp_path), 'hello.pytpl')
     assert 'some_name' in storage.list()
 
@@ -30,7 +30,7 @@ def test_add_path(pref_instance, tmp_path):
 def test_remove_path(pref_instance, tmp_path):
     storage = TemplateStorageManager(pref_instance)
     assert storage.list() == {}
-    storage.add_location('some_name', tmp_path)
+    storage.add_location('some_name', str(tmp_path))
     assert 'some_name' in storage.list()
 
     storage.remove_location('some_name')
