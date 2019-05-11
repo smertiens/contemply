@@ -5,7 +5,8 @@
 # For more information on licensing see LICENSE file
 #
 
-__all__ = ['TemplateException', 'ParserError', 'SyntaxError']
+__all__ = ['TemplateException', 'ParserError', 'SyntaxError', 'StorageException', 'InvalidStorageNameException',
+           'StorageNameExistsException', 'StorageNameNotFoundException']
 
 
 class TemplateException(Exception):
@@ -41,4 +42,20 @@ class ParserError(TemplateException):
 
 
 class SyntaxError(TemplateException):
+    pass
+
+
+class StorageException(Exception):
+    pass
+
+
+class InvalidStorageNameException(StorageException):
+    pass
+
+
+class StorageNameExistsException(StorageException):
+    pass
+
+
+class StorageNameNotFoundException(StorageException):
     pass
