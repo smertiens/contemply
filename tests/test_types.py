@@ -5,7 +5,7 @@
 # For more information on licensing see LICENSE file
 #
 from contemply.parser import *
-
+import pytest
 
 def test_list_index():
     parser = TemplateParser()
@@ -19,3 +19,32 @@ def test_list_add():
     result = parser.parse("#: list = ['item 1']\n#: list += 'item 2'")
 
     assert parser.get_template_context().get('list') == ['item 1', 'item 2']
+
+
+def test_string():
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+    result = parser.parse("#: my_str = 'Hello World'")
+    assert parser.get_template_context().get('my_str') == 'Hello World'
+
+    result = parser.parse('#: my_str = "Hello World"')
+    assert parser.get_template_context().get('my_str') == 'Hello World'
+
+    result = parser.parse("#: my_str = 'Hello \"World\"'")
+    assert parser.get_template_context().get('my_str') == 'Hello "World"'
+
+    result = parser.parse('#: my_str = "Hello \'World\'"')
+    assert parser.get_template_context().get('my_str') == "Hello 'World'"
+
+    result = parser.parse('#: my_str = "Hello \'World\'"')
+    assert parser.get_template_context().get('my_str') == "Hello 'World'"
+
+
+def test_string_fail_if_not_terminated():
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+
+    with pytest.raises(SyntaxError):
+        result = parser.parse("#: my_str = 'Hello World")
+
+

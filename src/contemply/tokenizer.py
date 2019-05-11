@@ -191,9 +191,13 @@ class Tokenizer:
             token = Token(RSQRBR, ']')
             self._advance()
 
-        elif self.get_chr() == '"' or self.get_chr() == "'":
+        elif self.get_chr() == '"':
             self._advance()
-            token = self._consume_string()
+            token = self._consume_string('"')
+
+        elif self.get_chr() == "'":
+            self._advance()
+            token = self._consume_string("'")
 
         elif self.get_chr() == ',':
             token = Token(COMMA, ',')
@@ -269,10 +273,13 @@ class Tokenizer:
 
         return Token(SYMBOL, name)
 
-    def _consume_string(self):
+    def _consume_string(self, delim):
         val = ''
 
-        while self.get_chr() is not None and self.get_chr() != '"' and self.get_chr() != "'":
+        while self.get_chr() != delim:
+            if self.get_chr() == '\n' or self.get_chr() is None:
+                raise SyntaxError('Unterminated string', self._ctx)
+
             val += self.get_chr()
             self._advance()
 
