@@ -548,7 +548,7 @@ class TemplateParser:
 
             if outfile == '':
                 # Prompt for outputfile
-                outfile = input('Please enter the filename of the new file: ')
+                outfile = cli.user_input('Please enter the filename of the new file: ')
 
             # replace variables in outputfile
             outfile = self._ctx.process_variables(outfile)

@@ -105,7 +105,7 @@ def get_argument_parser():
 
 
 def print_error(msg):
-    print(Fore.RED + '{0}'.format(msg))
+    print(Fore.RED + '{0}'.format(msg) + Fore.RESET)
 
 
 def header():
@@ -124,6 +124,9 @@ def get_builtin_template(name):
 
 
 def main():
+    # Init colorama
+    init()
+
     subparsers = ['storage:add', 'storage:remove', 'storage:list', 'run']
     arguments = sys.argv
     # Preprocess arguments so the default subparser will be "run"
@@ -151,6 +154,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # Init colorama
-    init()
     main()

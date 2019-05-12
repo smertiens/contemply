@@ -24,7 +24,7 @@ def ask(args, ctx):
     if prompt[-1] != ' ':
         prompt = prompt + ' '
 
-    answer = input(Style.BRIGHT + prompt + Style.RESET_ALL)
+    answer = cli.user_input(Style.BRIGHT + prompt + Style.RESET_ALL)
     return answer
 
 
@@ -44,7 +44,7 @@ def choose(args, ctx):
     correct = False
     answer = 0
     while not correct:
-        answer = input(Style.BRIGHT + 'Your choice: ' + Style.RESET_ALL)
+        answer = cli.user_input(Style.BRIGHT + 'Your choice: ' + Style.RESET_ALL)
 
         if answer.isnumeric() and int(answer) in range(1, len(choices) + 1):
             correct = True
