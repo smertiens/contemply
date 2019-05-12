@@ -34,8 +34,13 @@ There are a number of command line options that you can use:
      - Print output to console instead of creating a new file
    * - \\--no-header
      - If set the header will not be printed
-   * - \\--version
-     - show program's version number and exit
+
+To print the version of Contemply you can use the "version" subcommand:
+
+::
+    contemply version
+
+For further subcommands see :ref:`storage`.
 
 Get support
 ***********

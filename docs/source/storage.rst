@@ -1,6 +1,8 @@
 Template storage
 ================
 
+.. _storage:
+
 Basic usage
 ***********
 
