@@ -13,58 +13,6 @@ from contemply.ast import *
 from contemply.exceptions import *
 
 
-class InterpeterCondition:
-    TYPE_IF, TYPE_ELSE, TYPE_ELSEIF = 'TYPE_IF', 'TYPE_ELSE', 'TYPE_ELSEIF'
-
-    def __init__(self, expr, cond_type):
-        self.expr = expr
-        self.type = cond_type
-
-    def __str__(self):
-        return "Condition {0}, {1}".format(self.type, self.expr)
-
-    def __repr__(self):
-        return self.__str__()
-
-
-class WhileLoop:
-
-    def __init__(self, node, target_line):
-        self.node = node
-
-        # the line where the loop starts.
-        self.target_line = target_line
-        self.iterations = 0
-
-    def increment_iterations(self):
-        self.iterations += 1
-
-    def __str__(self):
-        return "While {0}".format(self.node.expr)
-
-    def __repr__(self):
-        return self.__str__()
-
-
-class ForLoop:
-
-    def __init__(self, node, target_line):
-        self.node = node
-
-        # the line where the loop starts.
-        self.target_line = target_line
-        self.iterations = 0
-
-    def increment_iterations(self):
-        self.iterations += 1
-
-    def __str__(self):
-        return "For {0} in {1}".format(self.node.itemvar, self.node.listvar)
-
-    def __repr__(self):
-        return self.__str__()
-
-
 class Interpreter:
     MAX_LOOP_RUNS = 10  # 10000
 
@@ -76,11 +24,11 @@ class Interpreter:
         }
 
         self._tree = []
-        self._conditions = []
-        self._loops = []
-        self._skip_until = None
         self._ctx = ctx
         self._line = 0
+
+        self._break_current_loop = None
+        self._loops_running = 0
 
         self._parsed_template = []
 
@@ -94,30 +42,8 @@ class Interpreter:
     def get_parsed_template(self):
         return self._parsed_template
 
-    def _skip_due_to_conditions(self):
-        result = False
-        for cond in self._conditions:
-            if (cond.type == InterpeterCondition.TYPE_IF and not cond.expr) or \
-                    (cond.type == InterpeterCondition.TYPE_ELSE and cond.expr):
-                result = True
-
-        return result
-
-    def _get_active_loop(self):
-        try:
-            return self._loops[-1]
-        except IndexError:
-            return None
-
     def _cleanup(self):
-        if len(self._conditions) > 0:
-            raise ParserError('There is still at least one open IF-block. Expected: ENDIF.', self._ctx)
-
-        if len(self._loops) > 0:
-            raise ParserError('There is still at least one open loop-block. Expected: ENDWHILE.', self._ctx)
-
-        if self._skip_until is not None:
-            raise ParserError('Unexpected end of template. Expected: {0}'.format(self._skip_until.__name__), self._ctx)
+        pass
 
     ##########################
     # Internal functions
@@ -132,20 +58,6 @@ class Interpreter:
     def _internal_func__debugDumpStack(self, args):
         print(self._ctx.get_all())
 
-    def _internal_func_break(self, args):
-        if len(args) > 0:
-            raise ParserError('break() taktes no arguments', self._ctx)
-
-        try:
-            active_loop = self._loops.pop()
-        except IndexError:
-            raise ParserError('Not in a loop.', self._ctx)
-
-        if isinstance(active_loop, WhileLoop):
-            self._skip_until = Endwhile
-        elif isinstance(active_loop, ForLoop):
-            self._skip_until = Endfor
-
     ##########################
     # Node visitors
     ##########################
@@ -153,7 +65,7 @@ class Interpreter:
     def visit(self, node):
         method_name = 'visit_' + type(node).__name__.lower()
         visitor = getattr(self, method_name, self.fallback_visit)
-        #print('Visiting: ' + type(node).__name__)
+        # print('Visiting: ' + type(node).__name__)
         return visitor(node)
 
     def fallback_visit(self, node):
@@ -174,6 +86,12 @@ class Interpreter:
             return call(args, self._ctx)
         else:
             raise ParserError("Unknown function: {0}".format(func), self._ctx)
+
+    def visit_break(self, node):
+        if self._loops_running <= 0:
+            raise ParserError("Unexpected BREAK: no surrounding loop found", self._ctx)
+
+        self._break_current_loop = True
 
     def visit_argumentlist(self, node):
         args = []
@@ -215,32 +133,16 @@ class Interpreter:
         for item in node.children:
             self.visit(item)
 
-    def visit_contentline(self, node):
-        if self._skip_until is not None:
-            # we can skip every contentline
-            return
+            if self._break_current_loop is True:
+                # Do not process any more statements from this block
+                break
 
-        if not self._skip_due_to_conditions():
-            line = self._ctx.process_variables(node.content)
-            self._parsed_template.append(line)
+    def visit_contentline(self, node):
+        line = self._ctx.process_variables(node.content)
+        self._parsed_template.append(line)
 
     def visit_commandline(self, node):
-        if (self._skip_until is not None) and (not isinstance(node.statement, self._skip_until)) \
-                and (not type(node.statement) in [Endif, Else, If]):
-            # this makes sure that conditionals are seen, otherwise a ParserError would be raised
-            # because there could be unclosed if-blocks remaining when using break() in a loop
-            return
-        elif self._skip_until is not None and isinstance(node.statement, self._skip_until):
-            # we have reached the desired statement
-            self._skip_until = None
-            # skip this statement (skip_until means "including the given statement")
-            return
-
-        if type(node.statement) not in [Endif, Else]:
-            if not self._skip_due_to_conditions():
-                self.visit(node.statement)
-        else:
-            self.visit(node.statement)
+        self.visit(node.statement)
 
     def visit_assignment(self, node):
         if node.type == 'ASSIGN':
@@ -274,11 +176,21 @@ class Interpreter:
             self.visit(node._else)
 
     def visit_while(self, node):
-        if self.visit(node.expr):
-            self._loops.append(WhileLoop(node, self._line))
-        else:
-            # while condition not True -> skip next while block until ENDWHILE is discovered
-            self._skip_until = Endwhile
+        counter = 0
+        self._loops_running += 1
+
+        while (self.visit(node.expr)):
+            if counter >= self.MAX_LOOP_RUNS:
+                raise ParserError("Maximum loop iterations of {0} reached.".format(self.MAX_LOOP_RUNS))
+            self.visit(node.block)
+
+            if self._break_current_loop:
+                self._break_current_loop = False
+                break
+
+            counter += 1
+
+        self._loops_running -= 1
 
     def visit_for(self, node):
         # Check listvar
@@ -289,71 +201,25 @@ class Interpreter:
 
         # No elements in list, no sense in running loop
         if len(listvar) == 0:
-            self._skip_until = Endfor
             return
 
-        # Initialize itemvar
-        self._ctx.set(node.itemvar.name, listvar[0])
-        self._loops.append(ForLoop(node, self._line))
+        self._loops_running += 1
 
-        # Since we're now running the loop for the first time, we also need to increment the counter
-        self._loops[-1].increment_iterations()
+        for item in listvar:
+            if self._break_current_loop:
+                self._break_current_loop = False
+                break
 
-    def visit_endfor(self, node):
-        # Get active loop
-        try:
-            active_loop = self._loops[-1]
-        except IndexError:
-            raise ParserError('Unexpected ENDFOR', self._ctx)
+            self._ctx.set(node.itemvar.name, item)
+            self.visit(node.block)
 
-        # Check whether it's the loop we're looking for
-        if not isinstance(active_loop, ForLoop):
-            raise ParserError('Active loop is not a for loop.', self._ctx)
-
-        # check if we're done with iterating
-        listvar = self.visit(active_loop.node.listvar)
-        if not active_loop.iterations < len(listvar):
-            self._loops.pop()
-        else:
-            # set itemvar to new value
-            self._ctx.set(active_loop.node.itemvar.name, listvar[active_loop.iterations])
-            # jump to start of loop and run again from there
-            self._line = active_loop.target_line
-            active_loop.increment_iterations()
-
-    def visit_endwhile(self, node):
-        try:
-            active_loop = self._loops[-1]
-        except IndexError:
-            raise ParserError('Unexpected ENDWHILE', self._ctx)
-
-        if not isinstance(active_loop, WhileLoop):
-            raise ParserError('Active loop is not a while loop.', self._ctx)
-
-        if not self.visit(active_loop.node.expr):
-            # the condition of the active loop does not match anymore so we can remove the loop from the stack
-            self._loops.pop()
-        else:
-            if active_loop.iterations >= self.MAX_LOOP_RUNS:
-                raise ParserError("Maximum loop iterations of {0} reached.".format(self.MAX_LOOP_RUNS))
-
-            # jump back to the loop's start and increment the number of loop runs
-            self._line = active_loop.target_line
-            active_loop.increment_iterations()
+        self._loops_running -= 1
 
     def visit_else(self, node):
-        try:
-            self._conditions.pop()
-        except IndexError:
-            raise ParserError("Unexpected ELSE", self._ctx)
-
-        self._conditions.append(InterpeterCondition(self.visit(node.condition), InterpeterCondition.TYPE_ELSE))
+        pass
 
     def visit_endif(self, node):
-        try:
-            self._conditions.pop()
-        except IndexError:
-            raise ParserError("Unexpected ENDIF", self._ctx)
+        pass
 
     def visit_simpleexpression(self, node):
         lval = self.visit(node.lval)

@@ -28,7 +28,7 @@ class TemplateException(Exception):
                 marker = '{0}^'.format(' ' * self.ctx.pos())
 
             return '{6} in {1}, line {2}, col {3}: {0}\n{4}\n{5}'.format(self.message, self.ctx.filename(),
-                                                                         self.ctx.line(), self.ctx.pos(),
+                                                                         self.ctx.line(), self.ctx.line_pos(),
                                                                          line, marker, self.__class__.__name__)
         else:
             return '{1}: {0}'.format(self.message, self.__class__.__name__)

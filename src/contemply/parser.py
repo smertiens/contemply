@@ -27,6 +27,7 @@ class TemplateContext:
         self._filename = ''
         self._line = 0
         self._pos = 0
+        self._line_pos = 0
 
     def set_text(self, text):
         """
@@ -63,11 +64,30 @@ class TemplateContext:
 
     def set_pos(self, val):
         """
-        Sets the current position inside the line (column)
+        Sets the current position inside the text (column)
 
         :param int val: The current character position
         """
+        diff =  val - self._pos
         self._pos = val
+        self._line_pos = self._line_pos +  diff
+
+    def set_line_pos(self, val):
+        """
+        Sets the current position inside the line (column)
+        Only used for error messages
+
+        :param int val: The current character position
+        """
+        self._line_pos = val
+
+    def line_pos(self):
+        """
+        Gets the current position inside the line (column)
+        Only used for error messages
+        """
+        return self._line_pos
+
 
     def filename(self):
         """
@@ -208,9 +228,7 @@ class Parser:
         self._tokenizer = tokenizer
         self._ctx = ctx
 
-        self._conditions = []
         self._cmd_block_mode = False
-
 
     def _raise_error(self, msg):
         raise ParserError(msg, self._ctx)
@@ -232,7 +250,7 @@ class Parser:
 
             if peek.type() == COMMENT:
                 self._tokenizer.skip_until('\n')
-                self._token = self._tokenizer.get_next_token() # NEWLINE or EOF
+                self._token = self._tokenizer.get_next_token()  # NEWLINE or EOF
 
             elif peek.type() == CMD_BLOCK:
                 self._token = self._tokenizer.get_next_token()
@@ -258,6 +276,9 @@ class Parser:
             if self._token.type() not in (NEWLINE, EOF):
                 raise InternalError('Statments did not consume whole line, got ' + self._token.type() + ' instead.',
                                     self._ctx)
+            else:
+                self._ctx.set_line(self._ctx.line() + 1)
+                self._ctx.set_line_pos(0)
 
         return node
 
@@ -324,12 +345,32 @@ class Parser:
             raise ParserError('Unexpected token-type: ' + self._token.type(), self._ctx)
         return node
 
+    def _consume_while_loop(self):
+        self._token = self._consume_next_token(WHILE)
+        expr = self._consume_expression(True)
+        block = self._consume_block((EOF, ENDWHILE))
+        node = While(expr, block)
+        self._token = self._consume_next_token(ENDWHILE)
+
+        return node
+
+    def _consume_for_loop(self):
+        self._token = self._consume_next_token(FOR)
+        itemvar = self._consume_symbol()
+        self._token = self._consume_next_token(IN)
+        listvar = self._consume_symbol()
+
+        block = self._consume_block((EOF, ENDFOR))
+        node = For(listvar, itemvar, block)
+        self._token = self._consume_next_token(ENDFOR)
+
+        return node
+
     def _consume_statement(self):
         if self._token.type() == SYMBOL:
             node = self._consume_symbol()
         elif self._token.type() == IF:
             node = self._consume_if_block()
-            #self._conditions.append(node)
         elif self._token.type() == ELSEIF:
             return NoOp()
         elif self._token.type() == ELSE:
@@ -337,34 +378,25 @@ class Parser:
         elif self._token.type() == ENDIF:
             self._token = self._consume_next_token(ENDIF)
             return NoOp()
-
         elif self._token.type() == WHILE:
-            self._token = self._consume_next_token(WHILE)
-            node = While(self._consume_expression(True))
-
+            node = self._consume_while_loop()
         elif self._token.type() == ENDWHILE:
-            node = Endwhile()
-
+            node = NoOp()
         elif self._token.type() == FOR:
-            self._token = self._consume_next_token(FOR)
-            itemvar = self._consume_symbol()
-            self._token = self._consume_next_token(SYMBOL)
-            listvar = self._consume_symbol()
-            node = For(listvar, itemvar)
-
+            node = self._consume_for_loop()
         elif self._token.type() == ENDFOR:
             node = Endfor()
-
+        elif self._token.type() == BREAK:
+            self._token = self._consume_next_token(BREAK)
+            node = Break()
+        elif self._token.type() == NEWLINE:
+            node = NoOp()
         else:
             raise ParserError('Unknown block start: ' + self._token.type(), self._ctx)
 
         return node
 
     def _consume_expression(self, condition_testing=False):
-
-        lval = None
-        op = None
-        rval = None
 
         if self._token.type() in (STRING, INTEGER):
             # Consume primitive type
@@ -517,10 +549,9 @@ class TemplateParser:
         self._ctx.set_filename(os.path.basename(filename))
 
         with open(filename, 'r') as f:
-            lines = []
-            for line in f:
-                lines.append(line)
-            self._ctx.set_text(lines)
+            lines = f.read()
+
+        self._ctx.set_text(lines)
 
         return self.parse()
 

@@ -12,12 +12,12 @@ from contemply.exceptions import *
 # Tokens
 STRING, INTEGER, LIST, SYMBOL, EOF = 'STRING', 'INTEGER', 'LIST', 'SYMBOL', 'EOF',
 LPAR, RPAR, COMMA, LSQRBR, RSQRBR, ASSIGN, ASSIGN_PLUS, NEWLINE = 'LPAR', 'RPAR', 'COMMA', 'LSQRBR', 'RSQRBR', 'ASSIGN', 'ASSIGN_PLUS', 'NEWLINE'
-IF, ELSE, ENDIF, WHILE, ENDWHILE, FOR, IN, ENDFOR, ELSEIF = 'IF', 'ELSE', 'ENDIF', 'WHILE', 'ENDWHILE', 'FOR', 'IN', 'ENDFOR', 'elseif'
+IF, ELSE, ENDIF, WHILE, ENDWHILE, FOR, IN, ENDFOR, ELSEIF, BREAK = 'IF', 'ELSE', 'ENDIF', 'WHILE', 'ENDWHILE', 'FOR', 'IN', 'ENDFOR', 'elseif', 'break'
 
 OPERATORS = COMP_EQ, COMP_LT, COMP_GT, COMP_LT_EQ, COMP_GT_EQ, COMP_NOT_EQ, ADD, SUB, DIV, MULT = 'COMP_EQ', 'COMP_LT', 'COMP_GT', 'COMP_LT_EQ', \
                                                                                                   'COMP_GT_EQ', 'COMP_NOT_EQ', 'ADD', 'SUB', 'DIV', 'MULT'
 CMD_LINE_START, COMMENT, CMD_BLOCK = 'CMD_LINE_START', 'COMMENT', 'CMD_BLOCK'
-RESERVED = 'True', 'False', 'None', 'for', 'in', 'while', 'endwhile', 'endif', 'if', 'else', 'endfor', 'elseif', 'endif'
+RESERVED = 'True', 'False', 'None', 'for', 'in', 'while', 'endwhile', 'endif', 'if', 'else', 'endfor', 'elseif', 'endif', 'break'
 
 
 class Token:
@@ -153,9 +153,13 @@ class Tokenizer:
             token = Token(FOR)
             advance = 3
 
-        elif self.get_chr() == 'i' and self.lookahead(2) == 'n':
+        elif self.get_chr() == 'i' and self.lookahead(2) == 'n ':
             token = Token(IN)
             advance = 2
+
+        elif self.get_chr() == 'b' and self.lookahead(4) == 'reak':
+            token = Token(BREAK)
+            advance = 5
 
         elif self.get_chr().isalpha() or self.get_chr() == '_':
             if peek:
