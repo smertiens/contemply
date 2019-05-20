@@ -71,7 +71,6 @@ class Tokenizer:
 
     def get_chr(self):
         try:
-            # print(self._text[self._pos])
             return self._text[self._pos]
         except IndexError:
             return None
@@ -98,6 +97,10 @@ class Tokenizer:
             self._advance()
 
         return raw
+
+    def skip_until(self, delim='\n'):
+        while self.get_chr() not in delim and self.get_chr() is not None:
+            self._advance()
 
     def get_next_token(self, peek=False):
         """
@@ -212,7 +215,7 @@ class Tokenizer:
                 token = Token(STRING)
             else:
                 self._advance()
-                token = self._consume_string('"')
+                token = self._consume_string("'")
 
         elif self.get_chr() == ',':
             token = Token(COMMA, ',')
@@ -270,7 +273,12 @@ class Tokenizer:
                 advance = 1
 
         else:
-            raise SyntaxError("Unrecognized token at pos {0}".format(self._pos), self._ctx)
+            if peek:
+                # Peek can also look at a contentline at the moment, so some tokens might not be recognized
+                # this should result in a token of uknown type
+                return Token(None)
+            else:
+                raise SyntaxError("Unrecognized token at pos {0}".format(self._pos), self._ctx)
 
         if not peek:
             for i in range(0, advance):

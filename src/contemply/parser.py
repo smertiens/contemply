@@ -30,9 +30,9 @@ class TemplateContext:
 
     def set_text(self, text):
         """
-        Sets the lines for parsing
+        Sets the text for parsing
 
-        :param list text: A list with lines to parse
+        :param str text: The string to parse
         :return:
         """
         self._text = text
@@ -231,7 +231,8 @@ class Parser:
             peek = self._tokenizer.get_next_token(True)
 
             if peek.type() == COMMENT:
-                self._token = self._tokenizer.get_next_token()
+                self._tokenizer.skip_until('\n')
+                self._token = self._tokenizer.get_next_token() # NEWLINE or EOF
 
             elif peek.type() == CMD_BLOCK:
                 self._token = self._tokenizer.get_next_token()

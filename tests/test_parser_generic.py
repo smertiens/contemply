@@ -59,3 +59,16 @@ def test_simple_expressions():
     assert result == []
 
 
+def test_parser_process_special_chars():
+    text = [
+        '#: var1 = "Hello"',
+        '#: if var1 == "Hello"',
+        'a p38 (P=)(§RZ=Pru ÄÖ\'Ö§Ü§§"U304 2Q§3"kljkL"',
+        '::;_;_:;!"§%&/()=?adklköölkk>><<<',
+        '#: endif'
+    ]
+
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+    result = parser.parse('\n'.join(text))
+    assert result == ['a p38 (P=)(§RZ=Pru ÄÖ\'Ö§Ü§§"U304 2Q§3"kljkL"','::;_;_:;!"§%&/()=?adklköölkk>><<<']

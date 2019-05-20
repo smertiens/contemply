@@ -10,8 +10,8 @@ from contemply.parser import TemplateContext
 
 
 def test_token_detection():
-    text = '#: demo = "Hello World"\necho("Function call")\n#: var = ["item1", "item2"]'.split('\n')
-    expected = [CMD_LINE_START, SYMBOL, ASSIGN, STRING, SYMBOL, LPAR, STRING, RPAR,
+    text = '#: demo = "Hello World"\necho("Function call")\n#: var = ["item1", "item2"]'
+    expected = [CMD_LINE_START, SYMBOL, ASSIGN, STRING, NEWLINE, SYMBOL, LPAR, STRING, RPAR, NEWLINE,
                 CMD_LINE_START, SYMBOL, ASSIGN, LSQRBR, STRING, COMMA, STRING, RSQRBR]
 
     actual = []
@@ -20,34 +20,11 @@ def test_token_detection():
     ctx.set_text(text)
     t = Tokenizer(ctx)
 
-    for i, line in enumerate(text):
-        ctx.set_position(i, 0)
-        t.update_position()
+    token = t.get_next_token()
+
+    while token.type() != EOF:
+        actual.append(token.type())
         token = t.get_next_token()
-        while token.type() != EOF:
-            actual.append(token.type())
-            token = t.get_next_token()
 
     assert actual == expected
 
-
-def test_content_token():
-    text = [
-        '#: var = newvalue',
-        'THis ics  asidjoasjidw',
-        'if (something): ',
-        'do something else',
-        '#: echo(var)'
-    ]
-
-    ctx = TemplateContext()
-    ctx.set_text(text)
-    t = Tokenizer(ctx)
-
-    for i, line in enumerate(text):
-        ctx.set_position(i, 0)
-        t.update_position()
-        token = t.get_next_token()
-        while token.type() != EOF:
-            token = t.get_next_token()
-            print(token)
