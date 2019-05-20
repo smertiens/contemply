@@ -29,3 +29,25 @@ def test_token_detection():
             token = t.get_next_token()
 
     assert actual == expected
+
+
+def test_content_token():
+    text = [
+        '#: var = newvalue',
+        'THis ics  asidjoasjidw',
+        'if (something): ',
+        'do something else',
+        '#: echo(var)'
+    ]
+
+    ctx = TemplateContext()
+    ctx.set_text(text)
+    t = Tokenizer(ctx)
+
+    for i, line in enumerate(text):
+        ctx.set_position(i, 0)
+        t.update_position()
+        token = t.get_next_token()
+        while token.type() != EOF:
+            token = t.get_next_token()
+            print(token)

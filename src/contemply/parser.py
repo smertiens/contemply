@@ -202,9 +202,6 @@ class Parser:
     This class will do the actual parsing. It needs a Tokenizer instance and will then create
     an AST from the input tokens that can be interpreted using the Interpreter.
     """
-    CMD_LINE_IDENTIFIER = '#:'
-    CONTEMPLY_COMMENT = '#%'
-    CMD_BLOCK_IDENTIFIER = '#::'
 
     def __init__(self, tokenizer, ctx):
         self._token = None
@@ -213,6 +210,7 @@ class Parser:
 
         self._conditions = []
         self._cmd_block_mode = False
+
 
     def _raise_error(self, msg):
         raise ParserError(msg, self._ctx)
@@ -224,44 +222,52 @@ class Parser:
         root = self._consume_template()
         return root
 
+    def _consume_block(self, delim=(EOF,)):
+        node = Block()
+
+        self._token = Token(None)
+
+        while self._token.type() not in delim:
+            peek = self._tokenizer.get_next_token(True)
+
+            if peek.type() == COMMENT:
+                self._token = self._tokenizer.get_next_token()
+
+            elif peek.type() == CMD_BLOCK:
+                self._token = self._tokenizer.get_next_token()
+                self._cmd_block_mode = not self._cmd_block_mode
+                self._token = self._tokenizer.get_next_token()
+
+            elif peek.type() == CMD_LINE_START or self._cmd_block_mode:
+                if not self._cmd_block_mode:
+                    self._token = self._tokenizer.get_next_token()
+                    self._token = self._tokenizer.get_next_token()
+                else:
+                    self._token = self._tokenizer.get_next_token()
+
+                # Check again for delim since block consumption is non-inclusive
+                if self._token.type() in delim:
+                    return node
+
+                node.children.append(self._consume_cmd_line())
+            else:
+                node.children.append(self._consume_content_line())
+
+            # all statements should consume until NEWLINE or end of file
+            if self._token.type() not in (NEWLINE, EOF):
+                raise InternalError('Statments did not consume whole line, got ' + self._token.type() + ' instead.',
+                                    self._ctx)
+
+        return node
+
     def _consume_template(self):
 
         node = Template()
 
-        # Consume template line by line
-        for i in range(0, len(self._ctx.text())):
-            self._ctx.set_position(i, 0)
-            self._tokenizer.update_position()
+        self._ctx.set_position(0, 0)
+        self._tokenizer.update_position()
 
-            # Contemply comment line: ignore
-            if self._tokenizer.get_chr() + self._tokenizer.lookahead(
-                    len(self.CONTEMPLY_COMMENT) - 1) == self.CONTEMPLY_COMMENT:
-
-                continue
-
-            # Toggle command block
-            elif self._tokenizer.get_chr() + self._tokenizer.lookahead(
-                    len(self.CMD_BLOCK_IDENTIFIER) - 1) == self.CMD_BLOCK_IDENTIFIER:
-
-                self._cmd_block_mode = not self._cmd_block_mode
-                continue
-
-            # Line is a command line orwe are inside a command block, which makes all
-            # lines command lines
-            elif (self._tokenizer.get_chr() + self._tokenizer.lookahead(
-                    len(self.CMD_LINE_IDENTIFIER) - 1) == self.CMD_LINE_IDENTIFIER) or \
-                    self._cmd_block_mode:
-
-                self._token = self._tokenizer.get_next_token()
-
-                # Skip empty lines
-                if self._token.type() == NEWLINE:
-                    continue
-
-                node.children.append(self._consume_cmd_line())
-
-            else:
-                node.children.append(self._consume_content_line())
+        node.main_block = self._consume_block()
 
         return node
 
@@ -272,9 +278,6 @@ class Parser:
             raise ParserError('Unexpected token, got ' + self._token.type() + ' expected ' + ttype, self._ctx)
 
     def _consume_cmd_line(self):
-        if not self._cmd_block_mode:
-            self._token = self._consume_next_token(CMD_LINE_START)
-
         statement = self._consume_statement()
         return CommandLine(statement)
 
@@ -284,7 +287,7 @@ class Parser:
 
         if self._token.type() == LPAR:
             node = self._consume_function(name)
-        elif self._token.type() in [ASSIGN, ASSIGN_PLUS]:
+        elif self._token.type() in (ASSIGN, ASSIGN_PLUS):
             node = self._consume_assignment(name)
         else:
             index = None
@@ -325,24 +328,14 @@ class Parser:
             node = self._consume_symbol()
         elif self._token.type() == IF:
             node = self._consume_if_block()
-            self._conditions.append(node)
+            #self._conditions.append(node)
+        elif self._token.type() == ELSEIF:
+            return NoOp()
         elif self._token.type() == ELSE:
-            try:
-                last_condition = self._conditions.pop()
-                node = Else(last_condition.condition)
-                self._token = self._consume_next_token(ELSE)
-                self._conditions.append(node)
-            except IndexError:
-                raise ParserError("Unexpected token: ELSE", self._ctx)
-
+            return NoOp()
         elif self._token.type() == ENDIF:
-            try:
-                self._conditions.pop()
-            except IndexError:
-                raise ParserError("Unexpected token: ENDIF", self._ctx)
-
             self._token = self._consume_next_token(ENDIF)
-            node = Endif()
+            return NoOp()
 
         elif self._token.type() == WHILE:
             self._token = self._consume_next_token(WHILE)
@@ -372,7 +365,7 @@ class Parser:
         op = None
         rval = None
 
-        if self._token.type() in [STRING, INTEGER]:
+        if self._token.type() in (STRING, INTEGER):
             # Consume primitive type
             lval = self._consume_value()
         elif self._token.type() == LSQRBR:
@@ -394,7 +387,7 @@ class Parser:
             else:
                 return lval
 
-        if self._token.type() in [STRING, INTEGER]:
+        if self._token.type() in (STRING, INTEGER):
             # Consume primitive type
             rval = self._consume_value()
         elif self._token.type() == LSQRBR:
@@ -409,19 +402,33 @@ class Parser:
         return SimpleExpression(lval, op, rval)
 
     def _consume_if_block(self):
-
         self._token = self._consume_next_token(IF)
         cond = self._consume_expression()
-        node = If(cond)
+        block = self._consume_block((ELSE, ENDIF, ELSEIF))
+        node = IFBlock()
+        node._if.append(If(cond, block))
 
+        while self._token.type() != ENDIF:
+
+            if self._token.type() == ELSEIF:
+                self._token = self._consume_next_token(ELSEIF)
+                cond = self._consume_expression()
+                elseif_block = self._consume_block((ELSE, ELSEIF, ENDIF))
+                node._if.append(If(cond, elseif_block))
+
+            elif self._token.type() == ELSE:
+                self._token = self._consume_next_token(ELSE)
+                else_block = self._consume_block((ENDIF,))
+                node._else = else_block
+
+            else:
+                raise ParserError('Expected ENDIF or ELSE.', self._ctx)
+
+        self._token = self._consume_next_token(ENDIF)
         return node
 
-    def _consume_content_line(self, prepend=None):
+    def _consume_content_line(self):
         line = self._tokenizer.get_raw('\n')
-
-        if prepend is not None:
-            line = prepend + line
-
         self._token = self._tokenizer.get_next_token()
         return ContentLine(line)
 
@@ -473,7 +480,7 @@ class TemplateParser:
     def get_logger(self):
         """
         Returns the logger instance for the parser.
-        This loggers level will also be used for the tokenizer and interpreter.
+        This log level will also be used for the tokenizer and interpreter.
 
         :returns: Logger instance
         :rtype: logging.Logger
@@ -526,7 +533,8 @@ class TemplateParser:
         :rtype: list
         """
         if text is not None:
-            self._ctx.set_text(text.split('\n'))
+            # self._ctx.set_text(text.split('\n'))
+            self._ctx.set_text(text)
             self._ctx.set_filename('')
 
         # Create the Tokenizer, Parser and Interpreter instances

@@ -116,3 +116,21 @@ def test_for_empty_list():
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
     result = parser.parse('\n'.join(text))
     assert [] == result
+
+
+def test_for_empty_list_with_nested_if():
+    text = [
+        '#::',
+        'list = []',
+        'for item in list',
+        'if item == "hello"',
+        'echo(item)',
+        'endif',
+        'endfor',
+        '#::'
+    ]
+
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+    result = parser.parse('\n'.join(text))
+    assert [] == result

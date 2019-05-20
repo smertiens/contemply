@@ -5,10 +5,12 @@
 # For more information on licensing see LICENSE file
 #
 
+import logging
+import sys
+
 import contemply.functions
 from contemply.ast import *
 from contemply.exceptions import *
-import logging
 
 
 class InterpeterCondition:
@@ -125,7 +127,7 @@ class Interpreter:
         if len(args) > 0:
             print(args[0])
 
-        quit()
+        sys.exit()
 
     def _internal_func__debugDumpStack(self, args):
         print(self._ctx.get_all())
@@ -151,7 +153,7 @@ class Interpreter:
     def visit(self, node):
         method_name = 'visit_' + type(node).__name__.lower()
         visitor = getattr(self, method_name, self.fallback_visit)
-        # print('Visiting: '+type(node).__name__)
+        #print('Visiting: ' + type(node).__name__)
         return visitor(node)
 
     def fallback_visit(self, node):
@@ -207,15 +209,11 @@ class Interpreter:
         return pylist
 
     def visit_template(self, node):
-        self._line = 0
+        self.visit(node.main_block)
 
-        while self._line < len(node.children):
-            child = node.children[self._line]
-            self.visit(child)
-
-            self._line += 1
-
-        self._cleanup()
+    def visit_block(self, node):
+        for item in node.children:
+            self.visit(item)
 
     def visit_contentline(self, node):
         if self._skip_until is not None:
@@ -260,7 +258,20 @@ class Interpreter:
         return node.value
 
     def visit_if(self, node):
-        self._conditions.append(InterpeterCondition(self.visit(node.condition), InterpeterCondition.TYPE_IF))
+        if self.visit(node.condition):
+            self.visit(node.block)
+            return True
+        else:
+            return False
+
+    def visit_ifblock(self, node):
+        results = []
+        for item in node._if:
+            results.append(self.visit(item))
+
+        if True not in results and node._else is not None:
+            # all conditions returned false -> execute else block
+            self.visit(node._else)
 
     def visit_while(self, node):
         if self.visit(node.expr):

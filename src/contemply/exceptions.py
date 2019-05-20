@@ -6,7 +6,7 @@
 #
 
 __all__ = ['TemplateException', 'ParserError', 'SyntaxError', 'StorageException', 'InvalidStorageNameException',
-           'StorageNameExistsException', 'StorageNameNotFoundException']
+           'StorageNameExistsException', 'StorageNameNotFoundException', 'InternalError']
 
 
 class TemplateException(Exception):
@@ -38,6 +38,10 @@ class TemplateException(Exception):
 
 
 class ParserError(TemplateException):
+    pass
+
+
+class InternalError(TemplateException):
     pass
 
 

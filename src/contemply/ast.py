@@ -12,6 +12,7 @@ class AST:
 class Template(AST):
 
     def __init__(self):
+        self.main_block = None
         self.children = []
 
 
@@ -93,16 +94,30 @@ class CommandLine(AST):
         self.statement = statement
 
 
+class Block(AST):
+    def __init__(self):
+        self.children = []
+
+
+class IFBlock(AST):
+
+    def __init__(self):
+        self._if = []
+        self._else = None
+
+
 class If(AST):
 
-    def __init__(self, condition):
+    def __init__(self, condition, block):
         self.condition = condition
+        self.block = block
 
 
 class Else(AST):
 
     def __init__(self, condition):
         self.condition = condition
+        self.lines = []
 
 
 class List(AST):
