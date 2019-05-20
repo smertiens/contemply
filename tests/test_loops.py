@@ -56,6 +56,32 @@ def test_nested_while_loop():
             'inner: 0', 'inner: 1', 'inner: 2'] == result
 
 
+def test_while_loop_break():
+    text = [
+        '#: num = 0',
+        '#: while num <= 5',
+        'This run no. $num',
+        '#: if num == 3',
+        '#: break',
+        'This should not be processed',
+        '#: endif',
+        '#: num = num + 1',
+        '#: endwhile'
+    ]
+
+    expected = [
+        'This run no. 0',
+        'This run no. 1',
+        'This run no. 2',
+        'This run no. 3'
+    ]
+
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+    result = parser.parse('\n'.join(text))
+    assert result == expected
+
+
 def test_while_loop_max_runs():
     text = [
         '#: while True',
@@ -81,6 +107,21 @@ def test_for_loop():
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
     result = parser.parse('\n'.join(text))
     assert ['Found item 1', 'Found item 2', 'Found item 2'] == result
+
+
+def test_for_loop_break():
+    text = [
+        '#: list = ["item 1", "item 2", "item 3"]',
+        '#: for item in list',
+        'Found $item',
+        '#: break',
+        '#: endfor'
+    ]
+
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+    result = parser.parse('\n'.join(text))
+    assert result == ['Found item 1']
 
 
 def test_for_nested_loop():
@@ -116,3 +157,63 @@ def test_for_empty_list():
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
     result = parser.parse('\n'.join(text))
     assert [] == result
+
+
+def test_for_empty_list_with_nested_if():
+    text = [
+        '#::',
+        'list = []',
+        'for item in list',
+        'if item == "hello"',
+        'echo(item)',
+        'endif',
+        'endfor',
+        '#::'
+    ]
+
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+    result = parser.parse('\n'.join(text))
+    assert [] == result
+
+
+def test_mixed_nested_loops_break():
+    text = [
+        '#::',
+        'list = ["item 1", "item 2", "item 3"]',
+        'for item in list',
+        '#::',
+        'Hello $item',
+        '#: num = 0',
+        '#: while True',
+        '#: if num == 2',
+        '#: break',
+        '#: endif',
+        'This is number $num',
+        '#: num = num + 1',
+        '#: endwhile',
+        '#: if item == "item 2"',
+        '#: break',
+        '#: endif',
+        '#: endfor',
+    ]
+
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+    result = parser.parse('\n'.join(text))
+    assert ['Hello item 1', 'This is number 0', 'This is number 1', 'Hello item 2', 'This is number 0', 'This is number 1'] == result
+
+def test_wrong_break():
+    text = [
+        '#::',
+        'list = []',
+        'break',
+        '#::'
+    ]
+
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+
+    with pytest.raises(ParserError):
+        # Unexpected break
+        result = parser.parse('\n'.join(text))

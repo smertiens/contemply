@@ -41,6 +41,10 @@ def storage_list(args, storage, preferences):
         print_error(str(e))
 
 
+def show_version(args, storage, preferences):
+    print('Contemply version {0}'.format(contemply.__version__))
+
+
 def template_parse(args, storage, preferences):
     if args.template_file.startswith('samples:'):
         file = get_builtin_template(args.template_file.split(':')[1])
@@ -90,6 +94,9 @@ def get_argument_parser():
     storage_list_parser = subparsers.add_parser('storage:list')
     storage_list_parser.set_defaults(func=storage_list)
 
+    version_parser = subparsers.add_parser('version')
+    version_parser.set_defaults(func=show_version)
+
     template_parser = subparsers.add_parser('run')
     template_parser.add_argument('template_file', metavar='TEMPLATE', type=str,
                                  help='The template file you want to run')
@@ -97,15 +104,16 @@ def get_argument_parser():
                                  action="store_true")
     template_parser.set_defaults(func=template_parse)
 
-    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
-    parser.add_argument("--no-header", help="If set  the header will not be printed", action="store_true")
-    parser.add_argument('--version', action='version', version='%(prog)s {0}'.format(contemply.__version__))
+    # Add common parser options to all subparsers
+    for sub in [storage_add_parser, storage_del_parser, storage_list_parser, template_parser, version_parser]:
+        sub.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+        sub.add_argument("--no-header", help="If set  the header will not be printed", action="store_true")
 
     return parser
 
 
 def print_error(msg):
-    print(Fore.RED + '{0}'.format(msg))
+    print(Fore.RED + '{0}'.format(msg) + Fore.RESET)
 
 
 def header():
@@ -124,13 +132,16 @@ def get_builtin_template(name):
 
 
 def main():
-    subparsers = ['storage:add', 'storage:remove', 'storage:list', 'run']
+    # Init colorama
+    init()
+
+    subparsers = ['storage:add', 'storage:remove', 'storage:list', 'run', 'version']
     arguments = sys.argv
     # Preprocess arguments so the default subparser will be "run"
-    if len(arguments) == 2:
-        if arguments[1] not in subparsers:
-            # add default subparser
-            arguments = [arguments[0], 'run', arguments[1]]
+    if arguments[1] not in subparsers:
+        # add default subparser
+        # arguments = [arguments[0], 'run', arguments[1]]
+        arguments.insert(1, 'run')
 
     # remove script name
     arguments = arguments[1:]
@@ -151,6 +162,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # Init colorama
-    init()
     main()

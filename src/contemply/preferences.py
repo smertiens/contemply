@@ -8,7 +8,6 @@ import json
 import logging
 import os
 import platform
-from io import StringIO
 
 
 class PreferencesProvider:
@@ -31,23 +30,16 @@ class PreferencesProvider:
             return
 
         with open(self._get_settings_file('settings.json'), 'r') as f:
-            contents = f.read()
-
-        data = StringIO(contents)
-        try:
-            obj = json.load(data)
-            self.settings = obj
-        except json.JSONDecodeError:
-            self.get_logger().error('Unable to read settings file')
-            return
+            try:
+                obj = json.load(f)
+                self.settings = obj
+            except json.JSONDecodeError:
+                self.get_logger().error('Unable to read settings file')
+                return
 
     def save(self):
-        out = StringIO()
-        json.dump(self.settings, out)
-        json_data = out.getvalue()
-
         with open(self._get_settings_file('settings.json'), 'w') as f:
-            f.write(json_data)
+            json.dump(self.settings, f)
 
         self.get_logger().debug('Settings saved')
 
