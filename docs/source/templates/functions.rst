@@ -3,6 +3,9 @@
 Template functions
 ==================
 
+Interactivity
+*************
+
 .. py:function:: ask(prompt)
 
     This function will prompt the user for a string value.
@@ -68,6 +71,20 @@ Template functions
 
         Hello World
 
+
+Other Template functions
+************************
+
+.. py:function:: setOutput(filename)
+
+    Sets the name of the outputfile. If no outputfile is set, the user will be prompted to enter a filename.
+
+    :param str filename: The name of the file (may contain variables). Either absolute or relative to the current directory
+
+
+Built in functions
+==================
+
 .. py:function:: echo(message)
 
     Prints a message to the console.
@@ -88,9 +105,6 @@ Template functions
         #: username = env("USER")
         #: echo ("Hello $username!")
 
+.. py:function:: exit()
 
-.. py:function:: setOutput(filename)
-
-    Sets the name of the outputfile. If no outputfile is set, the user will be prompted to enter a filename.
-
-    :param str filename: The name of the file (may contain variables). Either absolute or relative to the current directory
+    Exits contemply and stops template processing

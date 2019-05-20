@@ -99,7 +99,7 @@ class Tokenizer:
         return raw
 
     def skip_until(self, delim='\n'):
-        while self.get_chr() not in delim and self.get_chr() is not None:
+        while self.get_chr() is not None and self.get_chr() not in delim:
             self._advance()
 
     def get_next_token(self, peek=False):

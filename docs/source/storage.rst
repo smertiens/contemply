@@ -31,14 +31,14 @@ and use this instead:
 
 ::
 
-    contemply work_templates:default.pytpl
+    contemply work_templates::default.pytpl
 
 
 The list of storages are saved in the Contemply user settings. You can find the file at different location,
 depending on your operating system:
 
-Linux and OSX: USERHOME/.contemply/settings.json
-Windows: USERHOME/contemply/settings.json
+* Linux and OSX: USERHOME/.contemply/settings.json
+* Windows: USERHOME/contemply/settings.json
 
 USERHOME corresponds to your users home directory.
 
