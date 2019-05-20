@@ -20,6 +20,13 @@ def test_list_add():
 
     assert parser.get_template_context().get('list') == ['item 1', 'item 2']
 
+def test_list_size():
+    parser = TemplateParser()
+    parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+    result = parser.parse("#: list = ['item 1', 'item 2', 'item 3']\n#: len = size(list)")
+
+    assert parser.get_template_context().get('len') == 3
+
 
 def test_string():
     parser = TemplateParser()

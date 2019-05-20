@@ -15,6 +15,7 @@ from contemply.exceptions import *
 Built in functions
 """
 
+# Interactive functions
 
 def ask(args, ctx):
     if len(args) != 1:
@@ -65,6 +66,17 @@ def yesno(args, ctx):
     return cli.prompt(args[0], default)
 
 
+# Other template functions
+
+def setOutput(args, ctx):
+    if len(args) == 0:
+        raise SyntaxError("Function output() needs exactly 1 argument", ctx)
+
+    ctx.set_outputfile(args[0])
+
+
+# Other functions
+
 def env(args, ctx):
     if len(args) != 1:
         raise SyntaxError("Function env() needs at exactly 1 argument", ctx)
@@ -79,8 +91,66 @@ def echo(args, ctx):
     print(ctx.process_variables(str(args[0])))
 
 
-def setOutput(args, ctx):
-    if len(args) == 0:
-        raise SyntaxError("Function output() needs exactly 1 argument", ctx)
+# String functions
 
-    ctx.set_outputfile(args[0])
+def uppercase(args, ctx):
+    if len(args) != 1:
+        raise SyntaxError("Function uppercase() needs at exactly 1 argument", ctx)
+
+    if not isinstance(args[0], str):
+        raise SyntaxError("Function uppercase() expects a string as first argument", ctx)
+
+    return args[0].upper()
+
+def lowercase(args, ctx):
+    if len(args) != 1:
+        raise SyntaxError("Function lowercase() needs at exactly 1 argument", ctx)
+
+    if not isinstance(args[0], str):
+        raise SyntaxError("Function lowercase() expects a string as first argument", ctx)
+
+    return args[0].lower()
+
+def capitalize(args, ctx):
+    if len(args) != 1:
+        raise SyntaxError("Function capitalize() needs at exactly 1 argument", ctx)
+
+    if not isinstance(args[0], str):
+        raise SyntaxError("Function capitalize() expects a string as first argument", ctx)
+
+    return args[0].capitalize()
+
+def contains(args, ctx):
+    if len(args) != 2:
+        raise SyntaxError("Function contains() needs at exactly 2 arguments", ctx)
+
+    if not isinstance(args[0], str):
+        raise SyntaxError("Function contains() expects a string as first argument", ctx)
+    if not isinstance(args[1], str):
+        raise SyntaxError("Function contains() expects a string as second argument", ctx)
+
+    return args[1] in args[0]
+
+def replace(args, ctx):
+    if len(args) != 3:
+        raise SyntaxError("Function replace() needs at exactly 3 arguments", ctx)
+
+    if not isinstance(args[0], str):
+        raise SyntaxError("Function replace() expects a string as first argument", ctx)
+    if not isinstance(args[1], str):
+        raise SyntaxError("Function replace() expects a string as second argument", ctx)
+    if not isinstance(args[2], str):
+        raise SyntaxError("Function replace() expects a string as third argument", ctx)
+
+    return args[0].replace(args[1], args[2])
+
+# Misc functions working on types
+
+def size(args, ctx):
+    if len(args) != 1:
+        raise SyntaxError("Function size() needs at exactly 1 arguments", ctx)
+
+    if not isinstance(args[0], str) and not isinstance(args[0], list):
+        raise SyntaxError("Function size() expects a string or a list as first argument", ctx)
+
+    return len(args[0])
