@@ -10,7 +10,7 @@ with open('requirements.txt', 'r') as fh:
 
 setuptools.setup(
     name='contemply',
-    version='1.0.0b2',
+    version='1.0.0b3',
     packages=setuptools.find_packages('src'),
     package_dir={'': 'src'},
     classifiers=[
