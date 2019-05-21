@@ -116,7 +116,8 @@ class Tokenizer:
         token = None
         advance = 0
 
-        self._skip_whitespace()
+        if not peek:
+            self._skip_whitespace()
 
         if self.get_chr() is None:
             return Token(EOF)

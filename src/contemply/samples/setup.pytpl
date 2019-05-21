@@ -1,0 +1,77 @@
+#::
+setOutput('setup.py')
+
+echo("Let's start with some basic infos about your app")
+name = ask('What is the name of your app?')
+version = ask('What is the version of your app?')
+
+author = ask("What is the author's name?")
+email = ask("What is the author's email-address?")
+
+url = ask('What is the homepage url of your app?')
+keywords = ask('Enter some keywords for your app. Separate them with spaces')
+
+status_list = ['Development Status :: 4 - Beta']
+status = choose("What is the development status of your app?", status_list)
+
+desc = ask("Enter a short description for your app")
+has_readme = yesno("Do you have a README file that should be used for the apps's long description?")
+
+echo("Does your app have any dependencies?")
+deps = []
+while True
+    dep = ask("Enter the name of your dependency and a version if necessary. Leave empty to continue.")
+    if dep == ''
+        break
+    endif
+    deps += dep
+endwhile
+#::
+import setuptools
+
+#: if has_readme
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+#: else
+    long_description = "$desc"
+#: endif
+
+requirements = [
+#: for dep in deps
+    "$dep",
+#: endfor
+]
+
+setuptools.setup(
+    name='$name',
+    version='$version',
+    packages=setuptools.find_packages('src'),
+    package_dir={'': 'src'},
+    classifiers=[
+        '$status'
+    ],
+    url='$url',
+    project_urls={
+
+    },
+    keywords='$keywords',
+    license='',
+    author='$author',
+    author_email='$email',
+    description='',
+    long_description="$desc",
+#: if has_readme
+    long_description_content_type="text/markdown",
+#: endif
+    install_requires=requirements,
+    python_requires='',
+
+    package_data={
+    },
+
+    entry_points={
+        'console_scripts': [
+
+        ]
+    }
+)
