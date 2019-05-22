@@ -141,7 +141,6 @@ def main():
     if len(arguments) > 1:
         if arguments[1] not in subparsers:
             # add default subparser
-            # arguments = [arguments[0], 'run', arguments[1]]
             arguments.insert(1, 'run')
     else:
         # show help as default
