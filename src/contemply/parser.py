@@ -347,7 +347,7 @@ class Parser:
 
     def _consume_while_loop(self):
         self._token = self._consume_next_token(WHILE)
-        expr = self._consume_expression(True)
+        expr = self._consume_expression()
         block = self._consume_block((EOF, ENDWHILE))
         node = While(expr, block)
         self._token = self._consume_next_token(ENDWHILE)
@@ -396,7 +396,7 @@ class Parser:
 
         return node
 
-    def _consume_expression(self, condition_testing=False):
+    def _consume_expression(self):
 
         if self._token.type() in (STRING, INTEGER):
             # Consume primitive type
@@ -414,11 +414,7 @@ class Parser:
             op = self._token.value()
             self._token = self._consume_next_token(self._token.type())
         else:
-            if condition_testing:
-                # short form expression, assume operator == and rval == True
-                return SimpleExpression(lval, '==', Variable('True'))
-            else:
-                return lval
+            return lval
 
         if self._token.type() in (STRING, INTEGER):
             # Consume primitive type
