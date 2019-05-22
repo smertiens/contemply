@@ -138,10 +138,13 @@ def main():
     subparsers = ['storage:add', 'storage:remove', 'storage:list', 'run', 'version']
     arguments = sys.argv
     # Preprocess arguments so the default subparser will be "run"
-    if arguments[1] not in subparsers:
-        # add default subparser
-        # arguments = [arguments[0], 'run', arguments[1]]
-        arguments.insert(1, 'run')
+    if len(arguments) > 1:
+        if arguments[1] not in subparsers:
+            # add default subparser
+            arguments.insert(1, 'run')
+    else:
+        # show help as default
+        arguments.append('--help')
 
     # remove script name
     arguments = arguments[1:]

@@ -38,6 +38,7 @@ There are a number of command line options that you can use:
 To print the version of Contemply you can use the "version" subcommand:
 
 ::
+
     contemply version
 
 For further subcommands see :ref:`storage`.

@@ -201,7 +201,9 @@ def test_mixed_nested_loops_break():
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
     result = parser.parse('\n'.join(text))
-    assert ['Hello item 1', 'This is number 0', 'This is number 1', 'Hello item 2', 'This is number 0', 'This is number 1'] == result
+    assert ['Hello item 1', 'This is number 0', 'This is number 1', 'Hello item 2', 'This is number 0',
+            'This is number 1'] == result
+
 
 def test_wrong_break():
     text = [

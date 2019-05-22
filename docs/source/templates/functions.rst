@@ -3,6 +3,9 @@
 Template functions
 ==================
 
+Interactivity
+*************
+
 .. py:function:: ask(prompt)
 
     This function will prompt the user for a string value.
@@ -68,6 +71,74 @@ Template functions
 
         Hello World
 
+
+Other Template functions
+************************
+
+.. py:function:: setOutput(filename)
+
+    Sets the name of the outputfile. If no outputfile is set, the user will be prompted to enter a filename.
+
+    :param str filename: The name of the file (may contain variables). Either absolute or relative to the current directory
+
+
+String functions
+================
+
+.. py:function:: uppercase(string)
+
+    Converts string to uppercase.
+
+    :param str string: A string or a string variable
+
+
+.. py:function:: lowercase(string)
+
+    Converts string to lowercase.
+
+    :param str string: A string or a string variable
+
+
+.. py:function:: capitalize(string)
+
+    Capitalizes string.
+
+    :param str string: A string or a string variable
+
+
+.. py:function:: contains(string, search)
+
+    Returns True if "string" contains "search".
+
+    :param str string: A string or a string variable
+    :param str search: A string or a string variable
+    :rtype: boolean
+
+
+.. py:function:: replace(string, search, replace)
+
+    Replaces all occurences of "search" in "string" with "replace".
+
+    :param str string: A string or a string variable
+    :param str search: A string or a string variable
+    :param str replace: A string or a string variable
+    :return: The edited string
+    :rtype: str
+
+
+
+Built in functions
+==================
+
+.. py:function:: size(thing)
+
+    Returns the size of a thing. If the first argument is a string the function will return the strings length,
+    if it is a list it will return the number of items in the list.
+
+    :param any thing: A list or a string
+    :returns: Length or number of elements
+    :rtype: int
+
 .. py:function:: echo(message)
 
     Prints a message to the console.
@@ -88,9 +159,6 @@ Template functions
         #: username = env("USER")
         #: echo ("Hello $username!")
 
+.. py:function:: exit()
 
-.. py:function:: setOutput(filename)
-
-    Sets the name of the outputfile. If no outputfile is set, the user will be prompted to enter a filename.
-
-    :param str filename: The name of the file (may contain variables). Either absolute or relative to the current directory
+    Exits contemply and stops template processing

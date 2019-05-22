@@ -6,5 +6,8 @@ Templates
     :caption: Contents:
 
     syntax
+    variables
     functions
+    conditionals
     loops
+    expressions
