@@ -18,6 +18,9 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Operating System :: OS Independent",
+        "Topic :: Software Development",
+        "Topic :: Utilities",
+        "Environment :: Console"
     ],
     url='https://github.com/smertiens/contemply',
     project_urls={

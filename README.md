@@ -39,13 +39,14 @@ If you find any bugs or have a feature request, please create an issue on github
 ### 1. Take your template file and add some Contemply magic
 
 ````python
-# This is a demo file
-#: classname = ask('How should the new class be called?')
-#: text = ask('What should the text be?')
-#: printVersion = yesno('Create the version function?', 'Yes')
+#::
+classname = ask('How should the new class be called?')
+text = ask('What should the text be?')
+printVersion = yesno('Create the version function?', 'Yes')
 
-#: version = '1.0.0'
-#: setOutput('$classname.py')
+version = '1.0.0'
+setOutput('$classname.py')
+#::
 
 class $classname:
 

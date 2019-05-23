@@ -7,6 +7,7 @@
 
 import pytest
 from contemply.parser import *
+from contemply.interpreter import *
 
 
 def test_while_loop():
@@ -90,6 +91,9 @@ def test_while_loop_max_runs():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+
+    # check if default value is set correctly
+    assert Interpreter.MAX_LOOP_RUNS == 10000
 
     with pytest.raises(ParserError):
         parser.parse('\n'.join(text))

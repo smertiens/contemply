@@ -283,7 +283,7 @@ class Tokenizer:
                 # this should result in a token of uknown type
                 return Token(None)
             else:
-                raise SyntaxError("Unrecognized token at pos {0}".format(self._pos), self._ctx)
+                raise SyntaxError("Unrecognized token '{0}'".format(self.get_chr()), self._ctx)
 
         if not peek:
             for i in range(0, advance):
