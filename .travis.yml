@@ -1,21 +1,33 @@
-dist: xenial
 language: python
-python:
+python:     # will be tested on default linux system
   - "3.4"
-  - "3.5"
+  #- "3.5"
   - "3.5-dev"
   - "3.6"
   - "3.6-dev"
   - "3.7-dev"
-  - "3.7"
+  #- "3.7"
+
+matrix:
+  include:
+    - name: "Python 3.7 on Xenial Linux"
+      python: "3.7"
+      dist: xenial
+    - name: "Python 3.7.2 on macOS"
+      os: osx
+      osx_image: xcode10.2  # Python 3.7.2 running on macOS 10.14.3
+      language: shell       # 'language: python' is an error on Travis CI macOS
+    - name: "Python 3.7.3 on Windows"
+      os: windows
+      language: shell       # 'language: python' is an error on Travis CI Windows
+      before_install: choco install python
+      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
 
 install:
-  - pip install coverage
-  - pip install pytest
-  - pip install pytest-cov
-  - python setup.py install
-  #- export PYTHONPATH=$PYTHONPATH:$(pwd)/src
+    - pip3 install coverage
+    - pip3 install pytest
+    - pip3 install pytest-cov
+    - python3 setup.py install
 
-# command to run tests
 script:
-  - pytest --cov=contemply
+  - pytest --cov=contemply -v
