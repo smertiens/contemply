@@ -9,6 +9,14 @@ import re
 
 from contemply.exceptions import *
 
+def get_secure_path(base, path):
+    final_path = os.path.realpath(os.path.join(base, path))
+    real_base = os.path.realpath(base)
+
+    if not final_path.startswith(real_base):
+        raise SecurityException('Attempt to access path above the given base directory blocked.')
+
+    return final_path
 
 class TemplateStorageManager:
 
@@ -76,7 +84,7 @@ class TemplateStorageManager:
             raise StorageNameNotFoundException('The given storage was not found.')
 
         path = self._locations[name]
-        return os.path.join(path, template)
+        return get_secure_path(path, template)
 
     def list(self):
         """
