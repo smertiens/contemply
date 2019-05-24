@@ -14,7 +14,7 @@ from contemply.exceptions import *
 
 
 class Interpreter:
-    MAX_LOOP_RUNS = 10  # 10000
+    MAX_LOOP_RUNS = 10000
 
     def __init__(self, ctx):
         self._BUILTINS = {

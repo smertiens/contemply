@@ -4,15 +4,27 @@
 [![Documentation Status](https://readthedocs.org/projects/contemply/badge/?version=latest)](https://contemply.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/contemply.svg)](https://badge.fury.io/py/contemply)
 
-A code generator that interactively creates boilerplate files from templates.
+Contemply turns your boring old templates and project scaffolds into interactive code generators. 
 
-All the questions necessary to interactively create a file from your template are embedded in the template itself,
-so all you need is Contemply and your template file to get up and running.
-If you want to integrate code generation into you own project, you can use the Contemply library,
-see [developer docs](https://contemply.readthedocs.io/en/latest/developer.html) for more details.
+Everything (including your template) is kept in one file and easy to share and edit. With Contemply you can guide 
+your users through the creation of any kind of text-file, Python or not.
 
-The project is in early beta right now, you can help by creating an issue on GitHub for bugs or feature requests. 
-Contributors are always welcome! 
+How it works:
+
+* Create your template file, place variables where needed. You can use if-clauses, loops and different formatting
+functions if you like.
+* Prompt your user for input or let him choose an option to get all the information you need to build your 
+scaffold file.
+
+Keep all things in one place:
+
+* You can add paths to your templates using Contemply's storage function. Instead of typing the full path to your
+template file you can then use shortcuts like "work_templates::data_project.pytpl". 
+
+If you want to **integrate code generation into you own project**, you can use the Contemply library,
+see [developer docs](https://contemply.readthedocs.io/en/develop/developer.html) for more details.
+
+Help by creating an issue on GitHub for bugs or feature requests.  Contributors are always welcome! 
 
 ## Installation
 
@@ -34,18 +46,19 @@ You can find the documentation here: https://contemply.readthedocs.io/en/latest/
 
 If you find any bugs or have a feature request, please create an issue on github: https://github.com/smertiens/contemply/issues
 
-## Quickstart
+## Example
 
 ### 1. Take your template file and add some Contemply magic
 
 ````python
-# This is a demo file
-#: classname = ask('How should the new class be called?')
-#: text = ask('What should the text be?')
-#: printVersion = yesno('Create the version function?', 'Yes')
+#::
+classname = ask('How should the new class be called?')
+text = ask('What should the text be?')
+printVersion = yesno('Create the version function?', 'Yes')
 
-#: version = '1.0.0'
-#: setOutput('$classname.py')
+version = '1.0.0'
+setOutput('$classname.py')
+#::
 
 class $classname:
 

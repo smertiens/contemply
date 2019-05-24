@@ -10,7 +10,7 @@ with open('requirements.txt', 'r') as fh:
 
 setuptools.setup(
     name='contemply',
-    version='1.0.0b4',
+    version='1.0.0b5',
     packages=setuptools.find_packages('src'),
     package_dir={'': 'src'},
     classifiers=[
@@ -18,6 +18,9 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Operating System :: OS Independent",
+        "Topic :: Software Development",
+        "Topic :: Utilities",
+        "Environment :: Console"
     ],
     url='https://github.com/smertiens/contemply',
     project_urls={
@@ -27,7 +30,7 @@ setuptools.setup(
     license='AGPL-3.0',
     author='Sean Mertiens',
     author_email='sean@atraxi-flow.com',
-    description='A code generator that creates boilerplate files from templates',
+    description='Contemply turns your boring old templates and project scaffolds into interactive code generators.',
     long_description=long_description,
     long_description_content_type="text/markdown",
 

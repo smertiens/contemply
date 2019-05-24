@@ -72,18 +72,8 @@ Interactivity
         Hello World
 
 
-Other Template functions
-************************
-
-.. py:function:: setOutput(filename)
-
-    Sets the name of the outputfile. If no outputfile is set, the user will be prompted to enter a filename.
-
-    :param str filename: The name of the file (may contain variables). Either absolute or relative to the current directory
-
-
 String functions
-================
+****************
 
 .. py:function:: uppercase(string)
 
@@ -128,7 +118,7 @@ String functions
 
 
 Built in functions
-==================
+******************
 
 .. py:function:: size(thing)
 
@@ -162,3 +152,16 @@ Built in functions
 .. py:function:: exit()
 
     Exits contemply and stops template processing
+
+
+
+Other Template functions
+************************
+
+.. py:function:: setOutput(filename)
+
+    Sets the name of the outputfile. If no outputfile is set, the user will be prompted to enter a filename.
+
+    :param str filename: The name of the file (may contain variables). Either absolute or relative to the current directory
+
+

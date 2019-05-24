@@ -4,11 +4,19 @@
 # Copyright (C) 2019  Sean Mertiens
 # For more information on licensing see LICENSE file
 #
-import re
 import os
-from contemply.exceptions import *
-from contemply.preferences import PreferencesProvider
+import re
 
+from contemply.exceptions import *
+
+def get_secure_path(base, path):
+    final_path = os.path.realpath(os.path.join(base, path))
+    real_base = os.path.realpath(base)
+
+    if not final_path.startswith(real_base):
+        raise SecurityException('Attempt to access path above the given base directory blocked.')
+
+    return final_path
 
 class TemplateStorageManager:
 
@@ -40,7 +48,8 @@ class TemplateStorageManager:
         """
 
         if not self.is_valid_storage_name(name):
-            raise InvalidStorageNameException('Invalid name for the new storage. Use only alphanumeric character, . and _')
+            raise InvalidStorageNameException(
+                'Invalid name for the new storage. Use only alphanumeric character, . and _')
 
         if name in self._locations:
             raise StorageNameExistsException('The given storage already exists.')
@@ -75,7 +84,7 @@ class TemplateStorageManager:
             raise StorageNameNotFoundException('The given storage was not found.')
 
         path = self._locations[name]
-        return os.path.join(path, template)
+        return get_secure_path(path, template)
 
     def list(self):
         """

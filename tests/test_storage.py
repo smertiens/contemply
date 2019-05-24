@@ -54,3 +54,24 @@ def test_check_name(pref_instance):
 
     for name, expected in data.items():
         assert storage.is_valid_storage_name(name) == expected, 'Checking ' + name
+
+
+def test_access_upstream_folders(pref_instance, tmpdir):
+    storage = TemplateStorageManager(pref_instance)
+    assert storage.list() == {}
+
+    root = str(tmpdir)
+    storage_dir = os.path.join(root, 'foo', 'bar')
+    os.makedirs(storage_dir)
+
+    storage.add_location('my_storage', storage_dir)
+    assert 'my_storage' in storage.list()
+
+    assert storage.resolve('my_storage::hello.pytpl') == os.path.join(storage_dir, 'hello.pytpl')
+    assert storage.resolve('my_storage::./hello.pytpl') == os.path.join(storage_dir, 'hello.pytpl')
+
+    with pytest.raises(SecurityException):
+        assert storage.resolve('my_storage::../hello.pytpl') == os.path.join(root, 'foo', 'hello.pytpl')
+
+    with pytest.raises(SecurityException):
+        assert storage.resolve('my_storage::../../.././../hello.pytpl') == 'Something'
