@@ -30,7 +30,7 @@ setuptools.setup(
     license='AGPL-3.0',
     author='Sean Mertiens',
     author_email='sean@atraxi-flow.com',
-    description='A code generator that creates boilerplate files from templates',
+    description='Contemply turns your boring old templates and project scaffolds into interactive code generators.',
     long_description=long_description,
     long_description_content_type="text/markdown",
 

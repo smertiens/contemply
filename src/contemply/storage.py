@@ -4,10 +4,10 @@
 # Copyright (C) 2019  Sean Mertiens
 # For more information on licensing see LICENSE file
 #
-import re
 import os
+import re
+
 from contemply.exceptions import *
-from contemply.preferences import PreferencesProvider
 
 
 class TemplateStorageManager:
@@ -40,7 +40,8 @@ class TemplateStorageManager:
         """
 
         if not self.is_valid_storage_name(name):
-            raise InvalidStorageNameException('Invalid name for the new storage. Use only alphanumeric character, . and _')
+            raise InvalidStorageNameException(
+                'Invalid name for the new storage. Use only alphanumeric character, . and _')
 
         if name in self._locations:
             raise StorageNameExistsException('The given storage already exists.')
