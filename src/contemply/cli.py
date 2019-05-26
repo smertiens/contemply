@@ -27,7 +27,7 @@ def user_input(prompt):
     if platform.system() == 'Windows':
         pyver = sys.version_info
 
-        if (pyver[0] == 3 and pyver[1] >= 7) or pyver > 3:
+        if (pyver[0] == 3 and pyver[1] >= 5) or pyver[0] > 3:
             print(prompt)
             value = input('> ')
             return value
