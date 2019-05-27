@@ -1,16 +1,17 @@
 language: python
 python:     # will be tested on default linux system
   - "3.4"
-  #- "3.5"
+  - "3.5"
   - "3.5-dev"
   - "3.6"
   - "3.6-dev"
   - "3.7-dev"
-  #- "3.7"
 
 matrix:
   allow_failures:
-    - python: '3.7-dev'  # is crashing at the moment (marshaler error when installing)
+    - python:
+      - '3.7-dev'  # is crashing at the moment (marshaler error when installing)
+      - '3.5'
   include:
     - name: "Python 3.7 on Xenial Linux"
       python: "3.7"

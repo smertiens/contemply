@@ -44,6 +44,7 @@ Example:
 
 Content lines
 *************
+
 By default Contemply will ignore all other lines in your file  not starting with '#:' or '#%' and just hand them
 through to your templates output. These are your **content lines**. Contemply will replace variables in them though.
 To insert a variable in a content line prefix it with '$'.
@@ -58,4 +59,23 @@ Example:
 
     def say_hello():
         print("$var")
+
+
+Indentation
+***********
+
+You can indent lines **inside command blocks** as you like, but the block delimiters (#::) must be at the beginning of the line.
+As you can see from the script examples in the docs, indentation can increase readability.
+If you are using commandlines, the line **has to start with #:**. After that you can again indent as you like.
+
+::
+
+    #::
+        if True
+            echo('You can indent command blocks')
+        endif
+    #::
+
+    #:         echo('Command lines must start with #:')
+
 
