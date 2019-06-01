@@ -5,53 +5,81 @@
 # For more information on licensing see LICENSE file
 #
 
-import argparse, os, logging, sys
-from contemply.parser import *
-from contemply import samples
+import click
 from colorama import Fore, init
+from contemply import samples
+from contemply.parser import *
 from contemply.preferences import PreferencesProvider
 from contemply.storage import TemplateStorageManager
 
 
-def storage_add(args, storage, preferences):
-    try:
-        storage.add_location(args.storage_name, args.storage_path)
-        print(Fore.GREEN + '√' + Fore.RESET + ' New storage ' + Style.BRIGHT + '{0} (-> {1})'.format(
-            args.storage_name, args.storage_path) +
-              Style.RESET_ALL + ' has been added')
-    except StorageException as e:
-        print_error(str(e))
+class CLIContext:
+
+    def __init__(self):
+        self.preferences = PreferencesProvider()
+        self.storage = TemplateStorageManager(self.preferences)
+        self.verbose = False
 
 
-def storage_remove(args, storage, preferences):
-    try:
-        storage.remove_location(args.storage_name)
-        print(Fore.GREEN + '√' + Fore.RESET + ' Storage ' + Style.BRIGHT + '{0}'.format(args.storage_name) +
-              Style.RESET_ALL + ' has been deleted')
-    except StorageException as e:
-        print_error(str(e))
+def header():
+    print('*' * 40)
+    print('*' + 'Contemply {0}'.format(contemply.__version__).center(38) + '*')
+    print('*' * 40)
+    print('')
 
 
-def storage_list(args, storage, preferences):
-    try:
-        for name, path in storage.list().items():
-            print(Style.BRIGHT + name + Style.RESET_ALL + ' -> ' + path)
-
-    except StorageException as e:
-        print_error(str(e))
+def print_error(msg):
+    print(Fore.RED + '{0}'.format(msg) + Fore.RESET)
 
 
-def show_version(args, storage, preferences):
-    print('Contemply version {0}'.format(contemply.__version__))
+def get_builtin_template(name):
+    """
+    Retrieves one of the sample templates
+    :param str name: Builtin template name (from samples folder)
+    :return: The absolute path to the template file
+    """
+    if not name.endswith('.pytpl'):
+        name += '.pytpl'
+
+    path = os.path.realpath(os.path.join(os.path.dirname(samples.__file__), name))
+    return path
 
 
-def template_parse(args, storage, preferences):
-    if args.template_file.startswith('samples:'):
-        file = get_builtin_template(args.template_file.split(':')[1])
-    elif args.template_file.find('::') > 0:
-        file = storage.resolve(args.template_file)
+@click.group(invoke_without_command=False)
+@click.pass_context
+def cli(ctx):
+    ctx.obj = CLIContext()
+
+@cli.command()
+@click.option('--no-header', type=bool, is_flag=True)
+@click.option('--verbose', type=bool, is_flag=True)
+@click.option('--print', '-p', 'print_out', type=click.BOOL, is_flag=True)
+@click.argument('template_file')
+@click.pass_context
+def run(ctx, no_header, verbose, print_out, template_file):
+    """
+    Runs a template.
+
+    You can either enter the path to a file as TEMPLATE_FILE or run a template from storage, by prefixing the template
+    file with the storage name followed by ::, for example:
+
+        contemply my_storage::my_template.pytpl.
+
+    Contemply also provides a number of builtin sample templates, for example try this one:
+
+        contemply samples:class
+    """
+    if no_header is not True:
+        header()
+
+    storage = ctx.obj.storage
+
+    if template_file.startswith('samples:'):
+        file = get_builtin_template(template_file.split(':')[1])
+    elif template_file.find('::') > 0:
+        file = storage.resolve(template_file)
     else:
-        file = os.path.realpath(args.template_file)
+        file = os.path.realpath(template_file)
 
     if not os.path.exists(file):
         print_error('Template "{0}" not found.'.format(file))
@@ -60,12 +88,12 @@ def template_parse(args, storage, preferences):
     parser = TemplateParser()
 
     # set up parser
-    if args.verbose is True:
+    if verbose is True:
         parser.get_logger().setLevel(logging.DEBUG)
     else:
         parser.get_logger().setLevel(logging.INFO)
 
-    if args.print is True:
+    if print_out is True:
         parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
 
     try:
@@ -77,91 +105,90 @@ def template_parse(args, storage, preferences):
         sys.exit()
 
 
-def get_argument_parser():
-    parser = argparse.ArgumentParser(description="A code generator that creates boilerplate files from templates")
-    subparsers = parser.add_subparsers()
+@cli.command()
+@click.option('--no-header', type=bool, is_flag=True)
+@click.pass_context
+def version(ctx, no_header):
+    """
+    Shows the current version and exits.
+    """
+    if no_header is not True:
+        header()
 
-    storage_add_parser = subparsers.add_parser('storage:add')
-    storage_add_parser.add_argument('storage_name', type=str, metavar='NAME', help='The name of the new storage')
-    storage_add_parser.add_argument('storage_path', type=str, metavar='PATH',
-                                    help='The path the storage should point to')
-    storage_add_parser.set_defaults(func=storage_add)
-
-    storage_del_parser = subparsers.add_parser('storage:remove')
-    storage_del_parser.add_argument('storage_name', type=str, metavar='NAME', help='The name of the storage to remove')
-    storage_del_parser.set_defaults(func=storage_remove)
-
-    storage_list_parser = subparsers.add_parser('storage:list')
-    storage_list_parser.set_defaults(func=storage_list)
-
-    version_parser = subparsers.add_parser('version')
-    version_parser.set_defaults(func=show_version)
-
-    template_parser = subparsers.add_parser('run')
-    template_parser.add_argument('template_file', metavar='TEMPLATE', type=str,
-                                 help='The template file you want to run')
-    template_parser.add_argument("-p", "--print", help="Print output to console instead of creating a new file",
-                                 action="store_true")
-    template_parser.set_defaults(func=template_parse)
-
-    # Add common parser options to all subparsers
-    for sub in [storage_add_parser, storage_del_parser, storage_list_parser, template_parser, version_parser]:
-        sub.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
-        sub.add_argument("--no-header", help="If set  the header will not be printed", action="store_true")
-
-    return parser
+    print('Contemply version {0}'.format(contemply.__version__))
 
 
-def print_error(msg):
-    print(Fore.RED + '{0}'.format(msg) + Fore.RESET)
+@cli.command('storage:list')
+@click.option('--no-header', type=bool, is_flag=True)
+@click.option('--verbose', type=bool, is_flag=True)
+@click.pass_context
+def storage_list(ctx, no_header, verbose):
+    """
+    Lists all existing storage locations.
+    """
+    if no_header is not True:
+        header()
+
+    storage = ctx.obj.storage
+
+    try:
+        for name, path in storage.list().items():
+            print(Style.BRIGHT + name + Style.RESET_ALL + ' -> ' + path)
+
+    except StorageException as e:
+        print_error(str(e))
 
 
-def header():
-    print('*' * 40)
-    print('*' + 'Contemply {0}'.format(contemply.__version__).center(38) + '*')
-    print('*' * 40)
-    print('')
+@cli.command('storage:add')
+@click.option('--no-header', type=bool, is_flag=True)
+@click.option('--verbose', type=bool, is_flag=True)
+@click.argument('name')
+@click.argument('path')
+@click.pass_context
+def storage_add(ctx, no_header, verbose, name, path):
+    """
+    Adds a new storage location
+    """
+    if no_header is not True:
+        header()
+
+    storage = ctx.obj.storage
+
+    try:
+        storage.add_location(name, path)
+        print(Fore.GREEN + '√' + Fore.RESET + ' New storage ' + Style.BRIGHT + '{0} (-> {1})'.format(
+            name, os.path.realpath(path)) +
+              Style.RESET_ALL + ' has been added')
+    except StorageException as e:
+        print_error(str(e))
 
 
-def get_builtin_template(name):
-    if not name.endswith('.pytpl'):
-        name += '.pytpl'
+@cli.command('storage:remove')
+@click.option('--no-header', type=bool, is_flag=True)
+@click.option('--verbose', type=bool, is_flag=True)
+@click.argument('name')
+@click.pass_context
+def storage_remove(ctx, no_header, verbose, name):
+    """
+    Removes an existing storage location
+    """
+    if no_header is not True:
+        header()
 
-    path = os.path.realpath(os.path.join(os.path.dirname(samples.__file__), name))
-    return path
+    storage = ctx.obj.storage
+
+    try:
+        storage.remove_location(name)
+        print(Fore.GREEN + '√' + Fore.RESET + ' Storage ' + Style.BRIGHT + '{0}'.format(name) +
+              Style.RESET_ALL + ' has been removed')
+    except StorageException as e:
+        print_error(str(e))
 
 
 def main():
     # Init colorama
     init()
-
-    subparsers = ['storage:add', 'storage:remove', 'storage:list', 'run', 'version']
-    arguments = sys.argv
-    # Preprocess arguments so the default subparser will be "run"
-    if len(arguments) > 1:
-        if arguments[1] not in subparsers:
-            # add default subparser
-            arguments.insert(1, 'run')
-    else:
-        # show help as default
-        arguments.append('--help')
-
-    # remove script name
-    arguments = arguments[1:]
-
-    # Parse CLI args
-    argument_parser = get_argument_parser()
-    args = argument_parser.parse_args(arguments)
-    preferences = PreferencesProvider()
-    storage = TemplateStorageManager(preferences)
-
-    if not args.no_header is True:
-        header()
-
-    if not hasattr(args, 'func'):
-        argument_parser.print_help()
-    else:
-        args.func(args, storage, preferences)
+    cli()
 
 
 if __name__ == '__main__':
