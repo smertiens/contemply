@@ -138,6 +138,33 @@ def storage_list(ctx, no_header, verbose):
     except StorageException as e:
         print_error(str(e))
 
+@cli.command('storage:show')
+@click.option('--no-header', type=bool, is_flag=True)
+@click.option('--verbose', type=bool, is_flag=True)
+@click.argument('storage_name')
+@click.pass_context
+def storage_list(ctx, no_header, verbose, storage_name):
+    """
+    Show all templates in an existing storage location.
+    """
+    if no_header is not True:
+        header()
+
+    storage = ctx.obj.storage
+
+    try:
+        tpls = storage.show(storage_name)
+
+        print('Showing templates in ' + Style.BRIGHT + storage_name + Style.RESET_ALL + ':\n')
+
+        for path in tpls:
+            print('- ' + os.path.basename(path))
+
+        print('\nFound {} templates.'.format(len(tpls)))
+
+    except StorageException as e:
+        print_error(str(e))
+
 
 @cli.command('storage:add')
 @click.option('--no-header', type=bool, is_flag=True)
