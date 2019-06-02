@@ -39,6 +39,26 @@ def test_remove_path(pref_instance, tmpdir):
     with pytest.raises(StorageNameNotFoundException):
         storage.remove_location('does_not_exist')
 
+def test_list(pref_instance, tmpdir):
+    tmpdir = str(tmpdir)
+    storage = TemplateStorageManager(pref_instance)
+
+    # create demo files
+    files = ['demo1.pytpl', 'demo2.pytpl']
+    for file in files:
+        with open(tmpdir + '/' +file, 'w') as f:
+            f.write('#')
+
+        assert os.path.exists(tmpdir + '/' +file)
+
+    assert storage.list() == {}
+    storage.add_location('my_templates', tmpdir)
+    assert 'my_templates' in storage.list()
+
+    items = storage.show('my_templates')
+    for file in files:
+        assert file in items
+
 
 def test_check_name(pref_instance):
     storage = TemplateStorageManager(pref_instance)

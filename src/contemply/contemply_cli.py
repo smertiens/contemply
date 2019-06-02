@@ -21,12 +21,18 @@ class CLIContext:
         self.verbose = False
 
 
-def header():
-    print('*' * 40)
-    print('*' + 'Contemply {0}'.format(contemply.__version__).center(38) + '*')
-    print('*' * 40)
-    print('')
+def header(ret_header = False):
+    h = '\n'.join([
+        '*' * 40,
+        '*' + 'Contemply {0}'.format(contemply.__version__).center(38) + '*',
+        '*' * 40,
+        ''
+    ])
 
+    if ret_header:
+        return h
+    else:
+        print(h)
 
 def print_error(msg):
     print(Fore.RED + '{0}'.format(msg) + Fore.RESET)
@@ -51,9 +57,9 @@ def cli(ctx):
     ctx.obj = CLIContext()
 
 @cli.command()
-@click.option('--no-header', type=bool, is_flag=True)
-@click.option('--verbose', type=bool, is_flag=True)
-@click.option('--print', '-p', 'print_out', type=click.BOOL, is_flag=True)
+@click.option('--no-header', type=bool, is_flag=True, help='Do not show application header')
+@click.option('--verbose', '-v', type=click.BOOL, is_flag=True, help='Increase verbosity')
+@click.option('--print', '-p', 'print_out', type=click.BOOL, is_flag=True, help='Show template output in terminal')
 @click.argument('template_file')
 @click.pass_context
 def run(ctx, no_header, verbose, print_out, template_file):
@@ -106,29 +112,20 @@ def run(ctx, no_header, verbose, print_out, template_file):
 
 
 @cli.command()
-@click.option('--no-header', type=bool, is_flag=True)
 @click.pass_context
-def version(ctx, no_header):
+def version(ctx):
     """
     Shows the current version and exits.
     """
-    if no_header is not True:
-        header()
-
     print('Contemply version {0}'.format(contemply.__version__))
 
 
 @cli.command('storage:list')
-@click.option('--no-header', type=bool, is_flag=True)
-@click.option('--verbose', type=bool, is_flag=True)
 @click.pass_context
-def storage_list(ctx, no_header, verbose):
+def storage_list(ctx):
     """
     Lists all existing storage locations.
     """
-    if no_header is not True:
-        header()
-
     storage = ctx.obj.storage
 
     try:
@@ -139,16 +136,12 @@ def storage_list(ctx, no_header, verbose):
         print_error(str(e))
 
 @cli.command('storage:show')
-@click.option('--no-header', type=bool, is_flag=True)
-@click.option('--verbose', type=bool, is_flag=True)
 @click.argument('storage_name')
 @click.pass_context
-def storage_list(ctx, no_header, verbose, storage_name):
+def storage_show(ctx, storage_name):
     """
     Show all templates in an existing storage location.
     """
-    if no_header is not True:
-        header()
 
     storage = ctx.obj.storage
 
@@ -167,17 +160,13 @@ def storage_list(ctx, no_header, verbose, storage_name):
 
 
 @cli.command('storage:add')
-@click.option('--no-header', type=bool, is_flag=True)
-@click.option('--verbose', type=bool, is_flag=True)
 @click.argument('name')
 @click.argument('path')
 @click.pass_context
-def storage_add(ctx, no_header, verbose, name, path):
+def storage_add(ctx, name, path):
     """
     Adds a new storage location
     """
-    if no_header is not True:
-        header()
 
     storage = ctx.obj.storage
 
@@ -191,17 +180,12 @@ def storage_add(ctx, no_header, verbose, name, path):
 
 
 @cli.command('storage:remove')
-@click.option('--no-header', type=bool, is_flag=True)
-@click.option('--verbose', type=bool, is_flag=True)
 @click.argument('name')
 @click.pass_context
-def storage_remove(ctx, no_header, verbose, name):
+def storage_remove(ctx, name):
     """
     Removes an existing storage location
     """
-    if no_header is not True:
-        header()
-
     storage = ctx.obj.storage
 
     try:

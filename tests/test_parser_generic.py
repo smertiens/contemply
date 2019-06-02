@@ -6,7 +6,7 @@
 #
 
 from contemply.parser import *
-
+import pytest
 
 def test_parser_simple():
     text = '#: var1 = "Hello"\n#: var2 = "World"\n$var1 $var2'
@@ -72,3 +72,51 @@ def test_parser_process_special_chars():
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
     result = parser.parse('\n'.join(text))
     assert result == ['a p38 (P=)(§RZ=Pru ÄÖ\'Ö§Ü§§"U304 2Q§3"kljkL"','::;_;_:;!"§%&/()=?adklköölkk>><<<']
+
+def test_set_output(tmpdir):
+    tmpdir = str(tmpdir)
+    testfile = tmpdir + '/' + 'demo.pytpl'
+
+    # create a demo file
+    with open(testfile, 'w') as f:
+        f.write('\n'.join([
+            '#: echo("Hello World!")',
+            '#: setOutput("./demo.txt")',
+            'Contentline'
+        ]))
+
+    assert not os.path.exists('./demo.txt')
+
+    parser = TemplateParser()
+    result = parser.parse_file(testfile)
+    assert result == ['Contentline']
+
+    assert os.path.exists('./demo.txt')
+
+    with open('./demo.txt', 'r') as f:
+        assert f.read() == 'Contentline'
+
+    os.unlink('./demo.txt')
+    assert not os.path.exists('./demo.txt')
+
+def test_access_illegal_path(tmpdir):
+    tmpdir = str(tmpdir)
+    testfile = tmpdir + '/' + 'demo.pytpl'
+    outfile = tmpdir + '/' + 'demo.txt'
+
+    # create a demo file
+    with open(testfile, 'w') as f:
+        f.write('\n'.join([
+            '#: echo("Hello World!")',
+            '#: setOutput("%s")' % (outfile),
+            'Contentline'
+        ]))
+
+    assert not os.path.exists(outfile)
+    parser = TemplateParser()
+
+    with pytest.raises(SecurityException):
+        result = parser.parse_file(testfile)
+        assert result == ['Contentline']
+
+    assert not os.path.exists(outfile)

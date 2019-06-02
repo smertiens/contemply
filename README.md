@@ -37,7 +37,7 @@ pip install contemply
 Give it a testdrive:
 
 ````
-contemply samples:class
+contemply run samples:class
 ````
 
 ## Documentation and support
@@ -76,7 +76,7 @@ Save this file as demo.pytpl
 ## 2. Run contemply
 
 ```
-contemply demo.pytpl
+contemply run demo.pytpl
 ```
 
 Contemply will ask you some questions...
