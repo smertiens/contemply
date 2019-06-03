@@ -92,7 +92,7 @@ def test_storage_show(pref_instance, tmpdir):
     runner = CliRunner()
     result = runner.invoke(cli, ['storage:show', 'some_name'])
     assert result.exit_code == 0
-    assert 'Found 1 templates.' in result.output
+    assert 'Found 1 template.' in result.output
     assert 'settings.json' in result.output
 
 
