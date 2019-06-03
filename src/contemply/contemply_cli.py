@@ -153,7 +153,7 @@ def storage_show(ctx, storage_name):
         for path in tpls:
             print('- ' + os.path.basename(path))
 
-        print('\nFound {} templates.'.format(len(tpls)))
+        print('\nFound {} {}.'.format(len(tpls), 'templates' if len(tpls) != 1 else 'template'))
 
     except StorageException as e:
         print_error(str(e))
