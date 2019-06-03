@@ -5,4 +5,4 @@
 # For more information on licensing see LICENSE file
 #
 
-__version__ = '1.0.0b6'
+__version__ = '1.0.0rc1'

@@ -12,7 +12,7 @@ from contemply.exceptions import *
 # Tokens
 STRING, INTEGER, LIST, SYMBOL, EOF = 'STRING', 'INTEGER', 'LIST', 'SYMBOL', 'EOF',
 LPAR, RPAR, COMMA, LSQRBR, RSQRBR, ASSIGN, ASSIGN_PLUS, NEWLINE = 'LPAR', 'RPAR', 'COMMA', 'LSQRBR', 'RSQRBR', 'ASSIGN', 'ASSIGN_PLUS', 'NEWLINE'
-IF, ELSE, ENDIF, WHILE, ENDWHILE, FOR, IN, ENDFOR, ELSEIF, BREAK = 'IF', 'ELSE', 'ENDIF', 'WHILE', 'ENDWHILE', 'FOR', 'IN', 'ENDFOR', 'elseif', 'break'
+IF, ELSE, ENDIF, WHILE, ENDWHILE, FOR, IN, ENDFOR, ELSEIF, BREAK = 'IF', 'ELSE', 'ENDIF', 'WHILE', 'ENDWHILE', 'FOR', 'IN', 'ENDFOR', 'ELSEIF', 'BREAK'
 
 OPERATORS = COMP_EQ, COMP_LT, COMP_GT, COMP_LT_EQ, COMP_GT_EQ, COMP_NOT_EQ, ADD, SUB, DIV, MULT = 'COMP_EQ', 'COMP_LT', 'COMP_GT', 'COMP_LT_EQ', \
                                                                                                   'COMP_GT_EQ', 'COMP_NOT_EQ', 'ADD', 'SUB', 'DIV', 'MULT'

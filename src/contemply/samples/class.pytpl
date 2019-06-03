@@ -14,7 +14,7 @@ while propname != ''
     endif
 
     create_funcs = yesno('Do you want to add getter/setter methods?')
-    type = choose('What is the type of your property?', ['String', 'Integer', 'Float', 'Object'])
+    type = choose('What is the type of your property?', ['String', 'Integer', 'Float', 'Object', 'List'])
 
     propvar = '_' + propname
 
@@ -42,6 +42,9 @@ class $classname:
 #: if item[2] == 'Object'
         self.$item[1] = None
 #: endif
+#: if item[2] == 'List'
+        self.$item[1] = []
+#: endif
 #: endfor
 
 #: for item in props
@@ -52,5 +55,9 @@ class $classname:
     def get_$item[0](self):
         return self.$item[1]
 
+#: if item[2] == 'List'
+    def add_$item[0](self, item):
+        self.$item[1].append(item)
+#: endif
 #: endif
 #: endfor

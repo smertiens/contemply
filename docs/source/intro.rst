@@ -17,7 +17,7 @@ The only argument required is the name of the template file you want to run:
 
 ::
 
-    contemply template.pytpl
+    contemply run template.pytpl
 
 There are a number of command line options that you can use:
 

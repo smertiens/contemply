@@ -39,7 +39,7 @@ one can then be used inside the string. At the moment escaping characters is not
 Lists
 *****
 
-Lists in Contemply are one-dimensional and have zero-based integer keys. The can be created using square brackets.
+Lists in Contemply have zero-based integer keys. The can be created using square brackets.
 
 ::
 
@@ -63,6 +63,22 @@ To add an item to a list, you can use the **add operator (+=)**.
     my_list += 'item 3'
     echo(my_list)
     #% will echo: ['item 1', 'item 2', 'item 3']
+
+
+Although lists can itself have lists as items, child lists cannot be accessed directly (e.g. as my_list[0][0]) at
+the moment, but they can be used in a for loop:
+
+::
+
+    #::
+    my_list = []
+    my_list += ['inner item 1', 'inner item 2']
+    my_list += ['inner item 3', 'inner item 4']
+
+    for sublist in my_list
+        echo(sublist[0])
+    endfor
+
 
 
 Boolean

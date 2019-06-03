@@ -78,3 +78,14 @@ List all locations
 
 
 This will show a list of all known storage locations.
+
+
+Show all files in a storage location
+------------------------------------
+
+::
+
+    contemply storage:show LOCATION
+
+
+This will show a list of all files in the given storage location.

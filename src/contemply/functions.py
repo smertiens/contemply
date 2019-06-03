@@ -10,6 +10,7 @@ import os
 import contemply.cli as cli
 from colorama import Style
 from contemply.exceptions import *
+from contemply.storage import get_secure_path
 
 """
 Built in functions
@@ -72,7 +73,8 @@ def setOutput(args, ctx):
     if len(args) == 0:
         raise SyntaxError("Function output() needs exactly 1 argument", ctx)
 
-    ctx.set_outputfile(args[0])
+    path = get_secure_path(os.getcwd(), args[0])
+    ctx.set_outputfile(path)
 
 
 # Other functions

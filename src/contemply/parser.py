@@ -248,6 +248,9 @@ class Parser:
         while self._token.type() not in delim:
             peek = self._tokenizer.get_next_token(True)
 
+            if peek.type() == EOF and EOF not in delim:
+                raise ParserError('Unexpected end of file, expected {}'.format(', '.join(delim)))
+
             if peek.type() == COMMENT:
                 self._tokenizer.skip_until('\n')
                 self._token = self._tokenizer.get_next_token()  # NEWLINE or EOF
@@ -348,7 +351,7 @@ class Parser:
     def _consume_while_loop(self):
         self._token = self._consume_next_token(WHILE)
         expr = self._consume_expression()
-        block = self._consume_block((EOF, ENDWHILE))
+        block = self._consume_block((ENDWHILE,))
         node = While(expr, block)
         self._token = self._consume_next_token(ENDWHILE)
 
@@ -360,7 +363,7 @@ class Parser:
         self._token = self._consume_next_token(IN)
         listvar = self._consume_symbol()
 
-        block = self._consume_block((EOF, ENDFOR))
+        block = self._consume_block((ENDFOR,))
         node = For(listvar, itemvar, block)
         self._token = self._consume_next_token(ENDFOR)
 
