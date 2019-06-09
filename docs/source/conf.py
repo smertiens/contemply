@@ -22,7 +22,7 @@ copyright = '2019, Sean Mertiens'
 author = 'Sean Mertiens'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0.0a1'
+release = '1.0.0'
 master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
