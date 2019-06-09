@@ -133,8 +133,10 @@ class NoOp(AST):
 class Endif(AST):
     pass
 
+
 class Break(AST):
     pass
+
 
 class While(AST):
 
@@ -156,4 +158,14 @@ class For(AST):
 
 
 class Endfor(AST):
+    pass
+
+
+class FileBlockStart(AST):
+
+    def __init__(self, filename):
+        self.filename = filename
+
+
+class FileBlockEnd(AST):
     pass

@@ -6,15 +6,16 @@
 #
 
 import logging
-import sys
+import sys, os
 
 import contemply.functions
 from contemply.ast import *
 from contemply.exceptions import *
-
+from contemply.storage import get_secure_path
 
 class Interpreter:
     MAX_LOOP_RUNS = 10000
+    DEFAULT_TARGET = '__default__'
 
     def __init__(self, ctx):
         self._BUILTINS = {
@@ -27,10 +28,12 @@ class Interpreter:
         self._ctx = ctx
         self._line = 0
 
+        self.target = self.DEFAULT_TARGET
+
         self._break_current_loop = None
         self._loops_running = 0
 
-        self._parsed_template = []
+        self._parsed_templates = {self.DEFAULT_TARGET : []}
 
     def interpret(self, tree):
         self._tree = tree
@@ -40,10 +43,16 @@ class Interpreter:
         return logging.getLogger(self.__module__)
 
     def get_parsed_template(self):
-        return self._parsed_template
+        return self._parsed_templates
 
     def _cleanup(self):
         pass
+
+    def _add_content_line(self, content):
+        if self.target not in self._parsed_templates:
+            self._parsed_templates[self.target] = [content]
+        else:
+            self._parsed_templates[self.target].append(content)
 
     ##########################
     # Internal functions
@@ -139,7 +148,7 @@ class Interpreter:
 
     def visit_contentline(self, node):
         line = self._ctx.process_variables(node.content)
-        self._parsed_template.append(line)
+        self._add_content_line(line)
 
     def visit_commandline(self, node):
         self.visit(node.statement)
@@ -250,3 +259,9 @@ class Interpreter:
 
     def visit_noop(self, node):
         pass
+
+    def visit_fileblockstart(self, node):
+        self.target = get_secure_path(os.getcwd(), node.filename)
+
+    def visit_fileblockend(self, node):
+        self.target = self.DEFAULT_TARGET

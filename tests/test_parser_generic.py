@@ -12,7 +12,7 @@ def test_parser_simple():
     text = '#: var1 = "Hello"\n#: var2 = "World"\n$var1 $var2'
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse(text)
+    result = parser.parse(text)[Interpreter.DEFAULT_TARGET]
 
     assert result == ['Hello World']
     assert parser.get_template_context().get('var1') == 'Hello'
@@ -30,7 +30,7 @@ def test_parser_skip_comments():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == ['Lorem ipsum', '# Comment']
     assert not parser.get_template_context().has('var1')
 
@@ -48,14 +48,14 @@ def test_simple_expressions():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == ['Hello']
 
     text[2] = '#: test3 = 5'
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == []
 
 
@@ -70,7 +70,7 @@ def test_parser_process_special_chars():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == ['a p38 (P=)(§RZ=Pru ÄÖ\'Ö§Ü§§"U304 2Q§3"kljkL"','::;_;_:;!"§%&/()=?adklköölkk>><<<']
 
 def test_set_output(tmpdir):
@@ -88,7 +88,7 @@ def test_set_output(tmpdir):
     assert not os.path.exists('./demo.txt')
 
     parser = TemplateParser()
-    result = parser.parse_file(testfile)
+    result = parser.parse_file(testfile)[Interpreter.DEFAULT_TARGET]
     assert result == ['Contentline']
 
     assert os.path.exists('./demo.txt')

@@ -22,19 +22,19 @@ def test_if_conditions():
         '#: endif'
     ]
 
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == ['first elseif']
 
     text[0] = '#: var1 = "World2"'
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == ['second elseif']
 
     text[0] = '#: var1 = "World3"'
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == ['else block', 'inner if']
 
     text[1] ='#: var2 = "no demo"'
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == ['else block']
 
 def test_parser_if():
@@ -49,12 +49,12 @@ def test_parser_if():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == ['Lorem ipsum', 'or something']
 
     text[0] = '#: var1 = "Not Hello"'
 
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == []
 
 
@@ -71,9 +71,9 @@ def test_parser_if_else():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == ['or something']
 
     text[0] = '#: var1 = "Not Hello"'
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == ['Lorem ipsum']

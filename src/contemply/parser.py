@@ -12,6 +12,7 @@ import contemply.cli as cli
 from colorama import Fore, Style
 from contemply.interpreter import *
 from contemply.tokenizer import *
+from contemply.storage import get_secure_path
 
 
 class TemplateContext:
@@ -392,6 +393,13 @@ class Parser:
         elif self._token.type() == BREAK:
             self._token = self._consume_next_token(BREAK)
             node = Break()
+        elif self._token.type() == FILE_BLOCK_START:
+            self._token = self._consume_next_token(FILE_BLOCK_START)
+            node = FileBlockStart(self._token.value())
+            self._token = self._consume_next_token(STRING)
+        elif self._token.type() == FILE_BLOCK_END:
+            self._token = self._consume_next_token(FILE_BLOCK_END)
+            node = FileBlockEnd()
         elif self._token.type() == NEWLINE:
             node = NoOp()
         else:
@@ -583,28 +591,40 @@ class TemplateParser:
         result = interpreter.get_parsed_template()
 
         if self._output_mode == TemplateParser.OUTPUTMODE_FILE:
-            outfile = self._ctx.outputfile()
+            for target_file, content in result.items():
+                if target_file == Interpreter.DEFAULT_TARGET:
+                    # In case setOutput is used - will be deprecated in some future release
+                    if self._ctx.outputfile() != '':
+                        target_file = self._ctx.outputfile()
+                    else:
+                        # Prompt for outputfile
+                        outfile = cli.user_input('Please enter the filename of the new file: ')
+                        target_file = self._ctx.process_variables(outfile)
 
-            if outfile == '':
-                # Prompt for outputfile
-                outfile = cli.user_input('Please enter the filename of the new file: ')
+                path = get_secure_path(os.getcwd(), target_file)
+                disp_path = target_file.replace(os.getcwd(), '')
 
-            # replace variables in outputfile
-            outfile = self._ctx.process_variables(outfile)
-            path = os.path.realpath(outfile)
+                overwrite = True
+                if os.path.exists(path):
+                    overwrite = cli.prompt('A file with the name {0} already exists. Overwrite?'.format(disp_path))
 
-            overwrite = True
-            if os.path.exists(path):
-                overwrite = cli.prompt('A file with the name {0} already exists. Overwrite?'.format(outfile))
+                if overwrite:
+                    with open(path, 'w') as f:
+                        f.write('\n'.join(content))
 
-            if overwrite:
-                with open(path, 'w') as f:
-                    f.write('\n'.join(result))
-
-                print(Fore.GREEN + '√' + Fore.RESET + ' File ' + Style.BRIGHT + '{0}'.format(os.path.basename(path)) +
+                print(Fore.GREEN + '√' + Fore.RESET + ' File ' + Style.BRIGHT + '{0}'.format(disp_path) +
                       Style.RESET_ALL + ' has been created')
 
         elif self._output_mode == self.OUTPUTMODE_CONSOLE:
-            print('\n'.join(result))
+            for target_file, content in result.items():
+                if target_file == Interpreter.DEFAULT_TARGET:
+                    target_file = self._ctx.outputfile() if self._ctx.outputfile() != '' else '(No filename specified)'
+                else:
+                    target_file = target_file.replace(os.getcwd(), '')
+
+                print(Fore.CYAN + target_file + ': ' + Fore.RESET)
+
+                for line in content:
+                    print('\t' + line)
 
         return result

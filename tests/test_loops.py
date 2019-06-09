@@ -30,7 +30,7 @@ def test_while_loop():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == expected
 
 
@@ -51,7 +51,7 @@ def test_nested_while_loop():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert ['outer: 0', 'inner: 0', 'inner: 1', 'inner: 2', 'outer: 1', 'inner: 0', 'inner: 1',
             'inner: 2', 'outer: 2', 'inner: 0', 'inner: 1', 'inner: 2', 'outer: 3',
             'inner: 0', 'inner: 1', 'inner: 2'] == result
@@ -79,7 +79,7 @@ def test_while_loop_break():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == expected
 
 
@@ -109,7 +109,7 @@ def test_for_loop():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert ['Found item 1', 'Found item 2', 'Found item 2'] == result
 
 
@@ -124,7 +124,7 @@ def test_for_loop_break():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert result == ['Found item 1']
 
 
@@ -143,7 +143,7 @@ def test_for_nested_loop():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert ['Outer: item 1', 'Inner: another 1', 'Inner: another 2', 'Outer: item 2',
             'Inner: another 1', 'Inner: another 2', 'Outer: item 2', 'Inner: another 1',
             'Inner: another 2'] == result
@@ -159,7 +159,7 @@ def test_for_empty_list():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert [] == result
 
 
@@ -177,7 +177,7 @@ def test_for_empty_list_with_nested_if():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert [] == result
 
 
@@ -204,7 +204,7 @@ def test_mixed_nested_loops_break():
 
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-    result = parser.parse('\n'.join(text))
+    result = parser.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert ['Hello item 1', 'This is number 0', 'This is number 1', 'Hello item 2', 'This is number 0',
             'This is number 1'] == result
 

@@ -16,7 +16,8 @@ IF, ELSE, ENDIF, WHILE, ENDWHILE, FOR, IN, ENDFOR, ELSEIF, BREAK = 'IF', 'ELSE',
 
 OPERATORS = COMP_EQ, COMP_LT, COMP_GT, COMP_LT_EQ, COMP_GT_EQ, COMP_NOT_EQ, ADD, SUB, DIV, MULT = 'COMP_EQ', 'COMP_LT', 'COMP_GT', 'COMP_LT_EQ', \
                                                                                                   'COMP_GT_EQ', 'COMP_NOT_EQ', 'ADD', 'SUB', 'DIV', 'MULT'
-CMD_LINE_START, COMMENT, CMD_BLOCK = 'CMD_LINE_START', 'COMMENT', 'CMD_BLOCK'
+CMD_LINE_START, COMMENT, CMD_BLOCK, FILE_BLOCK_START, FILE_BLOCK_END = 'CMD_LINE_START', 'COMMENT', 'CMD_BLOCK', 'FILE_BLOCK_START', 'FILE_BLOCK_END'
+
 RESERVED = 'True', 'False', 'None', 'for', 'in', 'while', 'endwhile', 'endif', 'if', 'else', 'endfor', 'elseif', 'endif', 'break'
 
 
@@ -258,6 +259,9 @@ class Tokenizer:
             if self.lookahead() == '=':
                 token = Token(COMP_LT_EQ, '<=')
                 advance = 2
+            elif self.lookahead() == '<':
+                token = Token(FILE_BLOCK_END, '<<')
+                advance = 2
             else:
                 token = Token(COMP_LT, '<')
                 advance = 1
@@ -265,6 +269,9 @@ class Tokenizer:
         elif self.get_chr() == '>':
             if self.lookahead() == '=':
                 token = Token(COMP_GT_EQ, '>=')
+                advance = 2
+            elif self.lookahead() == '>':
+                token = Token(FILE_BLOCK_START)
                 advance = 2
             else:
                 token = Token(COMP_GT, '>')
