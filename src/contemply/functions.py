@@ -62,8 +62,7 @@ def yesno(args, ctx):
 
 def setOutput(args, ctx):
     check_function_args(['setOutput', 'str'], args)
-    path = get_secure_path(os.getcwd(), args[0])
-    ctx.set_outputfile(path)
+    ctx.set_outputfile(args[0])
 
 
 # Other functions
@@ -106,3 +105,16 @@ def size(args, ctx):
     check_function_args(['size','*str,list'], args)
 
     return len(args[0])
+
+
+# Filesystem functions
+
+def makeFolders(args,ctx):
+    check_function_args(['makeFolders', 'str', '*str'], args)
+    path = get_secure_path(os.getcwd(), args[0])
+
+    if len(args) == 2:
+        mode = int(args[1], 8)
+        os.makedirs(path, mode)
+    else:
+        os.makedirs(path)

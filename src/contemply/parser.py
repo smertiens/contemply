@@ -5,8 +5,7 @@
 # For more information on licensing see LICENSE file
 #
 
-import os
-import re
+import os, re, sys
 
 import contemply.cli as cli
 from colorama import Fore, Style
@@ -394,9 +393,7 @@ class Parser:
             self._token = self._consume_next_token(BREAK)
             node = Break()
         elif self._token.type() == FILE_BLOCK_START:
-            self._token = self._consume_next_token(FILE_BLOCK_START)
-            node = FileBlockStart(self._token.value())
-            self._token = self._consume_next_token(STRING)
+            node = self._consume_file_block_start()
         elif self._token.type() == FILE_BLOCK_END:
             self._token = self._consume_next_token(FILE_BLOCK_END)
             node = FileBlockEnd()
@@ -404,6 +401,17 @@ class Parser:
             node = NoOp()
         else:
             raise ParserError('Unknown block start: ' + self._token.type(), self._ctx)
+
+        return node
+
+    def _consume_file_block_start(self):
+        self._token = self._consume_next_token(FILE_BLOCK_START)
+        node = FileBlockStart(self._token.value())
+        self._token = self._consume_next_token(STRING)
+
+        if self._token.type() == COMMA:
+            self._token = self._consume_next_token(COMMA)
+            node.create_missing_folders = self._consume_symbol()
 
         return node
 
@@ -572,7 +580,6 @@ class TemplateParser:
         :rtype: list
         """
         if text is not None:
-            # self._ctx.set_text(text.split('\n'))
             self._ctx.set_text(text)
             self._ctx.set_filename('')
 
@@ -587,12 +594,17 @@ class TemplateParser:
         tree = parser.parse()
         # interpret the AST and execute all statements contained within
         interpreter.interpret(tree)
+
         # result will hold the contents of the parsed template
         result = interpreter.get_parsed_template()
 
         if self._output_mode == TemplateParser.OUTPUTMODE_FILE:
             for target_file, content in result.items():
                 if target_file == Interpreter.DEFAULT_TARGET:
+                    # The default target will only be created if the content is not empty.
+                    if len(content) == 0:
+                        continue
+
                     # In case setOutput is used - will be deprecated in some future release
                     if self._ctx.outputfile() != '':
                         target_file = self._ctx.outputfile()

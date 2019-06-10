@@ -13,6 +13,7 @@ from contemply.ast import *
 from contemply.exceptions import *
 from contemply.storage import get_secure_path
 
+
 class Interpreter:
     MAX_LOOP_RUNS = 10000
     DEFAULT_TARGET = '__default__'
@@ -33,7 +34,7 @@ class Interpreter:
         self._break_current_loop = None
         self._loops_running = 0
 
-        self._parsed_templates = {self.DEFAULT_TARGET : []}
+        self._parsed_templates = {self.DEFAULT_TARGET: []}
 
     def interpret(self, tree):
         self._tree = tree
@@ -261,7 +262,17 @@ class Interpreter:
         pass
 
     def visit_fileblockstart(self, node):
-        self.target = get_secure_path(os.getcwd(), node.filename)
+        self.target = node.filename
+
+        if node.create_missing_folders is not None:
+            val = self.visit(node.create_missing_folders)
+
+            if not isinstance(val, bool):
+                raise ParserError('Expected a boolean value for create_missing_folders argument', self._ctx)
+
+            if val:
+                self.get_logger().debug('FileBlockStart: create_missing_folders=True -> creating folders')
+                os.makedirs(os.path.dirname(get_secure_path(os.getcwd(), self.target)))
 
     def visit_fileblockend(self, node):
         self.target = self.DEFAULT_TARGET
