@@ -32,7 +32,7 @@ setuptools.setup(
     keywords='boilerplate skeleton code generator cli interactive',
     license='AGPL-3.0',
     author='Sean Mertiens',
-    author_email='sean@atraxi-flow.com',
+    author_email='sean@contemply.org',
     description='Contemply turns your boring old templates and project scaffolds into interactive code generators.',
     long_description=long_description,
     long_description_content_type="text/markdown",

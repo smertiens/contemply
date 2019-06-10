@@ -26,6 +26,7 @@ def test_division():
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
     result = parser.parse('#: result =  285/5\n$result')[Interpreter.DEFAULT_TARGET]
+    #TODO: There are only int numbers in contemply... so that should not be the correct result
     assert result == ['57.0']
 
 
