@@ -1,4 +1,5 @@
 language: python
+dist: xenial
 python:     # will be tested on default linux system
   - "3.4"
   - "3.5"

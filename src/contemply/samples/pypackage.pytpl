@@ -1,0 +1,21 @@
+#% Demo: Python package
+#::
+package_name = ask('What is the name of your package?')
+package_dir = replace(lowercase(package_dir), '-', '_')
+version = ask('What is the version of your package?')
+#::
+
+#: >> "src/$package_dir/__init__.py", True
+__version__ = '$version'
+#: <<
+
+#: >> "README.md"
+$package_name
+#: <<
+
+#: >> "setup.py"
+setuptools.setup(
+    name='$package_name',
+    version='$version'
+)
+#: <<

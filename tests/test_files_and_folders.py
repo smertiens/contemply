@@ -5,7 +5,7 @@
 # For more information on licensing see LICENSE file
 #
 from contemply.interpreter import Interpreter
-import os
+import os, platform
 
 # checking file permissions:
 # https://stackoverflow.com/questions/5337070/how-can-i-get-a-files-permission-mask
@@ -37,6 +37,7 @@ def test_make_folders_chmod(tmpdir, monkeypatch, parser_inst):
     result = parser_inst.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert os.path.exists(checkpath)
 
-    st = os.stat(checkpath)
-    perm = oct(st.st_mode  & 0o777)
-    assert perm == '0o644'
+    if platform.system() != 'Windows':
+        st = os.stat(checkpath)
+        perm = oct(st.st_mode  & 0o777)
+        assert perm == '0o644'
