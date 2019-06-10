@@ -125,9 +125,9 @@ class TemplateParser:
                         target_file = self._ctx.outputfile()
                     else:
                         # Prompt for outputfile
-                        outfile = cli.user_input('Please enter the filename of the new file: ')
-                        target_file = self._ctx.process_variables(outfile)
+                        target_file = cli.user_input('Please enter the filename of the new file: ')
 
+                target_file = self._ctx.process_variables(target_file)
                 path = get_secure_path(os.getcwd(), target_file)
                 disp_path = target_file.replace(os.getcwd(), '')
 

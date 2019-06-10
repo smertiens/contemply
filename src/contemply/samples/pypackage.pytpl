@@ -1,7 +1,7 @@
 #% Demo: Python package
 #::
 package_name = ask('What is the name of your package?')
-package_dir = replace(lowercase(package_dir), '-', '_')
+package_dir = replace(lowercase(package_name), ['-', ' '], '_')
 version = ask('What is the version of your package?')
 #::
 

@@ -101,8 +101,14 @@ def contains(args, ctx):
 
 
 def replace(args, ctx):
-    check_function_args(['replace', 'str', 'str', 'str'], args)
-    return args[0].replace(args[1], args[2])
+    check_function_args(['replace', 'str', 'str, list', 'str'], args)
+    search = args[1] if isinstance(args[1], list) else [args[1]]
+    result = args[0]
+
+    for item in search:
+        result = result.replace(item, args[2])
+
+    return result
 
 
 # Misc functions working on types

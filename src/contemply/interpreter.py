@@ -287,7 +287,7 @@ class Interpreter:
 
             if val:
                 self.get_logger().debug('FileBlockStart: create_missing_folders=True -> creating folders')
-                os.makedirs(os.path.dirname(get_secure_path(os.getcwd(), self.target)))
+                os.makedirs(os.path.dirname(get_secure_path(os.getcwd(), self._ctx.process_variables(self.target))))
 
     def visit_fileblockend(self, node):
         self.target = self.DEFAULT_TARGET

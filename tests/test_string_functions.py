@@ -61,6 +61,13 @@ def test_replace():
     assert parser.get_template_context().get('my_str_replace') == 'Hello Mars!'
 
 
+def test_replace_multiple(parser_inst):
+    parser_inst.parse("#::\nmy_str = 'Hello World'\nmy_str_replace = replace(my_str, ['e', 'o'], '!')")
+
+    assert parser_inst.get_template_context().get('my_str') == 'Hello World'
+    assert parser_inst.get_template_context().get('my_str_replace') == 'H!ll! W!rld'
+
+
 def test_size():
     parser = TemplateParser()
     parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
