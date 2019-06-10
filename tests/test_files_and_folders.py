@@ -37,7 +37,8 @@ def test_make_folders_chmod(tmpdir, monkeypatch, parser_inst):
     result = parser_inst.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
     assert os.path.exists(checkpath)
 
-    if platform.system() != 'Windows':
+    # this raises a PermissionError if run on Travis with Python < 3.7
+    if platform.system() != 'Windows' or 'TRAVIS_TEST' in os.environ:
         st = os.stat(checkpath)
         perm = oct(st.st_mode  & 0o777)
         assert perm == '0o644'
