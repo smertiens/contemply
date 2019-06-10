@@ -5,8 +5,8 @@
 # For more information on licensing see LICENSE file
 #
 
-from contemply.parser import *
-
+from contemply.frontend import TemplateParser
+from contemply.interpreter import Interpreter
 
 def test_subtraction():
     parser = TemplateParser()

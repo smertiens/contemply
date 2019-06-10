@@ -6,7 +6,7 @@
 #
 
 import pytest
-from contemply.parser import *
+from contemply.frontend import TemplateParser
 from contemply.interpreter import *
 
 

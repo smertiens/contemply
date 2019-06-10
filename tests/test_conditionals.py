@@ -1,5 +1,5 @@
-from contemply.parser import *
-
+from contemply.frontend import TemplateParser
+from contemply.interpreter import Interpreter
 
 def test_if_conditions():
     parser = TemplateParser()
