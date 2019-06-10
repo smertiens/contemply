@@ -1,6 +1,7 @@
 import setuptools, os
 
-basepath = os.path.dirname(__file__) + '/'
+basepath = os.path.dirname(__file__)
+basepath += '/' if basepath != '' else ''
 
 with open(basepath + "README.md", "r") as fh:
     long_description = fh.read()
