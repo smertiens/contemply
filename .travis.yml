@@ -1,6 +1,7 @@
 language: python
 dist: xenial
-python:     # will be tested on default linux system
+env: TRAVIS_TEST=1
+python:
   - "3.4"
   - "3.5"
   - "3.5-dev"
@@ -9,8 +10,8 @@ python:     # will be tested on default linux system
   - "3.7-dev"
 
 matrix:
-  allow_failures:
-    - python: '3.7-dev'  # is crashing at the moment (marshaler error when installing)
+  #allow_failures:
+  #  - python: '3.7-dev'  # is crashing at the moment (marshaler error when installing)
   include:
     - name: "Python 3.7 on Xenial Linux"
       python: "3.7"
