@@ -25,6 +25,8 @@ class Interpreter:
             'None': None
         }
 
+        self._function_lookup = [contemply.functions]
+
         self._tree = []
         self._ctx = ctx
         self._line = 0
@@ -45,6 +47,15 @@ class Interpreter:
 
     def get_parsed_template(self):
         return self._parsed_templates
+
+    def add_function_lookup(self, lu):
+        if isinstance(lu, list):
+            self._function_lookup += lu
+        else:
+            self._function_lookup.append(lu)
+
+    def add_builtin(self, symbol, val):
+        self._BUILTINS[symbol] = val
 
     def _cleanup(self):
         pass
@@ -91,8 +102,12 @@ class Interpreter:
             call = getattr(self, '_internal_func_{0}'.format(func))
             return call(args)
 
-        if hasattr(contemply.functions, '{0}'.format(func)):
-            call = getattr(contemply.functions, '{0}'.format(func))
+        call = None
+        for f in self._function_lookup:
+            if hasattr(f, '{0}'.format(func)):
+                call = getattr(f, '{0}'.format(func))
+
+        if call is not None:
             return call(args, self._ctx)
         else:
             raise ParserError("Unknown function: {0}".format(func), self._ctx)

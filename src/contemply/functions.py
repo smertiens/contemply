@@ -16,6 +16,7 @@ from contemply.util import check_function_args
 Built in functions
 """
 
+
 # Interactive functions
 
 def ask(args, ctx):
@@ -83,33 +84,38 @@ def uppercase(args, ctx):
     check_function_args(['uppercase', 'str'], args)
     return args[0].upper()
 
+
 def lowercase(args, ctx):
     check_function_args(['lowercase', 'str'], args)
     return args[0].lower()
+
 
 def capitalize(args, ctx):
     check_function_args(['capitalize', 'str'], args)
     return args[0].capitalize()
 
+
 def contains(args, ctx):
     check_function_args(['contains', 'str', 'str'], args)
     return args[1] in args[0]
+
 
 def replace(args, ctx):
     check_function_args(['replace', 'str', 'str', 'str'], args)
     return args[0].replace(args[1], args[2])
 
+
 # Misc functions working on types
 
 def size(args, ctx):
-    check_function_args(['size','*str,list'], args)
+    check_function_args(['size', '*str,list'], args)
 
     return len(args[0])
 
 
 # Filesystem functions
 
-def makeFolders(args,ctx):
+def makeFolders(args, ctx):
     check_function_args(['makeFolders', 'str', '*str'], args)
     path = get_secure_path(os.getcwd(), args[0])
 

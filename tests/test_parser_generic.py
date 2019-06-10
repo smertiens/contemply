@@ -187,3 +187,20 @@ def test_multifile_output_prompt_default(tmpdir, parser_inst, monkeypatch):
 
     with open(file2) as f:
         assert f.read() == 'Hello Peter\nJust testing.'
+
+
+def test_add_function_lookup(parser_inst):
+    from contemply.samples import function_extension
+
+    text = [
+        '#: res = my_function()',
+        'I say $res',
+        '#: if True == Yes',
+        'Builtins are also imported',
+        '#: endif'
+    ]
+
+    parser_inst.register_lookup_module(function_extension)
+    result = parser_inst.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
+
+    assert result == ['I say Hello world!', 'Builtins are also imported']

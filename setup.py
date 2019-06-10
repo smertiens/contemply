@@ -1,18 +1,20 @@
-import setuptools
+import setuptools, os
 
-with open("README.md", "r") as fh:
+basepath = os.path.dirname(__file__)
+
+with open(basepath + "/README.md", "r") as fh:
     long_description = fh.read()
 
 requirements = []
-with open('requirements.txt', 'r') as fh:
+with open(basepath + '/requirements.txt', 'r') as fh:
     for line in fh:
         requirements.append(line)
 
 setuptools.setup(
     name='contemply',
     version='1.0.0',
-    packages=setuptools.find_packages('src'),
-    package_dir={'': 'src'},
+    packages=setuptools.find_packages(basepath + '/src'),
+    package_dir={'': basepath + '/src'},
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         "Programming Language :: Python :: 3",

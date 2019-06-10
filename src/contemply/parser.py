@@ -524,6 +524,8 @@ class TemplateParser:
     def __init__(self):
         self._ctx = TemplateContext()
         self._output_mode = self.OUTPUTMODE_FILE
+        self._lookup_modules = []
+        self._additional_builtins = {}
 
     def get_logger(self):
         """
@@ -552,6 +554,13 @@ class TemplateParser:
         :param mode: TemplateParser.OUTPUTMODE_CONSOLE | TemplateParser.OUTPUTMODE_FILE
         """
         self._output_mode = mode
+
+    def register_lookup_module(self, mod):
+        if hasattr(mod, 'builtins'):
+            for symbol, val in mod.builtins.items():
+                self._additional_builtins[symbol] = val
+
+        self._lookup_modules.append(mod)
 
     def parse_file(self, filename):
         """
@@ -589,6 +598,12 @@ class TemplateParser:
         parser = Parser(tokenizer, self._ctx)
         interpreter = Interpreter(self._ctx)
         interpreter.get_logger().setLevel(self.get_logger().level)
+
+        # register modules
+        interpreter.add_function_lookup(self._lookup_modules)
+
+        for symbol, val in self._additional_builtins.items():
+            interpreter.add_builtin(symbol, val)
 
         # parse the input and create a AST
         tree = parser.parse()
