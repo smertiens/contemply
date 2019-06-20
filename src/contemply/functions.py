@@ -8,7 +8,7 @@
 import os
 
 import contemply.cli as cli
-from colorama import Style
+from colorama import Style, Fore
 from contemply.storage import get_secure_path
 from contemply.util import check_function_args
 
@@ -62,8 +62,9 @@ def yesno(args, ctx):
 # Other template functions
 
 def setOutput(args, ctx):
-    check_function_args(['setOutput', 'str'], args)
-    ctx.set_outputfile(args[0])
+    print(Fore.YELLOW + 'This function is deprecated and WILL NOT work. See "Creating multiple files" in the docs' + Fore.RESET)
+    #check_function_args(['setOutput', 'str'], args)
+    #ctx.set_outputfile(args[0])
 
 
 # Other functions

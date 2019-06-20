@@ -9,6 +9,7 @@ from contemply.frontend import TemplateParser
 from contemply.interpreter import Interpreter
 from contemply.exceptions import *
 from contemply import cli
+from colorama import Fore
 import pytest, os
 
 
@@ -76,31 +77,21 @@ def test_parser_process_special_chars():
     assert result == ['a p38 (P=)(§RZ=Pru ÄÖ\'Ö§Ü§§"U304 2Q§3"kljkL"', '::;_;_:;!"§%&/()=?adklköölkk>><<<']
 
 
-def test_set_output(tmpdir):
+def test_set_output(tmpdir, capsys, parser_inst):
     tmpdir = str(tmpdir)
     testfile = tmpdir + '/' + 'demo.pytpl'
 
     # create a demo file
     with open(testfile, 'w') as f:
         f.write('\n'.join([
-            '#: echo("Hello World!")',
-            '#: setOutput("./demo.txt")',
-            'Contentline'
+            '#: setOutput("./demo.txt")'
         ]))
 
-    assert not os.path.exists('./demo.txt')
+    #parser_inst.set_output_mode(TemplateParser.OUTPUTMODE_FILE)
+    result = parser_inst.parse_file(testfile)
 
-    parser = TemplateParser()
-    result = parser.parse_file(testfile)[Interpreter.DEFAULT_TARGET]
-    assert result == ['Contentline']
-
-    assert os.path.exists('./demo.txt')
-
-    with open('./demo.txt', 'r') as f:
-        assert f.read() == 'Contentline'
-
-    os.unlink('./demo.txt')
-    assert not os.path.exists('./demo.txt')
+    assert 'This function is deprecated and WILL NOT work. See ' + \
+            '"Creating multiple files" in the docs' in capsys.readouterr().out
 
 
 def test_access_illegal_path(tmpdir, monkeypatch):
@@ -114,7 +105,7 @@ def test_access_illegal_path(tmpdir, monkeypatch):
     with open(testfile, 'w') as f:
         f.write('\n'.join([
             '#: echo("Hello World!")',
-            '#: setOutput("%s")' % (outfile),
+            '#: >> "%s"' % (outfile),
             'Contentline'
         ]))
 

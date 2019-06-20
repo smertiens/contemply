@@ -23,7 +23,6 @@ class TemplateContext:
     def __init__(self):
         self._data = {}
         self._text = ''
-        self._outputfile = ''
         self._filename = ''
         self._line = 0
         self._pos = 0
@@ -114,24 +113,6 @@ class TemplateContext:
         :rtype: int
         """
         return self._pos
-
-    def set_outputfile(self, file):
-        """
-        Sets the path to the output file under which the rendered template is saved (can be set form within the
-        template via setOutput())
-
-        :param str file: Path to the file (can be relative to the current directory)
-        """
-        self._outputfile = file
-
-    def outputfile(self):
-        """
-        Returns the path to the outputfile
-
-        :return: Path to outputfile
-        :rtype: str
-        """
-        return self._outputfile
 
     def set(self, varname, v):
         """

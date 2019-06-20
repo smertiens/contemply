@@ -120,12 +120,8 @@ class TemplateParser:
                     if len(content) == 0:
                         continue
 
-                    # In case setOutput is used - will be deprecated in some future release
-                    if self._ctx.outputfile() != '':
-                        target_file = self._ctx.outputfile()
-                    else:
-                        # Prompt for outputfile
-                        target_file = cli.user_input('Please enter the filename of the new file: ')
+                    # Prompt for outputfile
+                    target_file = cli.user_input('Please enter the filename of the new file: ')
 
                 target_file = self._ctx.process_variables(target_file)
                 path = get_secure_path(os.getcwd(), target_file)
@@ -145,7 +141,7 @@ class TemplateParser:
         elif self._output_mode == self.OUTPUTMODE_CONSOLE:
             for target_file, content in result.items():
                 if target_file == Interpreter.DEFAULT_TARGET:
-                    target_file = self._ctx.outputfile() if self._ctx.outputfile() != '' else '(No filename specified)'
+                    target_file = '(No filename specified)'
                 else:
                     target_file = target_file.replace(os.getcwd(), '')
 

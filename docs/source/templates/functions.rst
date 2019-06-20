@@ -177,3 +177,5 @@ Other Template functions
     :param str filename: The name of the file (may contain variables). Either absolute or relative to the current directory
 
 
+    .. warning:: Set output is deprecated since version 1.1! It will not work anymore. You can specify a filename to write to using
+    the new file-syntaxt here: :ref:`multifile`.
