@@ -116,6 +116,18 @@ String functions
     :rtype: str
 
 
+Filesystem Functions
+********************
+
+.. py:function:: makeFolders(path, [, mode])
+
+    Recursively creates all folders in path.
+
+    :param str path: The path that should be created. All paths are relative to the current working directory. Trying to access
+            upstream folders will result in a SecurityError.
+    :param str mode: The file mode. Only available on systems that support it (Linux/OSX). If mode is omitted, the default
+            setting of the python os.makedir() function applies (0777)
+
 
 Built in functions
 ******************
