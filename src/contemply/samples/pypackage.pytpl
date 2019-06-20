@@ -1,21 +1,66 @@
-#% Demo: Python package
 #::
-package_name = ask('What is the name of your package?')
-package_dir = replace(lowercase(package_name), ['-', ' '], '_')
-version = ask('What is the version of your package?')
+echo("Welcome, let's start creating our package!")
+
+pkg_name = ask("What is the name of your package?")
+pkg_version = ask("What is the version of your package?")
+author_name = ask("What is the package author's name?")
+
+pkg_name_clean = replace(pkg_name, " ", "-")
+description = ask("Describe your package in a few words:")
+
+status = ["1 - Planning", "2 - Pre-Alpha", "3 - Alpha", "4 - Beta", "5 - Production/Stable"]
+pkg_status = choose("What is the status of your package?", status)
+
+requirements = []
+while True
+    answer = ask("Name of the required package:")
+    if answer == ""
+        break
+    else
+        requirements += answer
+    endif
+endwhile
 #::
 
-#: >> "src/$package_dir/__init__.py", True
-__version__ = '$version'
+#: >> "setup.py"
+import setuptools
+
+with open('README.md', 'r') as fh:
+    long_description = fh.read()
+
+requirements = []
+with open('requirements.txt', 'r') as fh:
+    for line in fh:
+        requirements.append(line)
+
+setuptools.setup(
+    name='$pkg_name_clean',
+    version='$pkg_version',
+    packages=setuptools.find_packages('src'),
+    package_dir={'': 'src'},
+    classifiers=[
+        '$pkg_status'
+    ],
+
+    author='$author_name'
+)
 #: <<
 
 #: >> "README.md"
-$package_name
+# $pkg_name
+$description
 #: <<
 
-#: >> "setup.py"
-setuptools.setup(
-    name='$package_name',
-    version='$version'
-)
+#: >> "requirements.txt"
+#: for req in requirements
+$req
+#: endfor
+#: <<
+
+#% Last thing to do: create source folder
+#: makeFolders("src/$pkg_name_clean")
+
+#% and write empty init file
+#: >> "src/$pkg_name_clean/__init__.py"
+
 #: <<

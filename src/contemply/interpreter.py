@@ -279,7 +279,7 @@ class Interpreter:
     def visit_fileblockstart(self, node):
         self.target = node.filename
 
-        if node.create_missing_folders is not None:
+        if node.create_missing_folders:
             val = self.visit(node.create_missing_folders)
 
             if not isinstance(val, bool):

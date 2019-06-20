@@ -163,7 +163,7 @@ class Endfor(AST):
 
 class FileBlockStart(AST):
 
-    def __init__(self, filename, create_missing_folders=None):
+    def __init__(self, filename, create_missing_folders=False):
         self.filename = filename
         self.create_missing_folders = create_missing_folders
 

@@ -11,6 +11,7 @@ Make sure you also take a look at the builtin samples: https://github.com/smerti
     :caption: Contents:
 
     intro
+    beginners_tutorial
     templates/index
     storage
     developer

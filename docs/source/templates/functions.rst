@@ -110,7 +110,7 @@ String functions
     Replaces all occurences of "search" in "string" with "replace".
 
     :param str string: A string or a string variable
-    :param str search: A string or a string variable
+    :param search: A string or a string variable or a list of strings to search for
     :param str replace: A string or a string variable
     :return: The edited string
     :rtype: str
@@ -178,4 +178,5 @@ Other Template functions
 
 
     .. warning:: Set output is deprecated since version 1.1! It will not work anymore. You can specify a filename to write to using
-    the new file-syntaxt here: :ref:`multifile`.
+        the new file-syntax here: :ref:`multifile`.
+
