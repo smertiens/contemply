@@ -15,7 +15,7 @@ template should do:
 - Create a setup.py with some basic information like package name and version
 - Create a README file
 - Create a requirements.txt file so we have all our dependencies
-- Create a src-folder with a subfolder for our package and the __init__.py file
+- Create a src-folder with a subfolder for our package and the __init__.py file (if the user wants that)
 
 
 Get the necessary information from the user
@@ -44,22 +44,33 @@ We will also use the ask-function again to prompt the user for a short package d
 
 .. code-block:: contemply
 
+    #::
     pkg_name_clean = replace(pkg_name, " ", "-")
     description = ask("Describe your package in a few words:")
 
-Describe
+.. warning:: You will see, that each code block in this tutorial starts with '#::', this is only necessary for the
+        syntax highlighting to work. You only need to set it once, see :ref:`commandblocks` for details.
+
+We also want to allow our user to choose the initial status of the pip package. Since there are predefined values for
+this property we show the options as a list to choose from. We can also see that Contemply supports simple lists (see
+:ref:`` for details). The :py:func:`choose` function will then get the chosen option from the user.
+The last line in this code blocks asks the user, whether a src-folder should be created using :py:func:`yesno`.
 
 .. code-block:: contemply
 
+    #::
     status = ["1 - Planning", "2 - Pre-Alpha", "3 - Alpha", "4 - Beta", "5 - Production/Stable"]
     pkg_status = choose("What is the status of your package?", status)
+    create_src_folder = yesno('Create source folder?', 'yes')
 
-
-Describe
+Before we put everything together we will ask the user about required packages. Since we can not be sure about
+the number of packages that should be added, we will use :ref:`whileloops` to add multiple dependencies until the
+user enters an empty string.
 
 
 .. code-block:: contemply
 
+    #::
     requirements = []
     while True
         answer = ask("Name of the required package:")
@@ -74,6 +85,9 @@ Describe
 
 Create all files and folders
 ----------------------------
+
+First of all we will create the setup.py file and the README.md. We will use multifile syntax to write the all the lines
+to the correct files (see :ref:`multifile` for details). Note that you can insert variables by prepending a $.
 
 .. code-block:: contemply
 
@@ -106,6 +120,14 @@ Create all files and folders
     $description
     #: >>
 
+
+To create the requirements.txt file (which is basically one required package per line) we use :ref:`forloops` to iterate
+over every element in our requirements list. Note that the $-syntax for variables does not only work on content lines
+but also inside of most string parameters (like :py:func:`makeFolders`).
+We also use an if-clause to check, wether we should create a src-folder.
+
+.. code-block:: contemply
+
     #: >> "requirements.txt"
     #: for req in requirements
     $req
@@ -113,14 +135,16 @@ Create all files and folders
     #: >>
 
     #% Last thing to do: create source folder
+    #: if create_src_folder
     #: makeFolders("src/$pkg_name_clean")
 
     #% and write empty init file
     #: >> "src/$pkg_name_clean/__init__.py"
 
     #: <<
+    #: endif
 
+Use Storage to gain quick access to your template
+-------------------------------------------------
 
-Use Storage to gain quick access to our template
-------------------------------------------------
-
+.. todo:: Describe how to create a storage.
