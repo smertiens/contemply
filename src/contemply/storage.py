@@ -11,6 +11,13 @@ from contemply.exceptions import *
 
 
 def get_secure_path(base, path):
+    # remove leading path separators, since we always prepend the base dir
+    if path.startswith(os.sep):
+        path = path[len(os.sep):]
+    else:
+        if os.altsep is not None and path.startswith(os.altsep):
+            path = path[len(os.altsep):]
+
     final_path = os.path.realpath(os.path.join(base, path))
     real_base = os.path.realpath(base)
 

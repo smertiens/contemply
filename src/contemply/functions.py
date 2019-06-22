@@ -8,19 +8,19 @@
 import os
 
 import contemply.cli as cli
-from colorama import Style
-from contemply.exceptions import *
+from colorama import Style, Fore
 from contemply.storage import get_secure_path
+from contemply.util import check_function_args
 
 """
 Built in functions
 """
 
+
 # Interactive functions
 
 def ask(args, ctx):
-    if len(args) != 1:
-        raise SyntaxError("Function ask() needs exactly 1 argument", ctx)
+    check_function_args(['ask', 'str'], args)
 
     prompt = args[0]
     if prompt[-1] != ' ':
@@ -31,11 +31,7 @@ def ask(args, ctx):
 
 
 def choose(args, ctx):
-    if len(args) != 2:
-        raise SyntaxError("Function choose() needs exactly 2 arguments", ctx)
-
-    if not isinstance(args[1], list):
-        raise SyntaxError("Expected list at position 2", ctx)
+    check_function_args(['choose', 'str', 'list'], args)
 
     choices = args[1]
     prompt = args[0]
@@ -57,11 +53,7 @@ def choose(args, ctx):
 
 
 def yesno(args, ctx):
-    if len(args) < 1:
-        raise SyntaxError("Function yesno() needs at least 1 argument", ctx)
-    elif len(args) > 2:
-        raise SyntaxError("Function yesno() expects not more than 2 arguments.", ctx)
-
+    check_function_args(['yesno', 'str', '*str'], args)
     default = 'Yes' if len(args) != 2 else args[1]
 
     return cli.prompt(args[0], default)
@@ -70,89 +62,72 @@ def yesno(args, ctx):
 # Other template functions
 
 def setOutput(args, ctx):
-    if len(args) == 0:
-        raise SyntaxError("Function output() needs exactly 1 argument", ctx)
-
-    path = get_secure_path(os.getcwd(), args[0])
-    ctx.set_outputfile(path)
+    print(Fore.YELLOW + 'This function is deprecated and WILL NOT work. See "Creating multiple files" in the docs' + Fore.RESET)
+    #check_function_args(['setOutput', 'str'], args)
+    #ctx.set_outputfile(args[0])
 
 
 # Other functions
 
 def env(args, ctx):
-    if len(args) != 1:
-        raise SyntaxError("Function env() needs at exactly 1 argument", ctx)
-
+    check_function_args(['env', 'str'], args)
     return os.environ[args[0]]
 
 
 def echo(args, ctx):
-    if len(args) == 0:
-        raise SyntaxError("Function echo() needs exactly 1 argument", ctx)
-
+    check_function_args(['echo', 'str'], args)
     print(ctx.process_variables(str(args[0])))
 
 
 # String functions
 
 def uppercase(args, ctx):
-    if len(args) != 1:
-        raise SyntaxError("Function uppercase() needs at exactly 1 argument", ctx)
-
-    if not isinstance(args[0], str):
-        raise SyntaxError("Function uppercase() expects a string as first argument", ctx)
-
+    check_function_args(['uppercase', 'str'], args)
     return args[0].upper()
 
+
 def lowercase(args, ctx):
-    if len(args) != 1:
-        raise SyntaxError("Function lowercase() needs at exactly 1 argument", ctx)
-
-    if not isinstance(args[0], str):
-        raise SyntaxError("Function lowercase() expects a string as first argument", ctx)
-
+    check_function_args(['lowercase', 'str'], args)
     return args[0].lower()
 
+
 def capitalize(args, ctx):
-    if len(args) != 1:
-        raise SyntaxError("Function capitalize() needs at exactly 1 argument", ctx)
-
-    if not isinstance(args[0], str):
-        raise SyntaxError("Function capitalize() expects a string as first argument", ctx)
-
+    check_function_args(['capitalize', 'str'], args)
     return args[0].capitalize()
 
+
 def contains(args, ctx):
-    if len(args) != 2:
-        raise SyntaxError("Function contains() needs at exactly 2 arguments", ctx)
-
-    if not isinstance(args[0], str):
-        raise SyntaxError("Function contains() expects a string as first argument", ctx)
-    if not isinstance(args[1], str):
-        raise SyntaxError("Function contains() expects a string as second argument", ctx)
-
+    check_function_args(['contains', 'str', 'str'], args)
     return args[1] in args[0]
 
+
 def replace(args, ctx):
-    if len(args) != 3:
-        raise SyntaxError("Function replace() needs at exactly 3 arguments", ctx)
+    check_function_args(['replace', 'str', 'str, list', 'str'], args)
+    search = args[1] if isinstance(args[1], list) else [args[1]]
+    result = args[0]
 
-    if not isinstance(args[0], str):
-        raise SyntaxError("Function replace() expects a string as first argument", ctx)
-    if not isinstance(args[1], str):
-        raise SyntaxError("Function replace() expects a string as second argument", ctx)
-    if not isinstance(args[2], str):
-        raise SyntaxError("Function replace() expects a string as third argument", ctx)
+    for item in search:
+        result = result.replace(item, args[2])
 
-    return args[0].replace(args[1], args[2])
+    return result
+
 
 # Misc functions working on types
 
 def size(args, ctx):
-    if len(args) != 1:
-        raise SyntaxError("Function size() needs at exactly 1 arguments", ctx)
-
-    if not isinstance(args[0], str) and not isinstance(args[0], list):
-        raise SyntaxError("Function size() expects a string or a list as first argument", ctx)
+    check_function_args(['size', '*str,list'], args)
 
     return len(args[0])
+
+
+# Filesystem functions
+
+def makeFolders(args, ctx):
+    check_function_args(['makeFolders', 'str', '*str'], args)
+    path = get_secure_path(os.getcwd(), args[0])
+
+    if len(args) == 2:
+        mode = int(args[1], 8)
+        os.makedirs(path, mode)
+    else:
+        os.makedirs(path)

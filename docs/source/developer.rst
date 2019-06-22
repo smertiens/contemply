@@ -1,12 +1,14 @@
 Adding Contemply to your application
 ====================================
 
+.. warning:: Since version 1.1 the TemplateParser class can be found in the "frontend"-module.
+
 You can easily add Contemply as a code generator to your application.
 Take a look at this example:
 
 .. code-block:: python
 
-    from contemply.parser import *
+    from contemply.frontend import TemplateParser
 
     parser = TemplateParser()
     output = parser.parse_file('my_template.pytpl')
@@ -15,7 +17,7 @@ Take a look at this example:
 TemplateParser Reference
 ************************
 
-.. autoclass:: contemply.parser.TemplateParser
+.. autoclass:: contemply.frontend.TemplateParser
     :members:
 
 TemplateContext Reference
@@ -25,7 +27,7 @@ Using the TemplateContext, you can inject your own variables into your templates
 
 .. code-block:: python
 
-    from contemply.parser import *
+    from contemply.frontend import TemplateParser
 
     parser = TemplateParser()
     ctx = parser.get_template_context()
@@ -34,5 +36,5 @@ Using the TemplateContext, you can inject your own variables into your templates
     output = parser.parse_file('my_template.pytpl')
 
 
-.. autoclass:: contemply.parser.TemplateContext
+.. autoclass:: contemply.frontend.TemplateContext
     :members:

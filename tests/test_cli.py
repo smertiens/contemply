@@ -109,7 +109,7 @@ def test_run_command(tmpdir):
     with open(testfile, 'w') as f:
         f.write('\n'.join([
             '#: echo("Hello World!")',
-            '#: setOutput("./demo.txt")',
+            '#: >> "./demo.txt"',
             'Contentline'
         ]))
 

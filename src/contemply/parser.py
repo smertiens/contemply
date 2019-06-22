@@ -5,13 +5,13 @@
 # For more information on licensing see LICENSE file
 #
 
-import os
-import re
+import os, re, sys
 
 import contemply.cli as cli
 from colorama import Fore, Style
 from contemply.interpreter import *
 from contemply.tokenizer import *
+from contemply.storage import get_secure_path
 
 
 class TemplateContext:
@@ -23,7 +23,6 @@ class TemplateContext:
     def __init__(self):
         self._data = {}
         self._text = ''
-        self._outputfile = ''
         self._filename = ''
         self._line = 0
         self._pos = 0
@@ -114,24 +113,6 @@ class TemplateContext:
         :rtype: int
         """
         return self._pos
-
-    def set_outputfile(self, file):
-        """
-        Sets the path to the output file under which the rendered template is saved (can be set form within the
-        template via setOutput())
-
-        :param str file: Path to the file (can be relative to the current directory)
-        """
-        self._outputfile = file
-
-    def outputfile(self):
-        """
-        Returns the path to the outputfile
-
-        :return: Path to outputfile
-        :rtype: str
-        """
-        return self._outputfile
 
     def set(self, varname, v):
         """
@@ -392,10 +373,26 @@ class Parser:
         elif self._token.type() == BREAK:
             self._token = self._consume_next_token(BREAK)
             node = Break()
+        elif self._token.type() == FILE_BLOCK_START:
+            node = self._consume_file_block_start()
+        elif self._token.type() == FILE_BLOCK_END:
+            self._token = self._consume_next_token(FILE_BLOCK_END)
+            node = FileBlockEnd()
         elif self._token.type() == NEWLINE:
             node = NoOp()
         else:
             raise ParserError('Unknown block start: ' + self._token.type(), self._ctx)
+
+        return node
+
+    def _consume_file_block_start(self):
+        self._token = self._consume_next_token(FILE_BLOCK_START)
+        node = FileBlockStart(self._token.value())
+        self._token = self._consume_next_token(STRING)
+
+        if self._token.type() == COMMA:
+            self._token = self._consume_next_token(COMMA)
+            node.create_missing_folders = self._consume_symbol()
 
         return node
 
@@ -494,117 +491,3 @@ class Parser:
 
         self._token = self._consume_next_token(RSQRBR)
         return node
-
-
-class TemplateParser:
-    """
-    This is the frontend class used for TemplateParsing.
-    It will set up a TemplateContext and split the input text up in
-    separate lines before handing it to the _parse function.
-    """
-
-    OUTPUTMODE_CONSOLE, OUTPUTMODE_FILE = 0, 1
-
-    def __init__(self):
-        self._ctx = TemplateContext()
-        self._output_mode = self.OUTPUTMODE_FILE
-
-    def get_logger(self):
-        """
-        Returns the logger instance for the parser.
-        This log level will also be used for the tokenizer and interpreter.
-
-        :returns: Logger instance
-        :rtype: logging.Logger
-        """
-        return logging.getLogger(self.__module__)
-
-    def get_template_context(self):
-        """
-        Returns the current template context instance
-
-        :return: The current template context
-        :rtype: TemplateContext
-        """
-        return self._ctx
-
-    def set_output_mode(self, mode):
-        """
-        Sets the parsers output mode. If set to "console", the parsed template is output to the
-        console. Defaults to OUTPUTMODE_FILE.
-
-        :param mode: TemplateParser.OUTPUTMODE_CONSOLE | TemplateParser.OUTPUTMODE_FILE
-        """
-        self._output_mode = mode
-
-    def parse_file(self, filename):
-        """
-        Parses the given filename
-
-        :param str filename: The path to a file to parse
-        :return: A list containing the lines of the parsed template
-        :rtype: list
-        """
-        self._ctx.set_filename(os.path.basename(filename))
-
-        with open(filename, 'r') as f:
-            lines = f.read()
-
-        self._ctx.set_text(lines)
-
-        return self.parse()
-
-    def parse(self, text=None):
-        """
-        Parses the given text. If no text is set, the parser will parse the content of the current
-        TemplateContext.
-
-        :param str text: A text to parse
-        :return: A list containing the lines of the parsed template
-        :rtype: list
-        """
-        if text is not None:
-            # self._ctx.set_text(text.split('\n'))
-            self._ctx.set_text(text)
-            self._ctx.set_filename('')
-
-        # Create the Tokenizer, Parser and Interpreter instances
-        tokenizer = Tokenizer(self._ctx)
-        tokenizer.get_logger().setLevel(self.get_logger().level)
-        parser = Parser(tokenizer, self._ctx)
-        interpreter = Interpreter(self._ctx)
-        interpreter.get_logger().setLevel(self.get_logger().level)
-
-        # parse the input and create a AST
-        tree = parser.parse()
-        # interpret the AST and execute all statements contained within
-        interpreter.interpret(tree)
-        # result will hold the contents of the parsed template
-        result = interpreter.get_parsed_template()
-
-        if self._output_mode == TemplateParser.OUTPUTMODE_FILE:
-            outfile = self._ctx.outputfile()
-
-            if outfile == '':
-                # Prompt for outputfile
-                outfile = cli.user_input('Please enter the filename of the new file: ')
-
-            # replace variables in outputfile
-            outfile = self._ctx.process_variables(outfile)
-            path = os.path.realpath(outfile)
-
-            overwrite = True
-            if os.path.exists(path):
-                overwrite = cli.prompt('A file with the name {0} already exists. Overwrite?'.format(outfile))
-
-            if overwrite:
-                with open(path, 'w') as f:
-                    f.write('\n'.join(result))
-
-                print(Fore.GREEN + '√' + Fore.RESET + ' File ' + Style.BRIGHT + '{0}'.format(os.path.basename(path)) +
-                      Style.RESET_ALL + ' has been created')
-
-        elif self._output_mode == self.OUTPUTMODE_CONSOLE:
-            print('\n'.join(result))
-
-        return result

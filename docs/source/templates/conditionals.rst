@@ -3,7 +3,7 @@ Conditionals
 
 Contemply supports if/elseif/else constructs to customize template output based on user input.
 
-::
+.. code-block:: contemply
 
     #::
     bool_var = True
@@ -15,7 +15,7 @@ Contemply supports if/elseif/else constructs to customize template output based 
 
 You can check for different conditions using **elseif** and provide a default with **else**:
 
-::
+.. code-block:: contemply
 
     #::
     fruit = ask("What's your favourite fruit?")

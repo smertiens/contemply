@@ -1,8 +1,8 @@
-Gettting started with Contemply
-===============================
-
 Installation
-************
+============
+
+Install via pip
+***************
 
 The easiest way to install Contemply is via pip:
 

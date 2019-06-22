@@ -18,8 +18,8 @@ scaffold file.
 
 Keep all things in one place:
 
-* You can add paths to your templates using Contemply's storage function. Instead of typing the full path to your
-template file you can then use shortcuts like "work_templates::data_project.pytpl". 
+* You can add template-paths using Contemply's storage function. Instead of typing the full path to your
+template file you can use shortcuts like "work_templates::data_project.pytpl". 
 
 If you want to **integrate code generation into you own project**, you can use the Contemply library,
 see [developer docs](https://contemply.readthedocs.io/en/develop/developer.html) for more details.
