@@ -10,6 +10,7 @@ import sys, os
 
 import contemply.functions
 from contemply.ast import *
+from contemply.util import check_function_args
 from contemply.exceptions import *
 from contemply.storage import get_secure_path
 
@@ -75,6 +76,10 @@ class Interpreter:
             print(args[0])
 
         sys.exit()
+
+    def _internal_func_output(self, args):
+        check_function_args(['output', 'str'], args)
+        self._add_content_line(args[0])
 
     def _internal_func__debugDumpStack(self, args):
         print(self._ctx.get_all())
@@ -291,3 +296,6 @@ class Interpreter:
 
     def visit_fileblockend(self, node):
         self.target = self.DEFAULT_TARGET
+
+    def visit_outputexpression(self, node):
+        self._add_content_line(node.content)

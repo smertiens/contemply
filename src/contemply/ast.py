@@ -170,3 +170,9 @@ class FileBlockStart(AST):
 
 class FileBlockEnd(AST):
     pass
+
+
+class OutputExpression(AST):
+
+    def __init__(self, content):
+        self.content = content

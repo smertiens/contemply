@@ -378,6 +378,10 @@ class Parser:
         elif self._token.type() == FILE_BLOCK_END:
             self._token = self._consume_next_token(FILE_BLOCK_END)
             node = FileBlockEnd()
+        elif self._token.type() == OUTPUT_LINE:
+            self._token = self._consume_next_token(OUTPUT_LINE)
+            node = OutputExpression(self._token.value())
+            self._token = self._consume_next_token(STRING)
         elif self._token.type() == NEWLINE:
             node = NoOp()
         else:

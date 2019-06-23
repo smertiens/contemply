@@ -68,7 +68,7 @@ Default output
 You don't need to use file blocks. Any output that is created outside of a fileblock, will also be saved. In this case
 Contemply will prompt the user for a filename.
 
-::
+.. code-block:: contemply
 
     This line will go to the default output. The user will be prompted for a filename.
 

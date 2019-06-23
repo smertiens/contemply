@@ -38,6 +38,7 @@ class ContemplyLexer(RegexLexer):
             (r'^#::.*\n', Name.Decorator, '#pop'),
             (r'\'', String.Literal, 'sqs'),
             (r'"', String.Literal, 'dqs'),
+            (r'\-\>', Keyword),
             (r'\>\>', Keyword),
             (r'\<\<', Keyword),
             (r'\d+', Number),
