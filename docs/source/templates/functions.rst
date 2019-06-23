@@ -170,6 +170,13 @@ Built in functions
 Other Template functions
 ************************
 
+.. py:function:: output(content)
+
+    Adds a line to the current file.
+
+    :param str content: The content that should be added to the file
+
+
 .. py:function:: setOutput(filename)
 
     Sets the name of the outputfile. If no outputfile is set, the user will be prompted to enter a filename.

@@ -2,16 +2,19 @@
 echo("Welcome, let's start creating our package!")
 
 pkg_name = ask("What is the name of your package?")
+pkg_name_clean = replace(pkg_name, " ", "-")
+
 pkg_version = ask("What is the version of your package?")
 author_name = ask("What is the package author's name?")
-
-pkg_name_clean = replace(pkg_name, " ", "-")
 description = ask("Describe your package in a few words:")
 
 status = ["1 - Planning", "2 - Pre-Alpha", "3 - Alpha", "4 - Beta", "5 - Production/Stable"]
 pkg_status = choose("What is the status of your package?", status)
 
+create_src_folder = yesno('Create source folder?', 'yes')
+
 requirements = []
+echo("You can add required packages now. Hit enter to finish this step.")
 while True
     answer = ask("Name of the required package:")
     if answer == ""
@@ -46,21 +49,24 @@ setuptools.setup(
 )
 #: <<
 
-#: >> "README.md"
-# $pkg_name
-$description
-#: <<
+#::
+>> "README.md"
+    -> "# $pkg_name"
+    -> "$description"
+<<
 
-#: >> "requirements.txt"
-#: for req in requirements
-$req
-#: endfor
-#: <<
+>> "requirements.txt"
+for req in requirements
+    -> "$req"
+endfor
+<<
 
 #% Last thing to do: create source folder
-#: makeFolders("src/$pkg_name_clean")
+if create_src_folder
+    makeFolders("src/$pkg_name_clean")
 
-#% and write empty init file
-#: >> "src/$pkg_name_clean/__init__.py"
-
-#: <<
+    #% and write empty init file
+    >> "src/$pkg_name_clean/__init__.py"
+        -> ""
+    <<
+endif

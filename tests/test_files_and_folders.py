@@ -12,16 +12,23 @@ import os, platform
 
 def test_make_folders_default(tmpdir, monkeypatch, parser_inst):
     tmpdir = str(tmpdir)
-    checkpath = os.path.join(tmpdir, 'foo', 'bar')
+    checkpath1 = os.path.join(tmpdir, 'foo', 'bar')
+    checkpath2 = os.path.join(tmpdir, 'foo', 'bar', 'hello')
 
     text = [
-        "#: makeFolders('foo/bar')"
+        "#: var1 = 'hello'",
+        "#: makeFolders('foo/bar')",
+        "#: makeFolders('foo/bar/$var1')"
     ]
 
-    assert not os.path.exists(os.path.join(tmpdir, 'foo', 'bar'))
+    assert not os.path.exists(checkpath1)
+    assert not os.path.exists(checkpath2)
+
     monkeypatch.setattr(os, 'getcwd', lambda: tmpdir)
     result = parser_inst.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
-    assert os.path.exists(checkpath)
+
+    assert os.path.exists(checkpath1)
+    assert os.path.exists(checkpath2)
 
 
 def test_make_folders_chmod(tmpdir, monkeypatch, parser_inst):

@@ -79,7 +79,7 @@ class Interpreter:
 
     def _internal_func_output(self, args):
         check_function_args(['output', 'str'], args)
-        self._add_content_line(args[0])
+        self._add_content_line(self._ctx.process_variables(args[0]))
 
     def _internal_func__debugDumpStack(self, args):
         print(self._ctx.get_all())
@@ -298,4 +298,4 @@ class Interpreter:
         self.target = self.DEFAULT_TARGET
 
     def visit_outputexpression(self, node):
-        self._add_content_line(node.content)
+        self._add_content_line(self._ctx.process_variables(node.content))

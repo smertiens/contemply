@@ -5,6 +5,23 @@
 # For more information on licensing see LICENSE file
 #
 
+def islistempty(listvar):
+    """
+    Checks wether a list has only empty values.
+    Empty values are empty strings ("") or None.
+
+    :param list listvar:
+    :return: True if empty, False otherwise
+    :rtype: bool
+    """
+
+    has_empty = True
+    empty = ("", None)
+    for item in listvar:
+        if item not in empty:
+            has_empty = False
+
+    return has_empty
 
 def _get_native_type(def_type):
     type_map = {

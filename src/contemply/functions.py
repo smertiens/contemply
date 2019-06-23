@@ -124,10 +124,13 @@ def size(args, ctx):
 
 def makeFolders(args, ctx):
     check_function_args(['makeFolders', 'str', '*str'], args)
-    path = get_secure_path(os.getcwd(), args[0])
+    path = get_secure_path(os.getcwd(), ctx.process_variables(args[0]))
 
     if len(args) == 2:
         mode = int(args[1], 8)
         os.makedirs(path, mode)
     else:
         os.makedirs(path)
+
+    print(Fore.GREEN + '√' + Fore.RESET + ' Folder ' + Style.BRIGHT + '{0}'.format(ctx.process_variables(args[0])) +
+          Style.RESET_ALL + ' has been created')

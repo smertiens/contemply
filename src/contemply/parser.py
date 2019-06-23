@@ -384,6 +384,14 @@ class Parser:
             self._token = self._consume_next_token(STRING)
         elif self._token.type() == NEWLINE:
             node = NoOp()
+        elif self._token.type() == COMMENT:
+            # we will check for comments here once more, since _consume_block will no strip whitespaces from the current
+            # line (so content lines reamain unchanged). If a comment is indented, it will end up in this function
+            # and needs to be handled.
+
+            self._tokenizer.skip_until('\n')
+            self._token = self._tokenizer.get_next_token()
+            node = NoOp()
         else:
             raise ParserError('Unknown block start: ' + self._token.type(), self._ctx)
 

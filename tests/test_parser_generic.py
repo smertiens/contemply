@@ -38,6 +38,18 @@ def test_parser_skip_comments():
     assert not parser.get_template_context().has('var1')
 
 
+def test_parser_indented_comment_in_commandlbock(parser_inst):
+    text = [
+        '#::',
+        '\t#% This is a comment',
+        '#::',
+        'Lorem ipsum'
+    ]
+
+    result = parser_inst.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
+    assert result == ['Lorem ipsum']
+
+
 def test_simple_expressions():
     text = [
         '#: test1 = 10',
@@ -197,3 +209,24 @@ def test_add_function_lookup(parser_inst):
     result = parser_inst.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
 
     assert result == ['I say Hello world!', 'Builtins are also imported']
+
+
+def test_output_jnside_commandblock(parser_inst):
+    text = [
+        '#::',
+        'var1 = "World"',
+        'var2 = "bar"',
+        '>> "demo.txt"',
+        'output("Hello $var1")',
+        '<<',
+        '',
+        '>> "demo2.txt"',
+        '-> "Foo $var2"',
+        '<<',
+        '#::'
+    ]
+
+    result = parser_inst.parse('\n'.join(text))
+
+    assert result['demo.txt'] == ['Hello World']
+    assert result['demo2.txt'] == ['Foo bar']

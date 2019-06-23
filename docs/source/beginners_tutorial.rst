@@ -72,6 +72,7 @@ user enters an empty string.
 
     #::
     requirements = []
+    echo("You can add required packages now. Hit enter to finish this step.")
     while True
         answer = ask("Name of the required package:")
         if answer == ""
@@ -115,10 +116,11 @@ to the correct files (see :ref:`multifile` for details). Note that you can inser
     )
     #: <<
 
-    #: >> "README.md"
-    # $pkg_name
-    $description
-    #: >>
+    #::
+    >> "README.md"
+        -> "# $pkg_name"
+        -> "$description"
+    <<
 
 
 To create the requirements.txt file (which is basically one required package per line) we use :ref:`forloops` to iterate
@@ -128,23 +130,26 @@ We also use an if-clause to check, wether we should create a src-folder.
 
 .. code-block:: contemply
 
-    #: >> "requirements.txt"
-    #: for req in requirements
-    $req
-    #: endfor
-    #: >>
+    #::
+    >> "requirements.txt"
+    for req in requirements
+        -> "$req"
+    endfor
+    <<
 
     #% Last thing to do: create source folder
-    #: if create_src_folder
-    #: makeFolders("src/$pkg_name_clean")
+    if create_src_folder
+        makeFolders("src/$pkg_name_clean")
 
-    #% and write empty init file
-    #: >> "src/$pkg_name_clean/__init__.py"
+        #% and write empty init file
+        >> "src/$pkg_name_clean/__init__.py"
+            -> ""
+        <<
+    endif
 
-    #: <<
-    #: endif
+
 
 Use Storage to gain quick access to your template
 -------------------------------------------------
 
-.. todo:: Describe how to create a storage.
+Take a look at :ref:`storage` to find out how to access your templates in a quick and easy way.

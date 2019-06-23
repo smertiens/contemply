@@ -11,6 +11,7 @@ from contemply.storage import get_secure_path
 from contemply.interpreter import Interpreter
 from contemply.parser import TemplateContext, Parser
 from contemply.tokenizer import Tokenizer
+from contemply import util
 
 class TemplateParser:
     """
@@ -117,7 +118,7 @@ class TemplateParser:
             for target_file, content in result.items():
                 if target_file == Interpreter.DEFAULT_TARGET:
                     # The default target will only be created if the content is not empty.
-                    if len(content) == 0:
+                    if len(content) == 0 or util.islistempty(content):
                         continue
 
                     # Prompt for outputfile
@@ -141,6 +142,9 @@ class TemplateParser:
         elif self._output_mode == self.OUTPUTMODE_CONSOLE:
             for target_file, content in result.items():
                 if target_file == Interpreter.DEFAULT_TARGET:
+                    if len(content) == 0 or util.islistempty(content):
+                        continue
+
                     target_file = '(No filename specified)'
                 else:
                     target_file = target_file.replace(os.getcwd(), '')

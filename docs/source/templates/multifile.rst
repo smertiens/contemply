@@ -48,6 +48,26 @@ When specifying the same file block more than once, the second set of lines will
     This line will be appended at the end of the file.
     #: <<
 
+
+Outputing to a file within a command block
+------------------------------------------
+
+You can also write to your file within a file block, either using the :func:`output` function or the "->" operator.
+Let's take a look at one of the examples above, but this time we only have one code block:
+
+.. code-block:: contemply
+
+    #::
+    >> "myfile.txt"
+    output("The content for my file.")
+    <<
+
+    >> "another_file.txt"
+    #% This does the same as the output function, but is a bit shorter
+    -> "This content goes to another_file.txt"
+    <<
+
+
 Create missing folders in filepath
 ----------------------------------
 
