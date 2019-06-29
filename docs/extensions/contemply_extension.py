@@ -19,14 +19,14 @@ class ContemplyLexer(RegexLexer):
         ],
 
         'comment': [
-            (r'^#%.*\n', Comment)
+            (r'\s*#%.*\n', Comment)
         ],
 
         'root': [
             (r'^#::.*\n', Name.Decorator, 'commandblock'),
             (r'^#:', Name.Decorator, 'commandline'),
-            (r'.*\n', Text),
-            include('comment')
+            include('comment'),
+            (r'.*\n', Text)
         ],
 
         'commandline': [
@@ -48,7 +48,7 @@ class ContemplyLexer(RegexLexer):
             (words(keywords, suffix=r'\b'), Keyword),
             (words(builtins, suffix=r'\b'), Name.Builtin),
             (r'\w+', Name.Variable),
-            (r'(\+=|\+|\-|\/|\*|==|=|!=)', Operator),
+            (r'(\+=|\+|\-|\/|\*|==|=|!=|\<|\>)', Operator),
             include('comment')
         ],
 

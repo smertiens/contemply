@@ -17,6 +17,9 @@ template should do:
 - Create a requirements.txt file so we have all our dependencies
 - Create a src-folder with a subfolder for our package and the __init__.py file (if the user wants that)
 
+You can find the complete template in the samples-folder:
+https://github.com/smertiens/contemply/blob/develop/src/contemply/samples/pypackage.pytpl
+
 
 Get the necessary information from the user
 -------------------------------------------
@@ -51,7 +54,22 @@ We will also use the ask-function again to prompt the user for a short package d
 .. warning:: You will see, that each code block in this tutorial starts with '#::', this is only necessary for the
         syntax highlighting to work. You only need to set it once, see :ref:`commandblocks` for details.
 
-We also want to allow our user to choose the initial status of the pip package. Since there are predefined values for
+Let's give our new template a test drive. Open a terminal and navigate to the folder where you have saved the template,
+and run it by entering:
+
+::
+
+    contemply run mytemplate.pytpl
+
+Instead of mytemplate.pytpl you have to use your template name of course. In this example, the template has a "pytpl"
+extension, in fact you can use any kind of filename or extension or even no extension for your templates. Contemply
+doesn't care. If we have done everything correctly, you will be asked for a package name version, your name and a package
+description.
+
+** Task: ** Try checking your package's clean name for proper string replacement by echoing "pkg_name_clean".
+
+Now that everything seems to work, we also want to allow our user to choose the initial status of the pip package.
+Since there are predefined values for
 this property we show the options as a list to choose from. We can also see that Contemply supports simple lists (see
 :ref:`` for details). The :py:func:`choose` function will then get the chosen option from the user.
 The last line in this code blocks asks the user, whether a src-folder should be created using :py:func:`yesno`.
@@ -121,6 +139,8 @@ to the correct files (see :ref:`multifile` for details). Note that you can inser
         -> "# $pkg_name"
         -> "$description"
     <<
+
+In this example you can also see, that there are several ways to add
 
 
 To create the requirements.txt file (which is basically one required package per line) we use :ref:`forloops` to iterate
