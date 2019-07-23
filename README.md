@@ -102,3 +102,7 @@ class MyClass:
         print('Hello World')
 ````
 
+# Changelog
+
+1.1.0b1: Added support for the creation of multiple output files and folders
+
