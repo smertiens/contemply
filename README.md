@@ -57,9 +57,9 @@ text = ask('What should the text be?')
 printVersion = yesno('Create the version function?', 'Yes')
 
 version = '1.0.0'
-setOutput('$classname.py')
 #::
 
+#: >> "$classname.py"
 class $classname:
 
     def someFunction(self):
@@ -69,6 +69,7 @@ class $classname:
     def versionFunction(self):
         print('$version')
 #: endif
+#: <<
 ````
 
 Save this file as demo.pytpl
