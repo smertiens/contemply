@@ -13,7 +13,7 @@ with open(basepath + 'requirements.txt', 'r') as fh:
 
 setuptools.setup(
     name='contemply',
-    version='1.1.0',
+    version='1.1.0b1',
     packages=setuptools.find_packages(basepath + 'src'),
     package_dir={'': basepath + 'src'},
     classifiers=[
