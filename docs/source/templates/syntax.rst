@@ -24,6 +24,8 @@ Contemply expression, one per line. The command line syntax is very similar to P
 languages. Take a look at the README file or the samples folder in the GitHub Repo to see how it works.
 You can also take a look at :ref:`templatefunctions`.
 
+.. _commandblocks:
+
 Command blocks
 --------------
 
@@ -33,7 +35,7 @@ this block are treated as command lines, sou don't have to start every line with
 Example:
 
 
-::
+.. code-block:: contemply
 
     #% Demo of a command block
     #::
@@ -51,7 +53,7 @@ To insert a variable in a content line prefix it with '$'.
 
 Example:
 
-::
+.. code-block:: contemply
 
     #% First we will define a variable
     #: var = "Hello world!"
@@ -68,7 +70,7 @@ You can indent lines **inside command blocks** as you like, but the block delimi
 As you can see from the script examples in the docs, indentation can increase readability.
 If you are using commandlines, the line **has to start with #:**. After that you can again indent as you like.
 
-::
+.. code-block:: contemply
 
     #::
         if True

@@ -6,15 +6,18 @@
 #
 
 import logging
-import sys
+import sys, os
 
 import contemply.functions
 from contemply.ast import *
+from contemply.util import check_function_args
 from contemply.exceptions import *
+from contemply.storage import get_secure_path
 
 
 class Interpreter:
     MAX_LOOP_RUNS = 10000
+    DEFAULT_TARGET = '__default__'
 
     def __init__(self, ctx):
         self._BUILTINS = {
@@ -23,14 +26,18 @@ class Interpreter:
             'None': None
         }
 
+        self._function_lookup = [contemply.functions]
+
         self._tree = []
         self._ctx = ctx
         self._line = 0
 
+        self.target = self.DEFAULT_TARGET
+
         self._break_current_loop = None
         self._loops_running = 0
 
-        self._parsed_template = []
+        self._parsed_templates = {self.DEFAULT_TARGET: []}
 
     def interpret(self, tree):
         self._tree = tree
@@ -40,10 +47,25 @@ class Interpreter:
         return logging.getLogger(self.__module__)
 
     def get_parsed_template(self):
-        return self._parsed_template
+        return self._parsed_templates
+
+    def add_function_lookup(self, lu):
+        if isinstance(lu, list):
+            self._function_lookup += lu
+        else:
+            self._function_lookup.append(lu)
+
+    def add_builtin(self, symbol, val):
+        self._BUILTINS[symbol] = val
 
     def _cleanup(self):
         pass
+
+    def _add_content_line(self, content):
+        if self.target not in self._parsed_templates:
+            self._parsed_templates[self.target] = [content]
+        else:
+            self._parsed_templates[self.target].append(content)
 
     ##########################
     # Internal functions
@@ -54,6 +76,10 @@ class Interpreter:
             print(args[0])
 
         sys.exit()
+
+    def _internal_func_output(self, args):
+        check_function_args(['output', 'str'], args)
+        self._add_content_line(self._ctx.process_variables(args[0]))
 
     def _internal_func__debugDumpStack(self, args):
         print(self._ctx.get_all())
@@ -81,8 +107,12 @@ class Interpreter:
             call = getattr(self, '_internal_func_{0}'.format(func))
             return call(args)
 
-        if hasattr(contemply.functions, '{0}'.format(func)):
-            call = getattr(contemply.functions, '{0}'.format(func))
+        call = None
+        for f in self._function_lookup:
+            if hasattr(f, '{0}'.format(func)):
+                call = getattr(f, '{0}'.format(func))
+
+        if call is not None:
             return call(args, self._ctx)
         else:
             raise ParserError("Unknown function: {0}".format(func), self._ctx)
@@ -139,7 +169,7 @@ class Interpreter:
 
     def visit_contentline(self, node):
         line = self._ctx.process_variables(node.content)
-        self._parsed_template.append(line)
+        self._add_content_line(line)
 
     def visit_commandline(self, node):
         self.visit(node.statement)
@@ -250,3 +280,22 @@ class Interpreter:
 
     def visit_noop(self, node):
         pass
+
+    def visit_fileblockstart(self, node):
+        self.target = node.filename
+
+        if node.create_missing_folders:
+            val = self.visit(node.create_missing_folders)
+
+            if not isinstance(val, bool):
+                raise ParserError('Expected a boolean value for create_missing_folders argument', self._ctx)
+
+            if val:
+                self.get_logger().debug('FileBlockStart: create_missing_folders=True -> creating folders')
+                os.makedirs(os.path.dirname(get_secure_path(os.getcwd(), self._ctx.process_variables(self.target))))
+
+    def visit_fileblockend(self, node):
+        self.target = self.DEFAULT_TARGET
+
+    def visit_outputexpression(self, node):
+        self._add_content_line(self._ctx.process_variables(node.content))

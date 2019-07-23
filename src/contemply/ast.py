@@ -133,8 +133,10 @@ class NoOp(AST):
 class Endif(AST):
     pass
 
+
 class Break(AST):
     pass
+
 
 class While(AST):
 
@@ -157,3 +159,20 @@ class For(AST):
 
 class Endfor(AST):
     pass
+
+
+class FileBlockStart(AST):
+
+    def __init__(self, filename, create_missing_folders=False):
+        self.filename = filename
+        self.create_missing_folders = create_missing_folders
+
+
+class FileBlockEnd(AST):
+    pass
+
+
+class OutputExpression(AST):
+
+    def __init__(self, content):
+        self.content = content

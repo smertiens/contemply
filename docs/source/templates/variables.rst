@@ -10,7 +10,7 @@ Numbers
 
 Contemply only support integer numbers at the moment.
 
-::
+.. code-block:: contemply
 
     #: answer = 42
 
@@ -23,7 +23,7 @@ Strings
 You can use both double quotes (") or single quotes (') to define a string in Contemply. If you use on of them, the other
 one can then be used inside the string. At the moment escaping characters is not supported.
 
-::
+.. code-block:: contemply
 
     #::
     my_string = "Hello World"
@@ -41,7 +41,7 @@ Lists
 
 Lists in Contemply have zero-based integer keys. The can be created using square brackets.
 
-::
+.. code-block:: contemply
 
     #::
     my_list = ['item 1', 'item 2']
@@ -53,7 +53,7 @@ Lists in Contemply have zero-based integer keys. The can be created using square
 
 To add an item to a list, you can use the **add operator (+=)**.
 
-::
+.. code-block:: contemply
 
     #::
     my_list = ['item 1', 'item 2']
@@ -68,7 +68,7 @@ To add an item to a list, you can use the **add operator (+=)**.
 Although lists can itself have lists as items, child lists cannot be accessed directly (e.g. as my_list[0][0]) at
 the moment, but they can be used in a for loop:
 
-::
+.. code-block:: contemply
 
     #::
     my_list = []
@@ -86,6 +86,6 @@ Boolean
 
 Boolean values are the reserved keywords **True** / **False**.
 
-::
+.. code-block:: contemply
 
     #: my_bool = True

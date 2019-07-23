@@ -1,20 +1,23 @@
-import setuptools
+import setuptools, os
 
-with open("README.md", "r") as fh:
+basepath = os.path.dirname(__file__)
+basepath += '/' if basepath != '' else ''
+
+with open(basepath + "README.md", "r") as fh:
     long_description = fh.read()
 
 requirements = []
-with open('requirements.txt', 'r') as fh:
+with open(basepath + 'requirements.txt', 'r') as fh:
     for line in fh:
         requirements.append(line)
 
 setuptools.setup(
     name='contemply',
-    version='1.0.0',
-    packages=setuptools.find_packages('src'),
-    package_dir={'': 'src'},
+    version='1.1.0b1',
+    packages=setuptools.find_packages(basepath + 'src'),
+    package_dir={'': basepath + 'src'},
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 4 - Beta',
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Operating System :: OS Independent",
@@ -29,7 +32,7 @@ setuptools.setup(
     keywords='boilerplate skeleton code generator cli interactive',
     license='AGPL-3.0',
     author='Sean Mertiens',
-    author_email='sean@atraxi-flow.com',
+    author_email='sean@contemply.org',
     description='Contemply turns your boring old templates and project scaffolds into interactive code generators.',
     long_description=long_description,
     long_description_content_type="text/markdown",

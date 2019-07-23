@@ -5,4 +5,10 @@
 # For more information on licensing see LICENSE file
 #
 
-__version__ = '1.1.0b1'
+builtins = {
+    'Yes': True,
+    'No': False
+}
+
+def my_function(args, ctx):
+    return 'Hello world!'

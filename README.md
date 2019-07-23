@@ -1,6 +1,6 @@
 # Contemply
 
-[![Build Status](https://travis-ci.org/smertiens/contemply.svg?branch=master)](https://travis-ci.org/smertiens/contemply)
+[![Build Status](https://travis-ci.org/smertiens/contemply.svg?branch=develop)](https://travis-ci.org/smertiens/contemply)
 [![Documentation Status](https://readthedocs.org/projects/contemply/badge/?version=latest)](https://contemply.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/contemply.svg)](https://badge.fury.io/py/contemply)
 
@@ -18,8 +18,8 @@ scaffold file.
 
 Keep all things in one place:
 
-* You can add paths to your templates using Contemply's storage function. Instead of typing the full path to your
-template file you can then use shortcuts like "work_templates::data_project.pytpl". 
+* You can add template-paths using Contemply's storage function. Instead of typing the full path to your
+template file you can use shortcuts like "work_templates::data_project.pytpl". 
 
 If you want to **integrate code generation into you own project**, you can use the Contemply library,
 see [developer docs](https://contemply.readthedocs.io/en/develop/developer.html) for more details.
@@ -57,9 +57,9 @@ text = ask('What should the text be?')
 printVersion = yesno('Create the version function?', 'Yes')
 
 version = '1.0.0'
-setOutput('$classname.py')
 #::
 
+#: >> "$classname.py"
 class $classname:
 
     def someFunction(self):
@@ -69,6 +69,7 @@ class $classname:
     def versionFunction(self):
         print('$version')
 #: endif
+#: <<
 ````
 
 Save this file as demo.pytpl
@@ -100,4 +101,8 @@ class MyClass:
     def someFunction(self):
         print('Hello World')
 ````
+
+# Changelog
+
+1.1.0b1: Added support for the creation of multiple output files and folders
 

@@ -4,11 +4,13 @@
 # Copyright (C) 2019  Sean Mertiens
 # For more information on licensing see LICENSE file
 #
-
+import os, sys, logging
 import click
-from colorama import Fore, init
+from contemply import __version__ as contemply_version
+from colorama import Fore, init, Style
 from contemply import samples
-from contemply.parser import *
+from contemply.exceptions import *
+from contemply.frontend import TemplateParser
 from contemply.preferences import PreferencesProvider
 from contemply.storage import TemplateStorageManager
 
@@ -24,7 +26,7 @@ class CLIContext:
 def header(ret_header = False):
     h = '\n'.join([
         '*' * 40,
-        '*' + 'Contemply {0}'.format(contemply.__version__).center(38) + '*',
+        '*' + 'Contemply {0}'.format(contemply_version).center(38) + '*',
         '*' * 40,
         ''
     ])
@@ -117,7 +119,7 @@ def version(ctx):
     """
     Shows the current version and exits.
     """
-    print('Contemply version {0}'.format(contemply.__version__))
+    print('Contemply version {0}'.format(contemply_version))
 
 
 @cli.command('storage:list')
