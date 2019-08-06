@@ -66,12 +66,12 @@ extension, in fact you can use any kind of filename or extension or even no exte
 doesn't care. If we have done everything correctly, you will be asked for a package name version, your name and a package
 description.
 
-** Task: ** Try checking your package's clean name for proper string replacement by echoing "pkg_name_clean".
+**Task:**: Try checking your package's clean name for proper string replacement by echoing "pkg_name_clean".
 
 Now that everything seems to work, we also want to allow our user to choose the initial status of the pip package.
 Since there are predefined values for
 this property we show the options as a list to choose from. We can also see that Contemply supports simple lists (see
-:ref:`` for details). The :py:func:`choose` function will then get the chosen option from the user.
+:ref:`lists` for details). The :py:func:`choose` function will then get the chosen option from the user.
 The last line in this code blocks asks the user, whether a src-folder should be created using :py:func:`yesno`.
 
 .. code-block:: contemply
@@ -140,8 +140,10 @@ to the correct files (see :ref:`multifile` for details). Note that you can inser
         -> "$description"
     <<
 
-In this example you can also see, that there are several ways to add
-
+In this example you can also see, that there are several ways to add content to a file. If you want to stay within a
+command block, use the "->" operator followed by a string to add the string contents as a new line to the current file.
+If you write content outside of command blocks, they will automatically be added to the current file.
+If no file is specified, Contemply will ask for a filename to write to after running the template.
 
 To create the requirements.txt file (which is basically one required package per line) we use :ref:`forloops` to iterate
 over every element in our requirements list. Note that the $-syntax for variables does not only work on content lines
