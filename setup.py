@@ -13,11 +13,11 @@ with open(basepath + 'requirements.txt', 'r') as fh:
 
 setuptools.setup(
     name='contemply',
-    version='1.1.0b1',
+    version='1.1.0',
     packages=setuptools.find_packages(basepath + 'src'),
     package_dir={'': basepath + 'src'},
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Operating System :: OS Independent",
