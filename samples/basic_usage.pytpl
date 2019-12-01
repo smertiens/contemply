@@ -1,0 +1,11 @@
+#% Create a very simple setup.py file interactively
+
+#: >> "setup.py"
+import setuptools
+
+setuptools.setup(
+    name='$("What is the name of your package? ")',
+    version='$("What is the version of your package? ")',
+    author='$("What is your name? ")',
+    author_email='$("What is your email-address? ")',
+)

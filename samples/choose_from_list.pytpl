@@ -1,0 +1,12 @@
+#% Create a very simply setup.py file interactively
+
+#: license = choose('Choose the license to use', ['GPLv2', 'GPLv3', 'LGPL', 'MIT', 'BSD'])
+
+#: >> "setup.py"
+import setuptools
+
+setuptools.setup(
+    name='$("What is the name of your package? ")',
+    version='$("What is the version of your package? ")',
+    license='$license',
+)

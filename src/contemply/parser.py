@@ -192,7 +192,7 @@ class TemplateContext:
 
                 return '{0}{1}'.format(val, match.group(4))
 
-        p = re.compile(r'(\$[\w_]+)(\[(\d+)\])?(\s|\W|$)', re.MULTILINE)
+        p = re.compile(r'(\$[\w_\@]+)(\[(\d+)\])?(\s|\W|$)', re.MULTILINE)
         text = p.sub(check_and_replace, text)
 
         return text
@@ -209,6 +209,8 @@ class Parser:
         self._tokenizer = tokenizer
         self._ctx = ctx
 
+        self._var_generator_index = 0
+
         self._cmd_block_mode = False
 
     def _raise_error(self, msg):
@@ -220,6 +222,81 @@ class Parser:
     def parse(self):
         root = self._consume_template()
         return root
+
+    def _extract_inline_content(self, content_line: str) -> list:
+        """
+        Check a raw contentline for variables or
+        inline commmand constructs.
+
+        Variables are inserted like this:
+
+        $varname
+
+
+        unless the $ is escaped.
+
+        An inline question is created like this:
+
+        Foo $("Whats up?") bar.
+
+        :return: tuple
+        """
+
+        def parse_inline_expression(exp: str) -> Assignment:
+            delim = ''
+
+            if (exp[0] == '"'):
+                delim = '"'
+            elif (exp[0] == "'"):
+                delim = "'"
+            else:
+                raise ParserError('Could not parse inline expression. Expected: string')
+
+            # extract string char by char to do syntax checking
+            str_prop = ''
+            n = 0
+
+            while (n < len(exp)):
+                c = exp[n]
+
+                if c == delim:
+                    if n == 0:
+                        n += 1
+                        continue
+                    elif n == len(exp)-1:
+                        break
+                    else:
+                        raise ParserError("Could not parse inline expression. Additional characters after string delimiter.")
+
+                str_prop += c
+                n += 1
+
+            args = ArgumentList()
+            args.children.append(String(str_prop))
+            node = Assignment(create_internal_variable_name(), Function('ask', args))
+            return node
+
+        def create_internal_variable_name() -> str:
+            """
+            Creates an unique variable name
+            :return:
+            """
+            s = '__@cpy_internal_%s' % self._var_generator_index
+            self._var_generator_index += 1
+            return s
+
+
+        matches = re.finditer(r'\$\(\s*(.+?)\s*\)', content_line, re.MULTILINE)
+        nodes = []
+
+        for match in matches:
+            node = parse_inline_expression(match.group(1))
+            nodes.append(node)
+            content_line = content_line.replace(match.group(0), '$%s' % node.variable)
+
+        nodes.append(ContentLine(content_line))
+
+        return nodes
 
     def _consume_block(self, delim=(EOF,)):
         node = Block()
@@ -254,7 +331,8 @@ class Parser:
 
                 node.children.append(self._consume_cmd_line())
             else:
-                node.children.append(self._consume_content_line())
+                for child in self._consume_content_line():
+                    node.children.append(child)
 
             # all statements should consume until NEWLINE or end of file
             if self._token.type() not in (NEWLINE, EOF):
@@ -470,8 +548,9 @@ class Parser:
 
     def _consume_content_line(self):
         line = self._tokenizer.get_raw('\n')
+        nodes = self._extract_inline_content(line)
         self._token = self._tokenizer.get_next_token()
-        return ContentLine(line)
+        return nodes
 
     def _consume_argument_list(self):
         node = ArgumentList()
