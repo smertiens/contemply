@@ -52,3 +52,18 @@ def test_inline_function_syntaxerror(monkeypatch, parser_inst):
 
     with pytest.raises(ParserError):
         result = parser_inst.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
+
+
+def test_escape_dollarsign(parser_inst):
+    text = [
+        "#: foo = 'bar'",
+        "foo $foo"
+    ]
+
+    result = parser_inst.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
+    assert result == ["foo bar"]
+
+    text[1] = "foo \$foo"
+
+    result = parser_inst.parse('\n'.join(text))[Interpreter.DEFAULT_TARGET]
+    assert result == ["foo $foo"]

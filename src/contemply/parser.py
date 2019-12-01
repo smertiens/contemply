@@ -190,10 +190,16 @@ class TemplateContext:
                 if not isinstance(val, str):
                     val = str(val)
 
+                print(val)
                 return '{0}{1}'.format(val, match.group(4))
 
-        p = re.compile(r'(\$[\w_\@]+)(\[(\d+)\])?(\s|\W|$)', re.MULTILINE)
+        # Match either start of string followed by $ or anything but a backslash
+        # Do not capture the first two groups.
+        p = re.compile(r'(?:(?:\A)|(?<=[^\\]))(\$[\w_\@]+)(\[(\d+)\])?(\s|\W|$)', re.MULTILINE)
         text = p.sub(check_and_replace, text)
+
+        # Process remaining esacped characters
+        text = text.replace('\\$', '$')
 
         return text
 

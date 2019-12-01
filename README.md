@@ -31,18 +31,16 @@ pip install contemply
 ## Your first template
 
 ```
-#% Create a nice textfile to say hello!
-#::
-name = ask('Who do you want to say hello to?')
->> 'greeting.txt'
--> 'Hello $name!'
-<<
+#: time_of_day = choose("What is your preferred time of day?", ["day", "night", "morning"])
+
+#: >> "say_hello.txt"
+Hello $("What's your name?"), have a nice $time_of_day!
 ```
 
 Save it as demo.pytpl.
 
 ```
-contemply run demo.pytpl
+contemply run demo.tpl
 ```
 
 ## Documentation and support
@@ -52,6 +50,8 @@ You can find the documentation here: https://contemply.readthedocs.io/en/latest/
 If you find any bugs or have a feature request, please create an issue on github: https://github.com/smertiens/contemply/issues
 
 ## Changes
+
+1.2.0: Added support for "inline asks", "$" is now escapable in content lines 
 
 1.1.0: Added support for the creation of multiple output files, added functions to create folders
 
