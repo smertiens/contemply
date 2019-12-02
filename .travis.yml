@@ -1,34 +1,7 @@
 language: python
-dist: xenial
 env: TRAVIS_TEST=1
 python:
-  - "3.4"
-  - "3.5"
-  - "3.6"
   - "3.7"
-  - "3.7-dev"
-  - "3.8"
-
-matrix:
-  #allow_failures:
-  #  - python: '3.7-dev'  # is crashing at the moment (marshaler error when installing)
-  include:
-
-    - name: "Python 3.7.2 on macOS"
-      os: osx
-      osx_image: xcode10.2  # Python 3.7.2 running on macOS 10.14.3
-      language: shell       # 'language: python' is an error on Travis CI macOS
-      install:
-        - pip3 install coverage
-        - pip3 install pytest
-        - pip3 install pytest-cov
-        - python3 setup.py install
-
-    - name: "Python 3.7.3 on Windows"
-      os: windows
-      language: shell       # 'language: python' is an error on Travis CI Windows
-      before_install: choco install python
-      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
 
 install:
     - pip3 install coverage

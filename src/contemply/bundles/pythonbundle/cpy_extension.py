@@ -19,6 +19,9 @@ def make_venv(args, ctx):
     target_dir = os.path.abspath('./.venv')
     venv.create(env_dir=target_dir, with_pip=True)
 
+    print(os.listdir(target_dir))
+    print(os.listdir(target_dir + '/bin'))
+
     pip_path = os.path.join(target_dir, 'bin', 'pip3')
 
     if len(install_packages) > 0:
