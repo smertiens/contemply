@@ -5,5 +5,5 @@
 # For more information on licensing see LICENSE file
 #
 
-__version__ = '1.2.0'
-
+def bar(args, ctx):
+    print('This %s!' % args[0])

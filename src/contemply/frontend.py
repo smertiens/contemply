@@ -4,7 +4,7 @@
 # Copyright (C) 2019  Sean Mertiens
 # For more information on licensing see LICENSE file
 #
-import os, logging
+import os, logging, importlib
 import contemply.cli as cli
 from colorama import Fore, Style
 from contemply.storage import get_secure_path
@@ -12,6 +12,7 @@ from contemply.interpreter import Interpreter
 from contemply.parser import TemplateContext, Parser
 from contemply.tokenizer import Tokenizer
 from contemply import util
+from contemply.exceptions import BundleException
 
 class TemplateParser:
     """
@@ -27,6 +28,24 @@ class TemplateParser:
         self._output_mode = self.OUTPUTMODE_FILE
         self._lookup_modules = []
         self._additional_builtins = {}
+
+        self.load_extension('contemply.bundles.pythonbundle')
+
+    def load_extension(self, modname):
+        """
+        To load an extension, provide the name of a python module.
+        The module has to contain a "cpy_extension.py" that holds
+        all the available functions and builtins for this extension.
+
+        :param modname: The python module to load as an extension
+        """
+
+        try:
+            mod = importlib.import_module(modname + '.cpy_extension')
+            self.register_lookup_module(mod)
+
+        except ImportError:
+            raise BundleException("The module '%s' is not a valid contemply bundle." % modname)
 
     def get_logger(self):
         """

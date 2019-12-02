@@ -28,6 +28,9 @@ class TemplateContext:
         self._pos = 0
         self._line_pos = 0
 
+    def stop(self):
+        sys.exit()
+
     def set_text(self, text):
         """
         Sets the text for parsing

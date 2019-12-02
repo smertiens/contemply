@@ -66,3 +66,7 @@ class StorageNameNotFoundException(StorageException):
 
 class SecurityException(Exception):
     pass
+
+
+class BundleException(Exception):
+    pass
