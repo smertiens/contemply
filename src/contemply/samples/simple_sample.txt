@@ -1,0 +1,34 @@
+--- Contemply
+Output is demo.todelete
+
+name = demo
+name: What's your name?
+
+---
+
+% check floor and round in KernelMat.Imagingkernel assignment
+clear
+subject= {'S036_PD_pre' { § name § };...    
+    };
+flow1 = [2:0.5:12 14:2:30];
+gamma_lowend=80;
+gamma_low_high_end=150;
+blocks=100;
+
+PAC_path='E:\§ name §\S036_PD_pre_ON';
+
+database='E:\Sean\brainstorm_db\Sean_RestingState_Pre\';
+pathStr = 'C:\brainstorm\current\brainstorm3\'; %path to the canolty code
+addpath(genpath(pathStr));
+pathStr = 'E:\Sean\scripts\hilbert-ica-rsn\'; %path to the canolty code
+addpath(genpath(pathStr));
+
+OutputPath=['E:\megPAC_reformat\§ name §\'];
+
+
+for isubject=1%:size(subject,1) %loop over subjects
+    for sourcediv=1:blocks+1 %loop over source_blocks
+        Trigger_Bad=[];
+        Data=[];
+        Kernel =[];
+        
