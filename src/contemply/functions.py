@@ -35,21 +35,7 @@ def choose(args, ctx):
 
     choices = args[1]
     prompt = args[0]
-    print(Style.BRIGHT + prompt + Style.RESET_ALL)
-    for i, line in enumerate(choices):
-        print('{0}. {1}'.format(i + 1, line))
-
-    correct = False
-    answer = 0
-    while not correct:
-        answer = cli.user_input(Style.BRIGHT + 'Your choice: ' + Style.RESET_ALL)
-
-        if answer.isnumeric() and int(answer) in range(1, len(choices) + 1):
-            correct = True
-        else:
-            print('Invalid choice')
-
-    return choices[int(answer) - 1]
+    return cli.choose(prompt, choices);
 
 
 def yesno(args, ctx):

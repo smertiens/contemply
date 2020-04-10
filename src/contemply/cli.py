@@ -8,7 +8,24 @@
 from colorama import Style, Fore
 import platform, sys
 
-__all__ = ['prompt', 'user_input']
+__all__ = ['prompt', 'user_input', 'choose']
+
+def choose(prompt: str, choices: list) -> str:
+    print(Style.BRIGHT + prompt + Style.RESET_ALL)
+    for i, line in enumerate(choices):
+        print('{0}. {1}'.format(i + 1, line))
+
+    correct = False
+    answer = 0
+    while not correct:
+        answer = user_input(Style.BRIGHT + 'Your choice: ' + Style.RESET_ALL)
+
+        if answer.isnumeric() and int(answer) in range(1, len(choices) + 1):
+            correct = True
+        else:
+            print('Invalid choice')
+
+    return choices[int(answer) - 1]
 
 
 def user_input(prompt):

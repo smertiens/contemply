@@ -15,3 +15,4 @@ tests/htmlcov
 .tox
 .pytest_cache
 .vscode
+.env
