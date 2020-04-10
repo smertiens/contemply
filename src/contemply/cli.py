@@ -8,8 +8,37 @@
 from colorama import Style, Fore
 import platform, sys
 
-__all__ = ['prompt', 'user_input', 'choose']
+__all__ = ['prompt', 'user_input', 'choose', 'collect']
 
+"""
+    Collect a list of strings from the user.
+    The user can add items until he enters an empty string.
+    
+    :param str prompt: The text to prompt the user
+    :rtype: list
+"""
+def collect(prompt: str) -> list:
+    print(Style.BRIGHT + prompt + Style.RESET_ALL)
+    stop = False
+    values = []
+
+    while (not stop):
+        userval = input('> ')
+        
+        if userval == '':
+            stop = True
+        else:
+            values.append(userval)
+    
+    return values
+
+"""
+    Lets the user choose from a list of options.
+
+    :param str prompt: The text to prompt the user
+    :param list choices: The available choices
+    :rtype: str
+"""
 def choose(prompt: str, choices: list) -> str:
     print(Style.BRIGHT + prompt + Style.RESET_ALL)
     for i, line in enumerate(choices):
@@ -30,7 +59,7 @@ def choose(prompt: str, choices: list) -> str:
 
 def user_input(prompt):
     """
-    Wraoper for input() to handle coloring issues on windows
+    Wrapper for input() to handle coloring issues on windows
 
     :param str prompt: The text to prompt the user
     :return: The user's input
