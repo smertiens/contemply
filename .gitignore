@@ -13,3 +13,5 @@ build_*.sh
 .coverage
 tests/htmlcov
 .tox
+.pytest_cache
+.vscode
