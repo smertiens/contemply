@@ -10,6 +10,8 @@ from contemply import __version__ as contemply_version
 from colorama import Fore, init, Style
 from contemply import samples
 from contemply.exceptions import *
+from contemply.simple_parser import Parser as SimpleParser
+from contemply.simple_parser import ParserException as SimpleParserException
 from contemply.frontend import TemplateParser
 from contemply.preferences import PreferencesProvider
 from contemply.storage import TemplateStorageManager
@@ -59,12 +61,13 @@ def cli(ctx):
     ctx.obj = CLIContext()
 
 @cli.command()
+@click.option('--legacy', '-l', type=click.BOOL, is_flag=True, help='Run with legacy parser')
 @click.option('--no-header', type=bool, is_flag=True, help='Do not show application header')
 @click.option('--verbose', '-v', type=click.BOOL, is_flag=True, help='Increase verbosity')
 @click.option('--print', '-p', 'print_out', type=click.BOOL, is_flag=True, help='Show template output in terminal')
 @click.argument('template_file')
 @click.pass_context
-def run(ctx, no_header, verbose, print_out, template_file):
+def run(ctx, legacy, no_header, verbose, print_out, template_file):
     """
     Runs a template.
 
@@ -76,6 +79,9 @@ def run(ctx, no_header, verbose, print_out, template_file):
     Contemply also provides a number of builtin sample templates, for example try this one:
 
         contemply samples:class
+
+    By default Contemply will use the new, simpler template syntax. If you want to run an old
+    template, set the --legacy flag.
     """
     if no_header is not True:
         header()
@@ -93,7 +99,14 @@ def run(ctx, no_header, verbose, print_out, template_file):
         print_error('Template "{0}" not found.'.format(file))
         sys.exit()
 
-    parser = TemplateParser()
+    if legacy is True:
+        parser = TemplateParser()
+        
+        if print_out is True:
+            parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+
+    else:
+        parser = SimpleParser()
 
     # set up parser
     if verbose is True:
@@ -101,12 +114,11 @@ def run(ctx, no_header, verbose, print_out, template_file):
     else:
         parser.get_logger().setLevel(logging.INFO)
 
-    if print_out is True:
-        parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
-
     try:
         parser.parse_file(file)
     except ParserError as e:
+        print_error(e)
+    except SimpleParserException as e:
         print_error(e)
     except KeyboardInterrupt:
         print('\nGoodbye.')

@@ -3,6 +3,7 @@ from contemply.parser import get_secure_path
 from colorama import Fore, Style
 import re
 import os
+import logging
 
 __all__ = ['SectionContext', 'Parser']
 
@@ -21,7 +22,6 @@ class SectionContext:
         self.output = []
 
     def config_set(self, name, val):
-        print("set " + name)
         self.settings[name] = val
 
     def data_set(self, name, val):
@@ -48,28 +48,36 @@ class SectionContext:
     def write_output(self):
         
         filename = ''
-
+        
         if self.config_get('Output') is None:
-            while filename != '':
+            
+            while filename == '':
                 filename = cli.user_input('Enter filename for saving [Press Ctrl + C to cancel]: ')
+
         elif self.config_get('Output') == '@null':
             return
+
+
+        elif self.config_get('Output') == '@console':
+            print('\n'.join(self.output))
+            return
+
         else:
             filename = self.config_get('Output')
 
-            path = get_secure_path(os.getcwd(), filename)
-            disp_path = path.replace(os.getcwd(), '')
+        path = get_secure_path(os.getcwd(), filename)
+        disp_path = path.replace(os.getcwd(), '')
 
-            overwrite = True
-            if os.path.exists(path):
-                overwrite = cli.prompt('A file with the name {0} already exists. Overwrite?'.format(disp_path))
+        overwrite = True
+        if os.path.exists(path):
+            overwrite = cli.prompt('A file with the name {0} already exists. Overwrite?'.format(disp_path))
 
-            if overwrite:
-                with open(path, 'w') as f:
-                    f.write('\n'.join(self.output))
+        if overwrite:
+            with open(path, 'w') as f:
+                f.write('\n'.join(self.output))
 
-            print(Fore.GREEN + '√' + Fore.RESET + ' File ' + Style.BRIGHT + '{0}'.format(disp_path) +
-                    Style.RESET_ALL + ' has been created')
+        print(Fore.GREEN + '√' + Fore.RESET + ' File ' + Style.BRIGHT + '{0}'.format(disp_path) +
+                Style.RESET_ALL + ' has been created')
 
 class ParserException(Exception):
     pass
@@ -95,6 +103,16 @@ class Parser:
         re_internal = '|'.join(SectionContext().settings.keys())
         self.re_internal_assignment = re.compile(
             r'^(' + re_internal + ') is (.*)$')
+
+    def get_logger(self):
+        """
+        Returns the logger instance for the parser.
+        This log level will also be used for the tokenizer and interpreter.
+
+        :returns: Logger instance
+        :rtype: logging.Logger
+        """
+        return logging.getLogger(self.__module__)
 
     def raise_exception(self, msg):
         raise ParserException('{} in {} on line {}'.format(msg, self.filename, self.current_line + 1))
@@ -153,7 +171,6 @@ class Parser:
     def process_line(self):
 
         def replace(match):
-            # https://regex101.com/r/6CPod3/1
             varname = match.group(1).strip()
             val = self._ctx.data_get(varname)
 
