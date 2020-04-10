@@ -12,3 +12,4 @@ __pycache__
 build_*.sh
 .coverage
 tests/htmlcov
+.tox
