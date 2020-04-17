@@ -1,9 +1,20 @@
 --- Contemply
 Output is @console
 
-classname: What is the name of your class?
+go = j
+
+block: "plain"
+test: hello world
+    ...
+
+demo: what
+    - adasd
+    - adj as demo
+
 ---
 
-class § classname §:
-    def __init__(self):
-        pass
+? go == "j"
+aopkdasod
+??
+lpasdlasl
+?

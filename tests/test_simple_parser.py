@@ -1,6 +1,7 @@
 from contemply.simple_parser import Parser, SectionContext
 from contemply import cli
-
+from contemply import samples
+import os
 
 def test_inst():
     ip = Parser()
@@ -152,3 +153,12 @@ def test_change_markers():
     parser.parse_string(text)
 
     assert parser._ctx.output == ['Hello world!']
+
+def test_run_sample():
+
+    f = os.path.join(os.path.dirname(samples.__file__), 'class.pytpl')
+    print(dir)
+
+    parser = Parser()
+    r = parser.parse_file(f)
+    print(r)
