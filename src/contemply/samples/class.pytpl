@@ -1,12 +1,10 @@
---- Contemply
+--- Contemply 
 Output is "@console"
-
-name = "sean"
-
-p: "Who are you?"
-
-demo: "Hi § p ! uppercase §! Enter stuff!"
-    ...
-
-
+This line should just be output.
+varname: "What is your name?"
+varname2: "What is your second name?"
+this should be: ignored
+another_var = "Foo"
+yet_another_var = "Bar"
 ---
+asd

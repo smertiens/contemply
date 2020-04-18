@@ -44,3 +44,6 @@ class TemplateContext:
 
                 print(Fore.GREEN + '√' + Fore.RESET + ' File ' + Style.BRIGHT + '{0}'.format(disp_path) +
                         Style.RESET_ALL + ' has been created')
+
+        elif self.output == '@null':
+            return

@@ -35,6 +35,7 @@ class Parser:
 
     def __init__(self):
 
+        self.interpreter = Interpreter()
         self.filename = ''
         self.lines = []
         self.current_line = 0
@@ -352,9 +353,8 @@ class Parser:
             return AST.Null()
 
     def run(self):
-        interpreter = Interpreter()
-        interpreter.run(self.parse_tree)
-
+        
+        self.interpreter.run(self.parse_tree)
 
 if __name__ == "__main__":
     p = Parser()

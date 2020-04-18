@@ -55,7 +55,7 @@ class Interpreter:
 
         self.allowed_internals = {
             'Output': {
-                'allowed': ['@console', '@file'],
+                'allowed': ['@console', '@file', '@null'],
             },
             'StartMarker': {
                 'allowed': ['*'],
@@ -79,6 +79,9 @@ class Interpreter:
         }
 
         self._function_lookup = [builtin_functions]
+
+        # Can be used for testing
+        self.processed_templates = []
 
         self.template_ctx = None
 
@@ -135,9 +138,6 @@ class Interpreter:
         :rtype: str
         """
 
-        start_marker = self.internals['StartMarker']
-        end_marker = self.internals['EndMarker']
-
         def check_and_replace(match):
             varname = match.group(1)
             val = self.get_symbol_value(varname)
@@ -163,7 +163,12 @@ class Interpreter:
 
         # Match either start of string followed by StartMarker or anything but a backslash
         # Do not capture the first two group
+        start_marker = self.internals['StartMarker']
+        end_marker = self.internals['EndMarker']
+
         re_start_marker = re.escape(start_marker)
+        re_end_marker = re.escape(end_marker)
+
         p = re.compile(r'(?:(?:\A)|(?<=[^\\])){start_marker}\s*([\w\@]+)\s*(!.*)?\s*{end_marker}'.format(
             start_marker=re_start_marker,
             end_marker = end_marker
@@ -235,7 +240,8 @@ class Interpreter:
         self.template_ctx = TemplateContext()
 
     def visit_sectionend(self, node):
-        pass
+        
+        self.processed_templates.append(self.template_ctx)
 
     def visit_null(self, node):
         pass
@@ -255,6 +261,12 @@ class Interpreter:
         
         if node.varname == 'Filename':
             self.template_ctx.filename = val
+
+        if node.varname == 'StartMarker':
+            self.internals['StartMarker'] = val
+        
+        if node.varname == 'EndMarker':
+            self.internals['EndMarker'] = val
 
     def visit_assignment(self, node: AST.Assignment):
         self.set_symbol_value(node.varname, self.visit(node.value))
