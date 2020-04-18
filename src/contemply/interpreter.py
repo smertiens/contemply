@@ -51,6 +51,7 @@ class Interpreter:
 
         self.block_stack = Stack()
         self.symbol_table = {}
+        self.parse_tree = []
         self.pos = 0
 
         self.allowed_internals = {
@@ -97,14 +98,25 @@ class Interpreter:
     def advance_pos(self):
         self.pos += 1
 
+    def advance_until(self, token_class):
+        
+        while self.pos < len(self.parse_tree):
+            if type(self.parse_tree[self.pos]) == token_class:
+                return
+            
+            self.advance_pos()
+        
+        self.raise_exception('Expected %s. Found EOF.'  % token_class)
+
     def set_pos (self, pos):
         self.pos = pos
 
     def run(self, parse_tree):
+        self.parse_tree = parse_tree
 
-        while self.pos < len(parse_tree):
+        while self.pos < len(self.parse_tree):
 
-            token = parse_tree[self.pos]
+            token = self.parse_tree[self.pos]
             
             if  not type(token) in (AST.Else, AST.Endif, AST.ElseIf):
             #if  not isinstance(token, AST.Else) and not isinstance(token, AST.Endif):
@@ -394,7 +406,7 @@ class Interpreter:
             self.raise_exception('Cannot iterate over variable "listvar" of type {}'.format(type(listvar)))
 
         if len(listvar) == 0:
-            # list is empty. No need to create a loop.
+            self.advance_until(AST.EndFor)
             return
 
         self.set_symbol_value(node.itemvar, listvar[0])
@@ -415,7 +427,7 @@ class Interpreter:
             if elem['type'] != 'for':
                 self.raise_exception('Encountered ENDFOR without preceding FOR')        
                 
-            if elem['index'] == len(elem['listvar']) - 1:
+            if (len(elem['listvar']) == 0) (elem['index'] == len(elem['listvar']) - 1):
                 # end loop
                 self.block_stack.pop()
             else:

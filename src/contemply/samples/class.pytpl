@@ -1,10 +1,24 @@
---- Contemply 
+--- Contemply
 Output is "@console"
-This line should just be output.
-varname: "What is your name?"
-varname2: "What is your second name?"
-this should be: ignored
-another_var = "Foo"
-yet_another_var = "Bar"
+
+Welcome to the Python class creator!
+
+classname: 'What is the name of your class? '
+parentclass: 'Does your class have a parent class? Leave empty for none. '
+
+Let us start adding class properties
+
+props: "Enter a property name or leave empty to finish. "
+    ...
 ---
-asd
+
+? parentclass == ''
+class § classname §:
+??
+class § classname § (§ parentclass §):
+?
+
+    def __init__(self):
+... props -> prop
+        § prop § = ''
+...

@@ -1,39 +1,27 @@
---- Contemply
-classname: What is the name of your class?
-parentclass: Does your class have a parent class? Leave empty for none.
+#::
+classname = ask('What is the name of your class?')
+parentclass = ask('Does your class have a parent class? Leave empty for none.')
+propname = 'notempty'
 
-Let us start adding class properties
-props: 'What is the property called? (Leave empty to finish editing properties)
-    ...
+props = []
 
-! Summarize: all
+echo("Let us start adding class properties")
+while propname != ''
+    propname = ask('What is the property called? (Leave empty to finish editing properties)')
 
-! Create folder: /demmo/tmp
+    if propname == ''
+        break
+    endif
 
-? props == "demo"
+    create_funcs = yesno('Do you want to add getter/setter methods?')
+    type = choose('What is the type of your property?', ['String', 'Integer', 'Float', 'Object', 'List'])
 
-??
-    asdasd
-?
+    propvar = '_' + propname
 
-
-
----
+    props += [propname, propvar, type, create_funcs]
+endwhile
 
 #::
-parentclass?
-
-
-? parentclass == ""
-    class $classname($parentclass):
-??
-    class $classname:
-?
-
-... prop -> props
-    $prop
-...
-
 #: if parentclass != ''
 class $classname($parentclass):
 #: else
