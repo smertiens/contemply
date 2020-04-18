@@ -127,6 +127,34 @@ def test_collect_and_loop(monkeypatch):
         ' - Item 3',
     ]
 
+def test_collect_empty_and_loop(monkeypatch):
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        'This line should just be output.',
+        'varname: "Add some!"',
+        '   ...',
+        '---',
+        'Hello there!',
+        'You chose:',
+        '... varname -> item',
+        ' - § item §',
+        '...'
+    ])
+
+    monkeypatch.setattr(cli, 'collect', lambda t: [])
+
+    ip = Parser()
+    ip.parse_string(text)
+    ip.run()
+
+    assert len(ip.interpreter.processed_templates) == 1
+    assert ip.interpreter.processed_templates[0].content == [
+        'Hello there!',
+        'You chose:',
+    ]
+
+
 def test_variable_replacement():
     text = '\n'.join([
         '--- Contemply',

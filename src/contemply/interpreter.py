@@ -427,7 +427,7 @@ class Interpreter:
             if elem['type'] != 'for':
                 self.raise_exception('Encountered ENDFOR without preceding FOR')        
                 
-            if (len(elem['listvar']) == 0) (elem['index'] == len(elem['listvar']) - 1):
+            if (len(elem['listvar']) == 0) or (elem['index'] == len(elem['listvar']) - 1):
                 # end loop
                 self.block_stack.pop()
             else:
