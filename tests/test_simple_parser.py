@@ -153,12 +153,3 @@ def test_change_markers():
     parser.parse_string(text)
 
     assert parser._ctx.output == ['Hello world!']
-
-def test_run_sample():
-
-    f = os.path.join(os.path.dirname(samples.__file__), 'class.pytpl')
-    print(dir)
-
-    parser = Parser()
-    r = parser.parse_file(f)
-    print(r)

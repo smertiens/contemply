@@ -1,32 +1,13 @@
 --- Contemply
-Output is "@console"
+Filename is "file1"
 
-in = "yes"
-
-? in == 'yes'
-Yes!
-?? in == 'no'
-No!
-?? in == 'hello'
-World!
-??
-Okay then!
-?
-
-demo: Enter demo values
-    ...
-
-demo2: Enter more
-    ...
-
+name: What is your name?
 ---
+Your name is §name
 
-asdasd
+--- Contemply
+Filename is "file2"
 
-... demo -> item
-You said §item
-
-...     demo2 -> item2
-    You also said §item2
-...
-...
+age: What is your age?
+---
+Your age is §age.

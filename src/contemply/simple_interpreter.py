@@ -1,4 +1,5 @@
 import contemply.simple_ast as AST
+from contemply.templates import TemplateContext
 from contemply import cli
 import re
 
@@ -7,21 +8,6 @@ class InterpreterException(Exception):
 
 class BlockStackEmptyException(Exception):
     pass
-
-class TemplateContext:
-
-    def __init__(self):
-        self.output = '@output'
-        self.content = []
-    
-    def flush(self):
-        
-        if self.output == '@console':
-            print('\n'.join(self.content))
-        
-        else:
-            pass
-            # todo: implement writing to files
 
 class Stack:
 
@@ -56,8 +42,7 @@ class Interpreter:
         return logging.getLogger(self.__module__)
 
     def raise_exception(self, msg):
-        #Todo: complete
-        raise InterpreterException('{} in {} on line {}'.format(msg, 'x', self.pos + 1))
+        raise InterpreterException('{}'.format(msg))
 
     def __init__(self):
         
@@ -67,19 +52,18 @@ class Interpreter:
 
         self.allowed_internals = {
             'Output': {
-                'allowed': ['@console', '*'],
+                'allowed': ['@console', '@file'],
             },
             'StartMarker': {
                 'allowed': ['*'],
             },
-            'EndMarker': {
+            'Filename': {
                 'allowed': ['*'],
             },
         }
 
         self.internals = {
             'StartMarker': '§',
-            'EndMarker': ''
         }
 
         self.builtins = {
@@ -196,12 +180,17 @@ class Interpreter:
         if not node.varname in self.allowed_internals:
             self.raise_exception('Unknown internal value {}'.format(node.varname))
         
-        if (not node.value in self.allowed_internals[node.varname]['allowed']) and \
+        val = self.visit_value(node.value)
+
+        if (not val in self.allowed_internals[node.varname]['allowed']) and \
             '*' not in self.allowed_internals[node.varname]['allowed']:
-            self.raise_exception('Invalid value "{}" for internal setting {}'.format(node.value, node.varname))
+            self.raise_exception('Invalid value "{}" for internal setting {}'.format(val, node.varname))
 
         if node.varname == 'Output':
-            self.template_ctx.output = self.process_string(self.visit_value(node.value))
+            self.template_ctx.output = self.process_string(val)
+        
+        if node.varname == 'Filename':
+            self.template_ctx.filename = self.process_string(val)
 
     def visit_assignment(self, node: AST.Assignment):
         self.set_symbol_value(node.varname, self.visit_value(node.value))
