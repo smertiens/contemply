@@ -44,7 +44,7 @@ class Parser:
         self.block_stack = []
 
         # Regex for parsing section headers
-        self.re_prompt = re.compile(r'^(\w+)(?:[ ]*)\:(?:[ ]*)(.*)$')
+        self.re_prompt = re.compile(r'^(\w+)\s*\:\s*(?:(?:\"([^\"]*)\")|(?:\'([^\']*)\'))$')
         self.re_assignment = re.compile(r'^(\w+)(?:[ ]*)=(?:[ ]*)(.*)$')
         self.re_option = re.compile(r'^(?:\t| +)\- (.*)$')
         self.re_repeat = re.compile(r'^(?:\t| +)\.\.\.$')
@@ -289,12 +289,32 @@ class Parser:
         
     def parse_prompt(self):
         match = self.re_prompt.match(self.lines[self.current_line])
-        return AST.Prompt(match.group(2), match.group(1))
+
+        prompt = match.group(1)
+        text = ''
+
+        if match.groups()[1] is not None:
+            text = match.group(2)
+        else:
+            text = match.group(3)
+
+        # add " to the text, so the value visitor will recognize it as string
+        # and preform variale replacement
+        return AST.Prompt(AST.Value('"' + text + '"'), prompt)
 
     def parse_collection(self):
         match = self.re_prompt.match(self.lines[self.current_line])
+
+        prompt = match.group(1)
+        text = ''
+
+        if match.groups()[1] is not None:
+            text = match.group(2)
+        else:
+            text = match.group(3)
+
         self.advance_line()
-        return AST.CollectionLoop(match.group(2), match.group(1))
+        return AST.CollectionLoop(AST.Value('"' + text + '"'), prompt)
 
     def parse_internal_assignment(self):
         match = self.re_internal_assignment.match(self.lines[self.current_line])

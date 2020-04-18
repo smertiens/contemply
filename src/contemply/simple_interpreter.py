@@ -260,10 +260,10 @@ class Interpreter:
         self.set_symbol_value(node.varname, self.visit(node.value))
 
     def visit_prompt(self, node: AST.Prompt):
-        self.set_symbol_value(node.target_var, cli.user_input(node.text))
+        self.set_symbol_value(node.target_var, cli.user_input(self.visit(node.text)))
 
     def visit_collectionloop(self, node: AST.CollectionLoop):
-        self.set_symbol_value(node.target_var, cli.collect(node.text))
+        self.set_symbol_value(node.target_var, cli.collect(self.visit(node.text)))
 
     def visit_optionlist(self, node: AST.Optionlist):
         self.set_symbol_value(node.target_var, cli.choose(node.text, node.options))

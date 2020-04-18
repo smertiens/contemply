@@ -5,7 +5,7 @@ name = "sean"
 
 p: "Who are you?"
 
-demo: "Enter stuff!"
+demo: "Hi § p ! uppercase §! Enter stuff!"
     ...
 
 
