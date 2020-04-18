@@ -85,8 +85,9 @@ class Endif(SimpleAST):
     pass
 
 class For(SimpleAST):
-    def __init__(self, condition):
-        self.condition = condition
+    def __init__(self, listvar, itemvar):
+        self.listvar = listvar
+        self.itemvar = itemvar
 
 class EndFor(SimpleAST):
     pass

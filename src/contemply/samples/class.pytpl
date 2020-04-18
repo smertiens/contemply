@@ -1,20 +1,32 @@
 --- Contemply
-Output is @console
+Output is "@console"
 
-go = j
+in = "yes"
 
-block: "plain"
-test: hello world
+? in == 'yes'
+Yes!
+?? in == 'no'
+No!
+?? in == 'hello'
+World!
+??
+Okay then!
+?
+
+demo: Enter demo values
     ...
 
-demo: what
-    - adasd
-    - adj as demo
+demo2: Enter more
+    ...
 
 ---
 
-? go == "j"
-aopkdasod
-??
-lpasdlasl
-?
+asdasd
+
+... demo -> item
+You said §item
+
+...     demo2 -> item2
+    You also said §item2
+...
+...
