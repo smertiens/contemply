@@ -35,11 +35,11 @@ Using the TemplateContext, you can inject your own variables into your templates
 TemplateParser Reference
 ************************
 
-.. autoclass:: contemply.frontend.TemplateParser
+.. autoclass:: contemply.parser.Parser
     :members:
 
 TemplateContext Reference
 *************************
 
-.. autoclass:: contemply.frontend.TemplateContext
+.. autoclass:: contemply.templates.TemplateContext
     :members:
