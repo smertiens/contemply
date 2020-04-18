@@ -8,6 +8,10 @@
 class SimpleAST:
     pass
 
+class RAW(SimpleAST):
+    def __init__(self, value):
+        self.value = value
+
 class Null(SimpleAST):
     pass
 
@@ -16,6 +20,11 @@ class SectionStart(SimpleAST):
 
 class SectionEnd(SimpleAST):
     pass
+
+class Function(SimpleAST):
+    def __init__(self, name, arglist):
+        self.name = name
+        self.arglist = arglist
 
 class Value(SimpleAST):
     def __init__(self, value):

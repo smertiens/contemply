@@ -1,6 +1,7 @@
 import contemply.simple_ast as AST
 from contemply.templates import TemplateContext
 from contemply import cli
+from contemply import builtin_functions
 import re
 
 class InterpreterException(Exception):
@@ -45,7 +46,9 @@ class Interpreter:
         raise InterpreterException('{}'.format(msg))
 
     def __init__(self):
-        
+
+        self.string_re = re.compile(r'^(?:\"([^\"]*)\")|(?:\'([^\']*)\')$')
+
         self.block_stack = Stack()
         self.symbol_table = {}
         self.pos = 0
@@ -57,6 +60,9 @@ class Interpreter:
             'StartMarker': {
                 'allowed': ['*'],
             },
+            'EndMarker': {
+                'allowed': ['*'],
+            },
             'Filename': {
                 'allowed': ['*'],
             },
@@ -64,12 +70,15 @@ class Interpreter:
 
         self.internals = {
             'StartMarker': '§',
+            'EndMarker': '§',
         }
 
         self.builtins = {
             'true': True,
             'false': False
         }
+
+        self._function_lookup = [builtin_functions]
 
         self.template_ctx = None
 
@@ -127,27 +136,57 @@ class Interpreter:
         """
 
         start_marker = self.internals['StartMarker']
+        end_marker = self.internals['EndMarker']
 
         def check_and_replace(match):
-            varname = match.group(1)[len(start_marker):]  # strip trailing start marker
-        
+            varname = match.group(1)
             val = self.get_symbol_value(varname)
-            
+
+            # process filters (aka functions)
+            if match.groups()[1] is not None:
+                filters = match.group(2).split('!')
+
+                if len(filters) == 0:
+                    self.raise_exception('Invalid filter: %s' % varname)
+
+                for filter in filters:
+                    if filter == '':
+                        continue
+
+                    filter = filter.strip()
+                    val = self.visit(AST.Function(filter, [AST.RAW(val)]))
+
             if not isinstance(val, str):
                 val = str(val)
 
             return val
 
-        # Match either start of string followed by $ or anything but a backslash
+        # Match either start of string followed by StartMarker or anything but a backslash
         # Do not capture the first two group
         re_start_marker = re.escape(start_marker)
-        p = re.compile(r'(?:(?:\A)|(?<=[^\\]))({start_marker}[\w\@]+)'.format(start_marker=re_start_marker), re.MULTILINE)
+        p = re.compile(r'(?:(?:\A)|(?<=[^\\])){start_marker}\s*([\w\@]+)\s*(!.*)?\s*{end_marker}'.format(
+            start_marker=re_start_marker,
+            end_marker = end_marker
+            ), re.MULTILINE)
 
         text = p.sub(check_and_replace, text)
 
         # Process remaining esacped characters
         text = text.replace('\\' + start_marker, start_marker)
         return text
+
+    ############################################################
+    # Extension handling
+    ############################################################
+
+    def add_function_lookup(self, lu):
+        if isinstance(lu, list):
+            self._function_lookup += lu
+        else:
+            self._function_lookup.append(lu)
+
+    def add_builtin(self, symbol, val):
+        self.builtins[symbol] = val
 
 
     ############################################################
@@ -161,6 +200,31 @@ class Interpreter:
 
     def fallback_visit(self, node):
         self.raise_exception('No visitor found for node {0}'.format(node))
+
+    def visit_raw(self, node: AST.RAW):
+        # this node is used internally when a value does not need to be 
+        # processed further
+
+        return node.value
+
+    def visit_function(self, node: AST.Function):
+        funcname = node.name
+        args = []
+
+        for item in node.arglist:
+            v = self.visit(item)
+            
+            args.append(v)
+
+        call = None
+        for f in self._function_lookup:
+            if hasattr(f, '{0}'.format(funcname)):
+                call = getattr(f, '{0}'.format(funcname))
+
+        if call is not None:
+            return call(args)
+        else:
+            self.raise_exception('Unknown function: {}'.format(funcname))
 
     def visit_sectionstart(self, node):
 
@@ -180,20 +244,20 @@ class Interpreter:
         if not node.varname in self.allowed_internals:
             self.raise_exception('Unknown internal value {}'.format(node.varname))
         
-        val = self.visit_value(node.value)
+        val = self.visit(node.value)
 
         if (not val in self.allowed_internals[node.varname]['allowed']) and \
             '*' not in self.allowed_internals[node.varname]['allowed']:
             self.raise_exception('Invalid value "{}" for internal setting {}'.format(val, node.varname))
 
         if node.varname == 'Output':
-            self.template_ctx.output = self.process_string(val)
+            self.template_ctx.output = val
         
         if node.varname == 'Filename':
-            self.template_ctx.filename = self.process_string(val)
+            self.template_ctx.filename = val
 
     def visit_assignment(self, node: AST.Assignment):
-        self.set_symbol_value(node.varname, self.visit_value(node.value))
+        self.set_symbol_value(node.varname, self.visit(node.value))
 
     def visit_prompt(self, node: AST.Prompt):
         self.set_symbol_value(node.target_var, cli.user_input(node.text))
@@ -208,8 +272,8 @@ class Interpreter:
         self.template_ctx.content.append(self.process_string(node.line))
 
     def visit_expression(self, node: AST.SimpleExpression):
-        left = self.visit_value(node.left)
-        right = self.visit_value(node.right)
+        left = self.visit(node.left)
+        right = self.visit(node.right)
 
         if node.operator == '==':
             return left == right
@@ -226,8 +290,7 @@ class Interpreter:
         })
 
     def visit_value(self, node: AST.Value):
-        string_re = re.compile(r'^(?:\"([^\"]*)\")|(?:\'([^\']*)\')$')
-
+    
         if re.match(r'^\d+$', node.value):
             # integer
             return int(node.value)
@@ -236,14 +299,20 @@ class Interpreter:
             # float
             return float(node.value)
 
-        elif string_re.match(node.value):
+        elif self.string_re.match(node.value):
             # string
-            match = string_re.match(node.value)
+            match = self.string_re.match(node.value)
+            v = ''
 
+            # depending on the delimiter, a different group will match
             if match.groups()[0] == None:
-                return match.groups()[1]
+                v = match.groups()[1]
             else:
-                return match.groups()[0]
+                v = match.groups()[0]
+
+            # we automatically replace variables in string values
+            v = self.process_string(v)
+            return v
         
         else:
             # try builtin
@@ -307,7 +376,7 @@ class Interpreter:
             self.raise_exception('Encountered ENDIF without preceding IF (empty block stack)') 
 
     def visit_for(self, node: AST.For):
-        listvar = self.visit_value(node.listvar)
+        listvar = self.visit(node.listvar)
 
         if not isinstance(listvar, list):
             self.raise_exception('Cannot iterate over variable "listvar" of type {}'.format(type(listvar)))

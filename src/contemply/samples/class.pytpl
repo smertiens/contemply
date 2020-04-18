@@ -1,13 +1,12 @@
 --- Contemply
-Filename is "file1"
+Output is "@console"
 
-name: What is your name?
+name = "sean"
+
+p: "Who are you?"
+
+demo: "Enter stuff!"
+    ...
+
+
 ---
-Your name is §name
-
---- Contemply
-Filename is "file2"
-
-age: What is your age?
----
-Your age is §age.

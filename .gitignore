@@ -16,3 +16,4 @@ tests/htmlcov
 .pytest_cache
 .vscode
 .env
+*.tmp

@@ -28,6 +28,7 @@ class Parser:
     IF_START = '?'
     ELSE_IF_START = '??'
     LOOP_START = '...'
+    FUNCTION_START = '!'
 
     SCOPE_SECTION_HEADER = 1
     SCOPE_CONTENT = 2
@@ -58,6 +59,8 @@ class Parser:
         self.re_for_loop = re.compile(r'^\.\.\.\s*(\w+)\s*\-\>\s*(\w+)$')
         self.re_if = re.compile(r'^\?' + if_base)
         self.re_else_if = re.compile(r'^\?\?' + if_base)
+        self.re_function = re.compile(r'^\!\s*(\w+)\s*\((.*)\)$')
+        self.re_function_args = re.compile(r'([\d\.]+)|\w+|(\"[^\"]+\")|(\'[^\']+\')(?:,?)')
 
         # Base
         self.re_string = re.compile(r'^\"([^\"]+)\"$')
@@ -171,6 +174,9 @@ class Parser:
                 else:
                     token = self.parse_for()
 
+            elif line.startswith(self.FUNCTION_START):
+                token = self.parse_function()
+
             else:
                 if self.scope == self.SCOPE_CONTENT:
                     token = AST.Content(line)
@@ -181,6 +187,33 @@ class Parser:
             self.advance_line()
         
         return parse_tree
+
+    def parse_function(self):
+        match = self.re_function.match(self.lines[self.current_line])
+
+        if not match:
+            self.raise_exception('Could not parse function-expression.')
+
+        funcname = match.group(1)
+        args = match.group(2)
+        arglist = []
+
+        if args != '':
+            arg_matches = self.re_function_args.finditer(args)
+
+            for m in arg_matches:
+                val = None
+
+                for n in m.groups():
+                    if n is not None:
+                        val = AST.Value(n)
+
+                if val is None:
+                    self.raise_exception('Could not parse function argument list: %s' % args)
+
+                arglist.append(val)
+
+        return AST.Function(funcname, arglist)
 
     def parse_if(self):
         match = self.re_if.match(self.lines[self.current_line])
