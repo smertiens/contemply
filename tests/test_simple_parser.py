@@ -1,4 +1,4 @@
-from contemply.simple_parser import Parser, SectionContext
+from contemply.simple_parser import Parser
 from contemply import cli
 from contemply import samples
 import os

@@ -96,7 +96,7 @@ def test_storage_show(pref_instance, tmpdir):
     assert 'settings.json' in result.output
 
 
-def test_run_command(tmpdir):
+def test_run_command_legacy(tmpdir):
     tmpdir = str(tmpdir)
     testfile = tmpdir + '/' + 'demo.pytpl'
 
@@ -115,7 +115,7 @@ def test_run_command(tmpdir):
 
     # run file
     runner = CliRunner()
-    result = runner.invoke(cli, ['run', testfile])
+    result = runner.invoke(cli, ['run', '--legacy', testfile])
 
     assert result.exit_code == 0
     assert os.path.exists('./demo.txt')
@@ -129,7 +129,7 @@ def test_run_command(tmpdir):
 
     # run file and output to console
     runner = CliRunner()
-    result = runner.invoke(cli, ['run', '-p', testfile])
+    result = runner.invoke(cli, ['run','--legacy', '-p', testfile])
 
     assert result.exit_code == 0
     assert not os.path.exists('./demo.txt')
@@ -139,7 +139,7 @@ def test_run_command(tmpdir):
 
     # run file and output to console without header
     runner = CliRunner()
-    result = runner.invoke(cli, ['run', '--print', '--no-header', testfile])
+    result = runner.invoke(cli, ['run', '--print', '--legacy', '--no-header', testfile])
 
     assert result.exit_code == 0
     assert not os.path.exists('./demo.txt')
