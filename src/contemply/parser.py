@@ -57,8 +57,9 @@ class Parser:
             r'^(' + re_internal + ') is (.*)$')
 
         # Regex for processing lines
-        operators = [re.escape(item) for item in ('==', '!=')]
+        operators = [re.escape(item) for item in ('==', '!=', '>=', '<=', '>', '<')]
         if_base = r'\s*(.*)\s*({operators})\s*(.*)\s*'.format(operators='|'.join(operators))
+
         function_base = r'(\w+)\s*\((.*)\)'
         
         self.re_for_loop = re.compile(r'^\.\.\.\s*(\w+)\s*\-\>\s*(\w+)$')

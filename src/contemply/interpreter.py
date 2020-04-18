@@ -303,6 +303,14 @@ class Interpreter:
             return left == right
         elif node.operator == '!=':
             return left != right
+        elif node.operator == '>':
+            return left > right
+        elif node.operator == '>=':
+            return left >= right
+        elif node.operator == '<':
+            return left < right
+        elif node.operator == '<=':
+            return left <= right
 
     def visit_if(self, node: AST.If):
         e = self.visit_expression(node.condition)

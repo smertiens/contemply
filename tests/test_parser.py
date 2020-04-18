@@ -266,4 +266,88 @@ def test_handle_comments_in_header (capsys):
 
     assert len(parser.interpreter.processed_templates) == 1
     assert 'Second line.\n' in capsys.readouterr()
+
+
+def test_if_greater_than():
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        '---',
+        '? 5 > 12.5',
+        'Wrong',
+        '?',
+        '? 5 > 2.1',
+        'Right',
+        '?',
+    ])
+
+    parser = Parser()
+    parser.parse_string(text)
+    parser.run()
+
+    assert len(parser.interpreter.processed_templates) == 1
+    assert parser.interpreter.processed_templates[0].content == ['Right']
     
+def test_if_greater_than_or_equal():
+
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        '---',
+        '? 5 > 5',
+        'Wrong',
+        '?',
+        '? 5 >= 5',
+        'Right',
+        '?',
+    ])
+
+    parser = Parser()
+    parser.parse_string(text)
+    parser.run()
+
+    assert len(parser.interpreter.processed_templates) == 1
+    assert parser.interpreter.processed_templates[0].content == ['Right']
+
+def test_if_smaller_than():
+
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        '---',
+        '? 5 < 2',
+        'Wrong',
+        '?',
+        '? 5 < 8.98',
+        'Right',
+        '?',
+    ])
+
+    parser = Parser()
+    parser.parse_string(text)
+    parser.run()
+
+    assert len(parser.interpreter.processed_templates) == 1
+    assert parser.interpreter.processed_templates[0].content == ['Right']
+
+
+def test_if_smaller_than_or_equal():
+
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        '---',
+        '? 239.0 < 239.0',
+        'Wrong',
+        '?',
+        '? 239.0 <= 239.0',
+        'Right',
+        '?',
+    ])
+
+    parser = Parser()
+    parser.parse_string(text)
+    parser.run()
+
+    assert len(parser.interpreter.processed_templates) == 1
+    assert parser.interpreter.processed_templates[0].content == ['Right']
