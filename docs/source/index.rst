@@ -12,6 +12,7 @@ Make sure you also take a look at the builtin samples: https://github.com/smerti
 
     intro
     beginners_tutorial
-    templates/index
+    templates
     storage
     developer
+    legacy/index

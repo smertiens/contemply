@@ -20,11 +20,11 @@ sys.path.insert(0, os.path.abspath('../extensions'))
 # -- Project information -----------------------------------------------------
 
 project = 'Contemply'
-copyright = '2019, Sean Mertiens'
+copyright = '2019 - 2020, Sean Mertiens'
 author = 'Sean Mertiens'
 
 # The full version, including alpha/beta/rc tags
-release = '1.1.0'
+release = '2.0.0 Beta 1'
 master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------

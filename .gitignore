@@ -3,7 +3,7 @@ venv
 build
 dist
 src/*.egg-info
-doc/build
+docs/source/_build
 tests/.coverage
 add_path.sh
 grammar.txt

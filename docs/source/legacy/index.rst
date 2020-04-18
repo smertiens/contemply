@@ -1,5 +1,5 @@
-Templates
-=========
+Contemply Legacy Templates
+==========================
 
 .. toctree::
     :maxdepth: 2
