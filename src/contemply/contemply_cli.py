@@ -1,7 +1,7 @@
 #
 # Contemply - A code generator that creates boilerplate files from templates
 #
-# Copyright (C) 2019  Sean Mertiens
+# Copyright (C) 2019-2020  Sean Mertiens
 # For more information on licensing see LICENSE file
 #
 import os, sys, logging
@@ -10,9 +10,10 @@ from contemply import __version__ as contemply_version
 from colorama import Fore, init, Style
 from contemply import samples
 from contemply.exceptions import *
-from contemply.simple_parser import Parser as SimpleParser
-from contemply.simple_parser import ParserException as SimpleParserException
-from contemply.frontend import TemplateParser
+
+from contemply.parser import Parser, ParserException
+
+from contemply.legacy.frontend import TemplateParser as LegacyParser
 from contemply.preferences import PreferencesProvider
 from contemply.storage import TemplateStorageManager
 
@@ -100,13 +101,13 @@ def run(ctx, legacy, no_header, verbose, print_out, template_file):
         sys.exit()
 
     if legacy is True:
-        parser = TemplateParser()
+        parser = LegacyParser()
         
         if print_out is True:
-            parser.set_output_mode(TemplateParser.OUTPUTMODE_CONSOLE)
+            parser.set_output_mode(LegacyParser.OUTPUTMODE_CONSOLE)
 
     else:
-        parser = SimpleParser()
+        parser = Parser()
 
     # set up parser
     if verbose is True:
@@ -115,7 +116,12 @@ def run(ctx, legacy, no_header, verbose, print_out, template_file):
         parser.get_logger().setLevel(logging.INFO)
 
     try:
-        parser.parse_file(file)
+        if legacy is True:
+            parser.parse_file(file)
+        else:
+            parser.parse_file(file)
+            parser.run()
+            
     except ParserError as e:
         print_error(e)
     except SimpleParserException as e:

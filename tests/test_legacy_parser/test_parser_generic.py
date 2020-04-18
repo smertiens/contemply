@@ -5,8 +5,8 @@
 # For more information on licensing see LICENSE file
 #
 
-from contemply.frontend import TemplateParser
-from contemply.interpreter import Interpreter
+from contemply.legacy.frontend import TemplateParser
+from contemply.legacy.interpreter import Interpreter
 from contemply.exceptions import *
 from contemply import cli
 from colorama import Fore

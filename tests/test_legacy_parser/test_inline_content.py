@@ -7,7 +7,7 @@
 import pytest
 from contemply import cli
 from contemply.exceptions import ParserError
-from contemply.interpreter import Interpreter
+from contemply.legacy.interpreter import Interpreter
 
 
 def test_inline_function(monkeypatch, parser_inst):

@@ -8,9 +8,9 @@ import os, logging, importlib
 import contemply.cli as cli
 from colorama import Fore, Style
 from contemply.storage import get_secure_path
-from contemply.interpreter import Interpreter
-from contemply.parser import TemplateContext, Parser
-from contemply.tokenizer import Tokenizer
+from contemply.legacy.interpreter import Interpreter
+from contemply.legacy.parser import TemplateContext, Parser
+from contemply.legacy.tokenizer import Tokenizer
 from contemply import util
 from contemply.exceptions import BundleException
 

@@ -1,10 +1,10 @@
 #
 # Contemply - A code generator that creates boilerplate files from templates
 #
-# Copyright (C) 2019  Sean Mertiens
+# Copyright (C) 2019-2020  Sean Mertiens
 # For more information on licensing see LICENSE file
 #
-from contemply.interpreter import Interpreter
+from contemply.legacy.interpreter import Interpreter
 import os, platform
 
 # checking file permissions:

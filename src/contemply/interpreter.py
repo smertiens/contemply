@@ -1,53 +1,183 @@
-#
-# Contemply - A code generator that creates boilerplate files from templates
-#
-# Copyright (C) 2019  Sean Mertiens
-# For more information on licensing see LICENSE file
-#
+import contemply.ast as AST
+from contemply.templates import TemplateContext
+from contemply import cli
+from contemply import builtin_functions
+import re
 
-import logging
-import sys, os
+class InterpreterException(Exception):
+    pass
 
-import contemply.functions
-from contemply.ast import *
-from contemply.util import check_function_args
-from contemply.exceptions import *
-from contemply.storage import get_secure_path
+class BlockStackEmptyException(Exception):
+    pass
 
+class Stack:
+
+    def __init__(self):
+        self._data = []
+
+    def push(self, elem):
+        self._data.insert(0, elem)
+
+    def update_first(self, data):
+        self._data[0] = data
+
+    def pop(self):
+        self._data.pop(0)
+
+    def get_first(self):
+        if len(self._data) == 0:
+            raise BlockStackEmptyException()
+
+        return self._data[0]
 
 class Interpreter:
-    MAX_LOOP_RUNS = 10000
-    DEFAULT_TARGET = '__default__'
-
-    def __init__(self, ctx):
-        self._BUILTINS = {
-            'True': True,
-            'False': False,
-            'None': None
-        }
-
-        self._function_lookup = [contemply.functions]
-
-        self._tree = []
-        self._ctx = ctx
-        self._line = 0
-
-        self.target = self.DEFAULT_TARGET
-
-        self._break_current_loop = None
-        self._loops_running = 0
-
-        self._parsed_templates = {self.DEFAULT_TARGET: []}
-
-    def interpret(self, tree):
-        self._tree = tree
-        self.visit(tree)
 
     def get_logger(self):
+        """
+        Returns the logger instance for the parser.
+        This log level will also be used for the tokenizer and interpreter.
+
+        :returns: Logger instance
+        :rtype: logging.Logger
+        """
         return logging.getLogger(self.__module__)
 
-    def get_parsed_template(self):
-        return self._parsed_templates
+    def raise_exception(self, msg):
+        raise InterpreterException('{}'.format(msg))
+
+    def __init__(self):
+
+        self.string_re = re.compile(r'^(?:\"([^\"]*)\")|(?:\'([^\']*)\')$')
+
+        self.block_stack = Stack()
+        self.symbol_table = {}
+        self.pos = 0
+
+        self.allowed_internals = {
+            'Output': {
+                'allowed': ['@console', '@file'],
+            },
+            'StartMarker': {
+                'allowed': ['*'],
+            },
+            'EndMarker': {
+                'allowed': ['*'],
+            },
+            'Filename': {
+                'allowed': ['*'],
+            },
+        }
+
+        self.internals = {
+            'StartMarker': '§',
+            'EndMarker': '§',
+        }
+
+        self.builtins = {
+            'true': True,
+            'false': False
+        }
+
+        self._function_lookup = [builtin_functions]
+
+        self.template_ctx = None
+
+    def set_symbol_value(self, symbol, val):
+        self.symbol_table[symbol] =  val
+
+    def get_symbol_value(self, symbol):
+        if symbol in self.symbol_table:
+            return self.symbol_table[symbol]
+        else:
+            self.raise_exception('Variable "{}" not found'.format(symbol))
+
+    def advance_pos(self):
+        self.pos += 1
+
+    def set_pos (self, pos):
+        self.pos = pos
+
+    def run(self, parse_tree):
+
+        while self.pos < len(parse_tree):
+
+            token = parse_tree[self.pos]
+            
+            if  not type(token) in (AST.Else, AST.Endif, AST.ElseIf):
+            #if  not isinstance(token, AST.Else) and not isinstance(token, AST.Endif):
+                try:
+                    elem = self.block_stack.get_first()
+
+                    if (elem['type'] == 'if'):
+                        if not elem['condition']:
+                            # if condition not met, skip lines
+                            self.advance_pos()
+                            continue
+
+                except BlockStackEmptyException:
+                    pass
+
+            self.visit(token)
+            self.advance_pos() 
+
+        # save template context
+        if self.template_ctx is not None:
+            self.template_ctx.flush()
+
+    def process_string(self, text: str):
+        """
+        Replaces variabels inside a string.
+        The content line notation is used (variable names start with a $).
+        Variable names and values are taken from this TemplateContexte instance.
+
+        :param str text: The text to parse
+        :return: The parsed text
+        :rtype: str
+        """
+
+        start_marker = self.internals['StartMarker']
+        end_marker = self.internals['EndMarker']
+
+        def check_and_replace(match):
+            varname = match.group(1)
+            val = self.get_symbol_value(varname)
+
+            # process filters (aka functions)
+            if match.groups()[1] is not None:
+                filters = match.group(2).split('!')
+
+                if len(filters) == 0:
+                    self.raise_exception('Invalid filter: %s' % varname)
+
+                for filter in filters:
+                    if filter == '':
+                        continue
+
+                    filter = filter.strip()
+                    val = self.visit(AST.Function(filter, [AST.RAW(val)]))
+
+            if not isinstance(val, str):
+                val = str(val)
+
+            return val
+
+        # Match either start of string followed by StartMarker or anything but a backslash
+        # Do not capture the first two group
+        re_start_marker = re.escape(start_marker)
+        p = re.compile(r'(?:(?:\A)|(?<=[^\\])){start_marker}\s*([\w\@]+)\s*(!.*)?\s*{end_marker}'.format(
+            start_marker=re_start_marker,
+            end_marker = end_marker
+            ), re.MULTILINE)
+
+        text = p.sub(check_and_replace, text)
+
+        # Process remaining esacped characters
+        text = text.replace('\\' + start_marker, start_marker)
+        return text
+
+    ############################################################
+    # Extension handling
+    ############################################################
 
     def add_function_lookup(self, lu):
         if isinstance(lu, list):
@@ -56,246 +186,238 @@ class Interpreter:
             self._function_lookup.append(lu)
 
     def add_builtin(self, symbol, val):
-        self._BUILTINS[symbol] = val
+        self.builtins[symbol] = val
 
-    def _cleanup(self):
-        pass
 
-    def _add_content_line(self, content):
-        if self.target not in self._parsed_templates:
-            self._parsed_templates[self.target] = [content]
-        else:
-            self._parsed_templates[self.target].append(content)
-
-    ##########################
-    # Internal functions
-    ##########################
-
-    def _internal_func_exit(self, args):
-        if len(args) > 0:
-            print(args[0])
-
-        sys.exit()
-
-    def _internal_func_output(self, args):
-        check_function_args(['output', 'str'], args)
-        self._add_content_line(self._ctx.process_variables(args[0]))
-
-    def _internal_func__debugDumpStack(self, args):
-        print(self._ctx.get_all())
-
-    ##########################
+    ############################################################
     # Node visitors
-    ##########################
+    ############################################################
 
     def visit(self, node):
         method_name = 'visit_' + type(node).__name__.lower()
         visitor = getattr(self, method_name, self.fallback_visit)
-        # print('Visiting: ' + type(node).__name__)
         return visitor(node)
 
     def fallback_visit(self, node):
-        raise ParserError('No visitor found for node {0}'.format(node))
+        self.raise_exception('No visitor found for node {0}'.format(node))
 
-    def visit_function(self, node):
-        # function
-        func = node.name
-        args = self.visit(node.args)
+    def visit_raw(self, node: AST.RAW):
+        # this node is used internally when a value does not need to be 
+        # processed further
 
-        # check for internal function
-        if hasattr(self, '_internal_func_{0}'.format(func)):
-            call = getattr(self, '_internal_func_{0}'.format(func))
-            return call(args)
+        return node.value
+
+    def visit_function(self, node: AST.Function):
+        funcname = node.name
+        args = []
+
+        for item in node.arglist:
+            v = self.visit(item)
+            
+            args.append(v)
 
         call = None
         for f in self._function_lookup:
-            if hasattr(f, '{0}'.format(func)):
-                call = getattr(f, '{0}'.format(func))
+            if hasattr(f, '{0}'.format(funcname)):
+                call = getattr(f, '{0}'.format(funcname))
 
         if call is not None:
-            return call(args, self._ctx)
+            return call(args)
         else:
-            raise ParserError("Unknown function: {0}".format(func), self._ctx)
+            self.raise_exception('Unknown function: {}'.format(funcname))
 
-    def visit_break(self, node):
-        if self._loops_running <= 0:
-            raise ParserError("Unexpected BREAK: no surrounding loop found", self._ctx)
+    def visit_sectionstart(self, node):
 
-        self._break_current_loop = True
+        if self.template_ctx is not None:
+            # a template has already been processed - save it
+            self.template_ctx.flush()
+        
+        self.template_ctx = TemplateContext()
 
-    def visit_argumentlist(self, node):
-        args = []
-        for child in node.children:
-            args.append(self.visit(child))
-        return args
+    def visit_sectionend(self, node):
+        pass
 
-    def visit_num(self, node):
-        return int(node.value)
+    def visit_null(self, node):
+        pass
 
-    def visit_variable(self, node):
-        if node.name in self._BUILTINS:
-            return self._BUILTINS[node.name]
+    def visit_internalassignment(self, node: AST.InternalAssignment):
+        if not node.varname in self.allowed_internals:
+            self.raise_exception('Unknown internal value {}'.format(node.varname))
+        
+        val = self.visit(node.value)
 
-        if self._ctx.has(node.name):
-            var = self._ctx.get(node.name)
-            if node.index is not None:
-                if isinstance(var, list):
-                    return var[node.index]
-                else:
-                    raise ParserError('Variable "{0}" is not a list.'.format(node.name), self._ctx)
+        if (not val in self.allowed_internals[node.varname]['allowed']) and \
+            '*' not in self.allowed_internals[node.varname]['allowed']:
+            self.raise_exception('Invalid value "{}" for internal setting {}'.format(val, node.varname))
+
+        if node.varname == 'Output':
+            self.template_ctx.output = val
+        
+        if node.varname == 'Filename':
+            self.template_ctx.filename = val
+
+    def visit_assignment(self, node: AST.Assignment):
+        self.set_symbol_value(node.varname, self.visit(node.value))
+
+    def visit_prompt(self, node: AST.Prompt):
+        self.set_symbol_value(node.target_var, cli.user_input(self.visit(node.text)))
+
+    def visit_collectionloop(self, node: AST.CollectionLoop):
+        self.set_symbol_value(node.target_var, cli.collect(self.visit(node.text)))
+
+    def visit_optionlist(self, node: AST.Optionlist):
+        self.set_symbol_value(node.target_var, cli.choose(node.text, node.options))
+
+    def visit_content(self, node: AST.Content):
+        self.template_ctx.content.append(self.process_string(node.line))
+
+    def visit_expression(self, node: AST.SimpleExpression):
+        left = self.visit(node.left)
+        right = self.visit(node.right)
+
+        if node.operator == '==':
+            return left == right
+        elif node.operator == '!=':
+            return left != right
+
+    def visit_if(self, node: AST.If):
+        e = self.visit_expression(node.condition)
+
+        self.block_stack.push({
+            'type': 'if',
+            'condition': e,
+            'block_resolved': e
+        })
+
+    def visit_value(self, node: AST.Value):
+    
+        if re.match(r'^\d+$', node.value):
+            # integer
+            return int(node.value)
+
+        elif re.match(r'^\d+\.\d+$', node.value):
+            # float
+            return float(node.value)
+
+        elif self.string_re.match(node.value):
+            # string
+            match = self.string_re.match(node.value)
+            v = ''
+
+            # depending on the delimiter, a different group will match
+            if match.groups()[0] == None:
+                v = match.groups()[1]
             else:
-                return var
+                v = match.groups()[0]
+
+            # we automatically replace variables in string values
+            v = self.process_string(v)
+            return v
+        
         else:
-            raise ParserError('Unknown variable: "{0}"'.format(node.name), self._ctx)
-
-    def visit_list(self, node):
-        pylist = []
-
-        for item in node.children:
-            pylist.append(self.visit(item))
-
-        return pylist
-
-    def visit_template(self, node):
-        self.visit(node.main_block)
-
-    def visit_block(self, node):
-        for item in node.children:
-            self.visit(item)
-
-            if self._break_current_loop is True:
-                # Do not process any more statements from this block
-                break
-
-    def visit_contentline(self, node):
-        line = self._ctx.process_variables(node.content)
-        self._add_content_line(line)
-
-    def visit_commandline(self, node):
-        self.visit(node.statement)
-
-    def visit_assignment(self, node):
-        if node.type == 'ASSIGN':
-            self._ctx.set(node.variable, self.visit(node.value))
-        elif node.type == 'ASSIGN_PLUS':
-            list_var = self._ctx.get(node.variable)
-
-            # check var type
-            if not isinstance(list_var, list):
-                raise ParserError("Expected variable of type 'list'.", self._ctx)
+            # try builtin
+            if node.value.lower() in self.builtins:
+                return self.builtins[node.value.lower()]
             else:
-                list_var.append(self.visit(node.value))
+                return self.get_symbol_value(node.value)
+    
+    def visit_else (self, node: AST.Else):
 
-    def visit_string(self, node):
-        return node.value
+        try:
+            elem = self.block_stack.get_first()
 
-    def visit_if(self, node):
-        if self.visit(node.condition):
-            self.visit(node.block)
-            return True
-        else:
-            return False
+            if elem['type'] != 'if':
+                self.raise_exception('Encountered ELSE without preceding IF')        
+                
+            if not elem['block_resolved']:
+                elem['condition'] = not elem['condition']
+                
+            else:
+                elem['condition'] = False
 
-    def visit_ifblock(self, node):
-        results = []
-        for item in node._if:
-            results.append(self.visit(item))
+            self.block_stack.update_first(elem)
 
-        if True not in results and node._else is not None:
-            # all conditions returned false -> execute else block
-            self.visit(node._else)
+        except BlockStackEmptyException:
+            self.raise_exception('Encountered ELSE without preceding IF (empty block stack)')
+    
+    def visit_elseif (self, node: AST.ElseIf):
 
-    def visit_while(self, node):
-        counter = 0
-        self._loops_running += 1
+        try:
+            elem = self.block_stack.get_first()
 
-        while (self.visit(node.expr)):
-            if counter >= self.MAX_LOOP_RUNS:
-                raise ParserError("Maximum loop iterations of {0} reached.".format(self.MAX_LOOP_RUNS))
-            self.visit(node.block)
+            if elem['type'] != 'if':
+                self.raise_exception('Encountered ELSE IF without preceding IF')
 
-            if self._break_current_loop:
-                self._break_current_loop = False
-                break
+            e = False
 
-            counter += 1
+            if not elem['block_resolved']:
+                e = self.visit_expression(node.condition)
+                elem['condition'] = e
+                elem['block_resolved'] = e
+            else:
+                elem['condition'] = e
+            
+            self.block_stack.update_first(elem)
 
-        self._loops_running -= 1
+        except BlockStackEmptyException:
+            self.raise_exception('Encountered ELSE IF without preceding IF (empty block stack)')
 
-    def visit_for(self, node):
-        # Check listvar
+    def visit_endif (self, node: AST.Endif):
+
+        try:
+            elem = self.block_stack.get_first()
+
+            if elem['type'] != 'if':
+                self.raise_exception('Encountered ENDIF without preceding IF')        
+                
+            self.block_stack.pop()
+
+        except BlockStackEmptyException:
+            self.raise_exception('Encountered ENDIF without preceding IF (empty block stack)') 
+
+    def visit_for(self, node: AST.For):
         listvar = self.visit(node.listvar)
 
         if not isinstance(listvar, list):
-            raise ParserError('Cannot iterate "{0}", expected a list.'.format(node.listvar.name), self._ctx)
+            self.raise_exception('Cannot iterate over variable "listvar" of type {}'.format(type(listvar)))
 
-        # No elements in list, no sense in running loop
         if len(listvar) == 0:
+            # list is empty. No need to create a loop.
             return
 
-        self._loops_running += 1
+        self.set_symbol_value(node.itemvar, listvar[0])
 
-        for item in listvar:
-            if self._break_current_loop:
-                self._break_current_loop = False
-                break
+        self.block_stack.push({
+            'type': 'for',
+            'listvar': listvar,
+            'itemvar': node.itemvar,
+            'pos': self.pos,
+            'index': 0
+        })
 
-            self._ctx.set(node.itemvar.name, item)
-            self.visit(node.block)
+    def visit_endfor(self, node: AST.EndFor):
 
-        self._loops_running -= 1
+        try:
+            elem = self.block_stack.get_first()
 
-    def visit_else(self, node):
-        pass
+            if elem['type'] != 'for':
+                self.raise_exception('Encountered ENDFOR without preceding FOR')        
+                
+            if elem['index'] == len(elem['listvar']) - 1:
+                # end loop
+                self.block_stack.pop()
+            else:
+                # next item
+                elem['index'] += 1
+                self.set_symbol_value(elem['itemvar'], elem['listvar'][elem['index']])
+                self.block_stack.update_first(elem)
 
-    def visit_endif(self, node):
-        pass
+                # jump to next iteration
+                self.pos = elem['pos']
 
-    def visit_simpleexpression(self, node):
-        lval = self.visit(node.lval)
-        rval = self.visit(node.rval)
+        except BlockStackEmptyException:
+            self.raise_exception('Encountered ENDFOR without preceding FOR (empty block stack)') 
 
-        if node.op == '==':
-            return lval == rval
-        elif node.op == '<':
-            return lval < rval
-        elif node.op == '>':
-            return lval > rval
-        elif node.op == '<=':
-            return lval <= rval
-        elif node.op == '>=':
-            return lval >= rval
-        elif node.op == '!=':
-            return lval != rval
-        elif node.op == '+':
-            return lval + rval
-        elif node.op == '-':
-            return lval - rval
-        elif node.op == '/':
-            return lval / rval
-        elif node.op == '*':
-            return lval * rval
-        else:
-            raise ParserError("Unrecognized operator: {0}".format(node.op), self._ctx)
 
-    def visit_noop(self, node):
-        pass
-
-    def visit_fileblockstart(self, node):
-        self.target = node.filename
-
-        if node.create_missing_folders:
-            val = self.visit(node.create_missing_folders)
-
-            if not isinstance(val, bool):
-                raise ParserError('Expected a boolean value for create_missing_folders argument', self._ctx)
-
-            if val:
-                self.get_logger().debug('FileBlockStart: create_missing_folders=True -> creating folders')
-                os.makedirs(os.path.dirname(get_secure_path(os.getcwd(), self._ctx.process_variables(self.target))))
-
-    def visit_fileblockend(self, node):
-        self.target = self.DEFAULT_TARGET
-
-    def visit_outputexpression(self, node):
-        self._add_content_line(self._ctx.process_variables(node.content))
+    def visit_echo (self, node: AST.Echo):
+        print(node.text)

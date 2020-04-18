@@ -6,7 +6,7 @@
 #
 import pytest
 from contemply.exceptions import ParserError, BundleException
-from contemply.interpreter import Interpreter
+from contemply.legacy.interpreter import Interpreter
 
 
 def test_bundle_load(parser_inst):

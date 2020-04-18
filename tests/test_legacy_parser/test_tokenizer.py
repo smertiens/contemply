@@ -5,8 +5,8 @@
 # For more information on licensing see LICENSE file
 #
 
-from contemply.tokenizer import *
-from contemply.parser import TemplateContext
+from contemply.legacy.tokenizer import *
+from contemply.legacy.parser import TemplateContext
 
 
 def test_token_detection():

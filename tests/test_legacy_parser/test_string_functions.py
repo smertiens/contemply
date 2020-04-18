@@ -5,7 +5,7 @@
 # For more information on licensing see LICENSE file
 #
 import pytest
-from contemply.frontend import TemplateParser
+from contemply.legacy.frontend import TemplateParser
 
 
 def test_uppercase():

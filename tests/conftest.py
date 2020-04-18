@@ -5,7 +5,7 @@
 # For more information on licensing see LICENSE file
 #
 
-from contemply.frontend import TemplateParser
+from contemply.legacy.frontend import TemplateParser
 import pytest
 
 @pytest.fixture()

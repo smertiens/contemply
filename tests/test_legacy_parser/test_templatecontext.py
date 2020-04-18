@@ -5,7 +5,7 @@
 # For more information on licensing see LICENSE file
 #
 
-from contemply.parser import *
+from contemply.legacy.parser import *
 import pytest
 
 

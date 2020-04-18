@@ -11,7 +11,7 @@ import sys
 
 import contemply.bundles.pythonbundle.cpy_extension as pythonbundle
 from contemply import cli
-from contemply.parser import TemplateContext
+from contemply.legacy.parser import TemplateContext
 
 @pytest.mark.skip(reason="Fails on travis")
 def test_create_venv(tmpdir, monkeypatch):

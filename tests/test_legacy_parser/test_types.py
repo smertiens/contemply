@@ -4,7 +4,7 @@
 # Copyright (C) 2019  Sean Mertiens
 # For more information on licensing see LICENSE file
 #
-from contemply.frontend import TemplateParser
+from contemply.legacy.frontend import TemplateParser
 from contemply.exceptions import *
 import pytest
 

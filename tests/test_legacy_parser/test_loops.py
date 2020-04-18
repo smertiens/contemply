@@ -6,8 +6,8 @@
 #
 
 import pytest
-from contemply.frontend import TemplateParser
-from contemply.interpreter import *
+from contemply.legacy.frontend import TemplateParser
+from contemply.legacy.interpreter import *
 
 
 def test_while_loop():
