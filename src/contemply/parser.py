@@ -393,11 +393,3 @@ class Parser:
     def run(self):
         
         self.interpreter.run(self.parse_tree)
-
-if __name__ == "__main__":
-    p = Parser()
-    intr = Interpreter()
-
-    f = '/Users/mephisto/python_projects/contemply/quicktest.tmp'
-    parse_tree = p.parse_file(f)
-    p.run()

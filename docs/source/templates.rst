@@ -33,9 +33,110 @@ The section header is the right place to:
 - Collect data from your users to fill the template with
 - Create additional folders
 
+Everything that is not a valid expression inside the section header will  be printed to the 
+console. Empty lines will be ignored. If you want to print an empty line to the console, write 
+a single dot "."
+
+.. code-block::
+
+    --- Contemply
+    
+    Welcome to our code generator!
+
+    There is no blank line above this one in the console.
+    .
+    .
+    Above this line there are two blank lines in the console.
+
+
+If you want to comment out a line inside a section header, use the "-" sign.
+
+
+.. code-block::
+
+    --- Contemply
+    
+    Welcome to our code generator!
+
+    - I am a comment and will be ignored.
+
+
+Define a filename to write to
+-----------------------------
+
+You do not need to define a filename to which your template is saved. By default, Contemply will prompt you for 
+a filename after every section in your template.
+Sometimes you might be interested in naming your output in a special way, e.g. when creating a python package. 
+In this case your package will not work if there is no \_\_init\_\_.py file.
+
+You can set a fixed filename using the **Filename** property inside the section header:
+
+.. code-block::
+    
+    --- Contemply
+    
+    Filename is "setup.py"
+
+    --
+    This line will be saved in setup.py
+
+Files (and folders) can only be created relative to the current directory.
+
+.. code-block::
+    
+    --- Contemply
+    
+    Output is "@console"
+
+    --
+    This line will be output to the console.
+
+
+There are a number of different values for **Output**:
+
+.. list-table:: Values for outputfile
+    :header-rows: 1
+
+    * - Option
+      - Description
+    * - @file
+      - Write to a file (either set by **Filename** or ask the user for it)
+    * - @console
+      - Output to the console (mentions the filename if one is set (see above))
+    * - @null
+      - No output at all (used in unit tests sometimes)
+
+
+Change the default output channel
+---------------------------------
+
+By default Contemply will save your template to a file. In some cases you might want to choose
+a different output, e.g. for debugging your templates. The output channel can be set using the
+**Output** property inside a section header.
+
+
+
+
+Template content
+----------------
+
+Everything outside of a section header is treated as template an potentially copied to your outputfile.
+You cannot use the user input syntax as mentioned above here, user input has to be handled in the section header.
+You can of course use conditionals, loops and call functions. See the respective sections of this documentation
+to learn how to use all of these elements.
+
+
+Get user input
+**************
+
+
+
+All user input functions can only be used inside a section header (first collect all data, then
+put it inside our template).
+
 
 Ask the user for string input
-'''''''''''''''''''''''''''''
+-----------------------------
 
 To prompt the user for string input, we need a text to display with the input prompt 
 and a variable name in which we want to save the users answer.
@@ -52,7 +153,7 @@ Notice that instead of "=" we use the ":" operator. This will trigger an input p
 
 
 Ask the user for a list of strings
-''''''''''''''''''''''''''''''''''
+----------------------------------
 
 Sometimes we want to use a list of items in the template. For example to loop over a list 
 of files to include. This can be done by adding the loop operator "..." after the line with
@@ -70,7 +171,7 @@ return). Remember to indent the loop operator "...".
 
 
 Let the user choose from a list of items
-'''''''''''''''''''''''''''''''''''''''''
+----------------------------------------
 
 If you want the user to choose from a predefined list of elements, you can use the list operator (-)
 after the prompt.
@@ -87,8 +188,13 @@ after the prompt.
     ---
 
 
+Use variables
+*************
+
+Apart from assigning user input to variables, you can also create them yourself.
+
 Define variables yourself
-'''''''''''''''''''''''''
+-------------------------
 
 If you want to define a variable yourself, simply use the assignment operator ("=").
 
@@ -102,20 +208,11 @@ If you want to define a variable yourself, simply use the assignment operator ("
 
     ---
 
-
-Template content
+Insert variables 
 ----------------
 
-Everything outside of a section header is treated as template an potentially copied to your outputfile.
-You cannot use the user input syntax as mentioned above here, user input has to be handled in the section header.
-You can of course use conditionals, loops and call functions. See the respective sections of this documentation
-to learn how to use all of these elements.
-
-Use variables
-*************
-
 You can insert variable values using their names and wrapping them inside "§". To change the start and end markers for
-variable replacement see HERE.
+variable replacement see :ref:`markers`.
 
 .. code-block::
 
@@ -128,6 +225,9 @@ variable replacement see HERE.
     # Version: § version §
 
     print('Hello!')
+
+If you are using variables as part of an expression (e.g. in conditionals, see following section), you do not need to 
+wrap them in §.
 
 
 Conditionals
@@ -217,7 +317,7 @@ available via a variable.
 Functions
 *********
 
-You can use a number of different functions. For a list of available functions see HERE.
+You can use a number of different functions. For a list of available functions see :ref:`functions`.
 To execute a function, start the line with **!**. This works in section headers and in your template' content.
 
 .. code-block::
@@ -240,7 +340,7 @@ If you want to use functions as part of expressions, you do not need to use the 
     ?
 
 Use functions as filters for variables
-''''''''''''''''''''''''''''''''''''''
+--------------------------------------
 
 You can append one or more functions to your variables. The functions will be processed from left to right.
 
@@ -256,3 +356,29 @@ You can append one or more functions to your variables. The functions will be pr
 
 **Notice** The function will only receive one argument (the input value). If the function requires more than one argument
 it might fail
+
+
+Additional settings
+*******************
+
+.. _markers:
+
+Change start-/endmarkers
+-------------------------
+
+The default start- and endmarkers for wrapping variables in Contemply is "§". Usually this default setting will
+work well with most programing languages/documents.
+They can still be changed inside a section header:
+
+.. code-block::
+
+    --- Contemply
+    
+    StartMarker is "$"
+    EndMarker is "#"
+
+    foo = "world"
+    
+    ---
+
+    Hello $ foo #!
