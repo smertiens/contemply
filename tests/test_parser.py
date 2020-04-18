@@ -191,3 +191,79 @@ def test_change_markers():
 
     assert len(parser.interpreter.processed_templates) == 1
     assert parser.interpreter.processed_templates[0].content == ['Hello world!']
+
+
+def test_if_with_function():
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        'foo = "bar"',
+        '---',
+        '? uppercase(foo) == "BAR"',
+        'Hello world!',
+        '?'
+    ])
+
+    parser = Parser()
+    parser.parse_string(text)
+    parser.run()
+
+    assert len(parser.interpreter.processed_templates) == 1
+    assert parser.interpreter.processed_templates[0].content == ['Hello world!']
+
+def test_if_with_function_inverted():
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        'foo = "BAR"',
+        '---',
+        '? "BAR" != lowercase(foo)',
+        'Hello world!',
+        '?'
+    ])
+
+    parser = Parser()
+    parser.parse_string(text)
+    parser.run()
+
+    assert len(parser.interpreter.processed_templates) == 1
+    assert parser.interpreter.processed_templates[0].content == ['Hello world!']
+
+
+def test_handle_blank_lines_in_header (capsys):
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        'First line',
+        '',
+        'Second line. No blank line above.',
+        '.',
+        '.',
+        'Two blank lines above',
+        '---',
+    ])
+
+    parser = Parser()
+    parser.parse_string(text)
+    parser.run()
+
+    assert len(parser.interpreter.processed_templates) == 1
+    assert 'First line\nSecond line. No blank line above.\n\n\nTwo blank lines above\n' in capsys.readouterr()
+    
+
+def test_handle_comments_in_header (capsys):
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        '- First line',
+        'Second line.',
+        '---',
+    ])
+
+    parser = Parser()
+    parser.parse_string(text)
+    parser.run()
+
+    assert len(parser.interpreter.processed_templates) == 1
+    assert 'Second line.\n' in capsys.readouterr()
+    

@@ -29,6 +29,7 @@ class Parser:
     ELSE_IF_START = '??'
     LOOP_START = '...'
     FUNCTION_START = '!'
+    COMMENT_START = '-'
 
     SCOPE_SECTION_HEADER = 1
     SCOPE_CONTENT = 2
@@ -55,14 +56,17 @@ class Parser:
         self.re_internal_assignment = re.compile(
             r'^(' + re_internal + ') is (.*)$')
 
-        # Regex for processing lines - uncompiled in case start/end markers change
-        if_base = r'\s*(\w+)\s*(\!\=|\=\=)?\s*(.+)?$'
-
+        # Regex for processing lines
+        operators = [re.escape(item) for item in ('==', '!=')]
+        if_base = r'\s*(.*)\s*({operators})\s*(.*)\s*'.format(operators='|'.join(operators))
+        function_base = r'(\w+)\s*\((.*)\)'
+        
         self.re_for_loop = re.compile(r'^\.\.\.\s*(\w+)\s*\-\>\s*(\w+)$')
         self.re_if = re.compile(r'^\?' + if_base)
         self.re_else_if = re.compile(r'^\?\?' + if_base)
-        self.re_function = re.compile(r'^\!\s*(\w+)\s*\((.*)\)$')
-        self.re_function_args = re.compile(r'([\d\.]+)|\w+|(\"[^\"]+\")|(\'[^\']+\')(?:,?)')
+        self.re_function = re.compile(r'^\!\s*{func}$'.format(func=function_base))
+        self.re_function_inline = re.compile(r'^{func}$'.format(func=function_base))
+        self.re_function_args = re.compile(r'([\d\.]+)|(\w+)|(\"[^\"]+\")|(\'[^\']+\')(?:,?)')
 
         # Base
         self.re_string = re.compile(r'^\"([^\"]+)\"$')
@@ -121,7 +125,7 @@ class Parser:
             token = None
 
             # skip blank lines in header
-            if (self.scope == self.SCOPE_SECTION_HEADER) and line.split() == '':
+            if (self.scope == self.SCOPE_SECTION_HEADER) and line.strip() == '':
                 self.advance_line()
                 continue
             
@@ -132,6 +136,11 @@ class Parser:
             elif line.rstrip() == self.SECTION_END:
                 self.scope = self.SCOPE_CONTENT
                 token = AST.SectionEnd()
+
+             # skip comments in header
+            elif (self.scope == self.SCOPE_SECTION_HEADER) and line.startswith(self.COMMENT_START):
+                self.advance_line()
+                continue
 
             elif self.line_is_prompt():
                 self.check_scope_header()
@@ -190,18 +199,27 @@ class Parser:
         
         return self.parse_tree
 
-    def parse_function(self):
-        match = self.re_function.match(self.lines[self.current_line])
+    def parse_expression(self, exp):
+        """
+        This function helps to distinguish between Values and Functions.
+        Values are constant entities and are returned as Value node.
+        Functions are parsed and returned as Function node.
+        """
+        exp = exp.strip()
 
-        if not match:
-            self.raise_exception('Could not parse function-expression.')
+        if self.re_function_inline.match(exp):
+            func_matches = self.re_function_inline.match(exp)
+            arglist = self.parse_function_arguments(func_matches.group(2))
+            return AST.Function(func_matches.group(1), arglist)
+        
+        else:
+            return  AST.Value(exp)
 
-        funcname = match.group(1)
-        args = match.group(2)
+    def parse_function_arguments(self, text):
         arglist = []
 
-        if args != '':
-            arg_matches = self.re_function_args.finditer(args)
+        if text != '':
+            arg_matches = self.re_function_args.finditer(text)
 
             for m in arg_matches:
                 val = None
@@ -211,9 +229,21 @@ class Parser:
                         val = AST.Value(n)
 
                 if val is None:
-                    self.raise_exception('Could not parse function argument list: %s' % args)
+                    self.raise_exception('Could not parse function argument list: %s' % text)
 
                 arglist.append(val)
+
+        return arglist
+
+    def parse_function(self):
+        match = self.re_function.match(self.lines[self.current_line])
+
+        if not match:
+            self.raise_exception('Could not parse function-expression.')
+
+        funcname = match.group(1)
+        args = match.group(2)
+        arglist = self.parse_function_arguments(args)
 
         return AST.Function(funcname, arglist)
 
@@ -222,14 +252,16 @@ class Parser:
 
         if not match:
             self.raise_exception('Could not parse if-expression.')
-        
-        ex = None 
+
+        print(match.groups())
 
         # simple truth testing with only symbol
         if len(match.groups()) == 1:
-            ex = AST.SimpleExpression(AST.Value(match.group(1)), '==', AST.Value('True'))
+            ex = AST.SimpleExpression(self.parse_expression(match.group(1)), '==', AST.Value('True'))
+
         elif len(match.groups()) == 3:
-            ex = AST.SimpleExpression(AST.Value(match.group(1)), match.group(2), AST.Value(match.group(3)))
+            ex = AST.SimpleExpression(self.parse_expression(match.group(1)), match.group(2), self.parse_expression(match.group(3)))
+
         else:
             self.raise_exception('Could not parse if-expression. Unexpected number of groups.')
 
@@ -347,8 +379,13 @@ class Parser:
         return AST.Optionlist(prompt.group(2), options, prompt.group(1))
 
     def parse_echo(self):
-        if self.lines[self.current_line].strip() != '':
-            return AST.Echo(self.lines[self.current_line])
+        line = self.lines[self.current_line].rstrip()
+
+        if line != '':
+            if line == '.':
+                return AST.Echo('')
+            else:
+                return AST.Echo(self.lines[self.current_line])
         else:
             return AST.Null()
 
@@ -360,6 +397,6 @@ if __name__ == "__main__":
     p = Parser()
     intr = Interpreter()
 
-    f = '/Users/mephisto/python_projects/contemply/src/contemply/samples/class.pytpl'
+    f = '/Users/mephisto/python_projects/contemply/quicktest.tmp'
     parse_tree = p.parse_file(f)
     p.run()
