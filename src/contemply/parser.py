@@ -8,6 +8,7 @@
 import logging
 import os
 import re
+import importlib
 
 from colorama import Fore, Style
 
@@ -15,6 +16,7 @@ import contemply.ast as AST
 from contemply import cli
 from contemply.storage import get_secure_path
 from contemply.interpreter import Interpreter
+from contemply.parser_env import ParserEnvironment
 
 
 class ParserException(Exception):
@@ -34,17 +36,22 @@ class Parser:
     SCOPE_SECTION_HEADER = 1
     SCOPE_CONTENT = 2
 
-    def __init__(self):
+    def __init__(self, env: ParserEnvironment = None):
 
-        self.interpreter = Interpreter()
         self.filename = ''
         self.lines = []
         self.current_line = 0
         self.parse_tree = []
 
         self.scope = self.SCOPE_SECTION_HEADER
-
         self.block_stack = []
+
+        if env is None:
+            env = ParserEnvironment()
+
+        self.env = env
+
+        self.interpreter = Interpreter(env)
 
         # Regex for parsing section headers
         self.re_prompt = re.compile(r'^(\w+)\s*\:\s*(?:(?:\"([^\"]*)\")|(?:\'([^\']*)\'))$')
@@ -214,7 +221,7 @@ class Parser:
             return AST.Function(func_matches.group(1), arglist)
         
         else:
-            return  AST.Value(exp)
+            return AST.Value(exp)
 
     def parse_function_arguments(self, text):
         arglist = []
@@ -254,8 +261,6 @@ class Parser:
         if not match:
             self.raise_exception('Could not parse if-expression.')
 
-        print(match.groups())
-
         # simple truth testing with only symbol
         if len(match.groups()) == 1:
             ex = AST.SimpleExpression(self.parse_expression(match.group(1)), '==', AST.Value('True'))
@@ -279,9 +284,9 @@ class Parser:
 
         # simple truth testing with only symbol
         if len(match.groups()) == 1:
-            ex = AST.SimpleExpression(AST.Value(match.group(1)), '==', AST.Value('True'))
+            ex = AST.SimpleExpression(self.parse_expression(match.group(1)), '==', AST.Value('True'))
         elif len(match.groups()) == 3:
-            ex = AST.SimpleExpression(AST.Value(match.group(1)), match.group(2), AST.Value(match.group(3)))
+            ex = AST.SimpleExpression(self.parse_expression(match.group(1)), match.group(2), self.parse_expression(match.group(3)))
         else:
             self.raise_exception('Could not parse if-expression. Unexpected number of groups.')
 
@@ -357,7 +362,7 @@ class Parser:
  
     def parse_assignment(self):
         match = self.re_assignment.match(self.lines[self.current_line])
-        return AST.Assignment(match.group(1), AST.Value(match.group(2)))
+        return AST.Assignment(match.group(1), self.parse_expression(match.group(2)))
 
     def parse_optionlist(self):
         prompt = self.re_prompt.match(self.lines[self.current_line])

@@ -1,7 +1,16 @@
+#
+# Contemply - A code generator that creates boilerplate files from templates
+#
+# Copyright (C) 2019-2020  Sean Mertiens
+# For more information on licensing see LICENSE file
+#
+
 import contemply.ast as AST
 from contemply.templates import TemplateContext
 from contemply import cli
 from contemply import builtin_functions
+from contemply.parser_env import ParserEnvironment
+import logging
 import re
 
 class InterpreterException(Exception):
@@ -45,7 +54,33 @@ class Interpreter:
     def raise_exception(self, msg):
         raise InterpreterException('{}'.format(msg))
 
-    def __init__(self):
+
+    def load_env(self):
+        """
+        Should only be called once in the constructor.
+        Apart from that it can be used to load extensions for debugging/testing.
+        """
+        self._function_lookup = [builtin_functions]
+
+        self.builtins = {
+            'true': True,
+            'false': False
+        }
+
+        # add extensions
+        for f in self.env.get_registered_functions():
+            if f in self._function_lookup:
+                self.get_logger().debug('Function lookup is shadowing existing lookup: %s' % f)
+
+            self.add_function_lookup(f)
+
+        for k, v in self.env.get_registered_builtins():
+            if k in self.builtins:
+                self.get_logger().debug('Builtin is shadowing existing one: %s' % k)
+
+            self.add_builtin(k, v)
+
+    def __init__(self, env: ParserEnvironment = None):
 
         self.string_re = re.compile(r'^(?:\"([^\"]*)\")|(?:\'([^\']*)\')$')
 
@@ -53,6 +88,7 @@ class Interpreter:
         self.symbol_table = {}
         self.parse_tree = []
         self.pos = 0
+
 
         self.allowed_internals = {
             'Output': {
@@ -74,12 +110,11 @@ class Interpreter:
             'EndMarker': '§',
         }
 
-        self.builtins = {
-            'true': True,
-            'false': False
-        }
+        if env is None:
+            env = ParserEnvironment()
 
-        self._function_lookup = [builtin_functions]
+        self.env = env
+        self.load_env()
 
         # Can be used for testing
         self.processed_templates = []
