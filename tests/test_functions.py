@@ -49,7 +49,7 @@ def test_function_arguments():
 
         def testFunc(self, args):
             assert args == [12, 394.033, "hello", "world"]
-            return "{} {} {} {}".format(args[0], args[1], args[2], args[3])
+            return "{} {} {} {}".format(args[0], args[1], args[2], args[3])
 
     text = '\n'.join([
         '--- Contemply',
@@ -69,3 +69,73 @@ def test_function_arguments():
 
     assert len(parser.interpreter.processed_templates) == 1
     assert parser.interpreter.processed_templates[0].content == ['12 394.033 hello world']
+
+################################
+# String functions
+################################
+
+def test_str_lowercase():
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        'test = lowercase("HELLO")',
+        '---',
+        '§ test §'
+    ])
+
+    parser = Parser()
+    parser.parse_string(text)
+    parser.run()
+
+    assert len(parser.interpreter.processed_templates) == 1
+    assert parser.interpreter.processed_templates[0].content == ['hello']
+
+
+def test_str_capitalize():
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        'test = capitalize("hello")',
+        '---',
+        '§ test §'
+    ])
+
+    parser = Parser()
+    parser.parse_string(text)
+    parser.run()
+
+    assert len(parser.interpreter.processed_templates) == 1
+    assert parser.interpreter.processed_templates[0].content == ['Hello']
+
+
+def test_str_contains():
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        'test = contains("hello", "ell")',
+        '---',
+        '§ test §'
+    ])
+
+    parser = Parser()
+    parser.parse_string(text)
+    parser.run()
+
+    assert len(parser.interpreter.processed_templates) == 1
+    assert parser.interpreter.processed_templates[0].content == ['True']
+
+def test_str_replace():
+    text = '\n'.join([
+        '--- Contemply',
+        'Output is "@null"',
+        'test = replace("hello world", "world", "foo")',
+        '---',
+        '§ test §'
+    ])
+
+    parser = Parser()
+    parser.parse_string(text)
+    parser.run()
+
+    assert len(parser.interpreter.processed_templates) == 1
+    assert parser.interpreter.processed_templates[0].content == ['hello foo']

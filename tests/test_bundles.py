@@ -8,22 +8,23 @@ import pytest
 from contemply.exceptions import BundleException
 from contemply.parser import Parser, ParserException
 
-
-def test_bundle_load():
+def test_bundle_load(capsys):
 
     text = '\n'.join([
         '--- Contemply',
         'Output is "@null"',
-        '! newstyle_bar()'
+        '! newstyle_bar("is working")',
         '---',
     ])
 
     parser = Parser()
+    parser.env.load_extension("tests.fixtures.foo_extension")
+    parser.interpreter.load_env()
     parser.parse_string(text)
     parser.run()
 
     assert len(parser.interpreter.processed_templates) == 1
-    assert parser.interpreter.processed_templates[0].content == ['Right']
+    assert 'This is working!\n' in capsys.readouterr()
 
 def test_bundle_load_error(parser_inst):
     with pytest.raises(BundleException):
