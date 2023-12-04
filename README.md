@@ -1,8 +1,6 @@
 # Contemply
 
-[![Build Status](https://travis-ci.org/smertiens/contemply.svg?branch=master)](https://travis-ci.org/smertiens/contemply)
-[![Documentation Status](https://readthedocs.org/projects/contemply/badge/?version=latest)](https://contemply.readthedocs.io/en/latest/?badge=latest)
-[![PyPI version](https://badge.fury.io/py/contemply.svg)](https://badge.fury.io/py/contemply)
+Status: Not actively under development.
 
 Contemply turns your boring old templates and project scaffolds into interactive code generators. 
 
